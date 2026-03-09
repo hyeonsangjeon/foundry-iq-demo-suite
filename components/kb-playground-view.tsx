@@ -19,7 +19,6 @@ import { useConversationStarters } from '@/lib/conversationStarters'
 import { cn, formatRelativeTime, cleanTextSnippet } from '@/lib/utils'
 import { TraceExplorer } from '@/components/trace-explorer'
 import { InsightPopup, INSIGHT_STEPS } from '@/components/insight-popup'
-import type { InsightStep } from '@/components/insight-popup'
 import { ServiceHealthPanel } from '@/components/service-health-panel'
 import { DataExplorer } from '@/components/data-explorer'
 import {
@@ -124,7 +123,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [viewCodeOpen, setViewCodeOpen] = useState(false)
-  const [insightStep, setInsightStep] = useState<InsightStep | null>(null)
+  const [insightStepIndex, setInsightStepIndex] = useState<number | null>(null)
   const [healthOpen, setHealthOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'chat' | 'explorer'>('chat')
   const [sourcesPanel, setSourcesPanel] = useState<{
@@ -170,6 +169,9 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  // Derived insight step from index
+  const currentInsightStep = insightStepIndex !== null ? INSIGHT_STEPS[insightStepIndex] : null
+
   // Get search endpoint from env
   const searchEndpoint = process.env.NEXT_PUBLIC_SEARCH_ENDPOINT || process.env.NEXT_PUBLIC_AZURE_SEARCH_ENDPOINT || ''
 
@@ -181,6 +183,28 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       localStorage.setItem('showCostEstimates', newValue.toString())
     }
   }
+
+  // Keyboard shortcuts for insight popup navigation
+  useEffect(() => {
+    if (insightStepIndex === null) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setInsightStepIndex(null)
+      } else if (e.key === 'ArrowRight' || e.key === 'Enter') {
+        setInsightStepIndex(prev => {
+          if (prev === null) return null
+          return prev < INSIGHT_STEPS.length - 1 ? prev + 1 : null
+        })
+      } else if (e.key === 'ArrowLeft') {
+        setInsightStepIndex(prev => {
+          if (prev === null || prev === 0) return prev
+          return prev - 1
+        })
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [insightStepIndex])
 
   // Load agents
   useEffect(() => {
@@ -776,7 +800,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setInsightStep(INSIGHT_STEPS[0])}
+                onClick={() => setInsightStepIndex(0)}
                 title="Show demo insights"
               >
                 💡 Insights
@@ -969,12 +993,14 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       />
 
       {/* Insight Popup - fixed bottom-right */}
-      {insightStep && (
+      {currentInsightStep && (
         <div className="fixed bottom-6 right-6 z-40 w-80">
           <InsightPopup
-            step={insightStep}
+            step={currentInsightStep}
             totalSteps={INSIGHT_STEPS.length}
-            onDismiss={() => setInsightStep(null)}
+            onDismiss={() => setInsightStepIndex(null)}
+            onNext={() => setInsightStepIndex(prev => prev !== null && prev < INSIGHT_STEPS.length - 1 ? prev + 1 : null)}
+            onPrev={() => setInsightStepIndex(prev => prev !== null && prev > 0 ? prev - 1 : prev)}
           />
         </div>
       )}

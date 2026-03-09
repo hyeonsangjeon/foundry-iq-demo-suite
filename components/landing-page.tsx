@@ -57,6 +57,16 @@ const demos = [
   },
 ]
 
+const comingSoonInfo: Record<string, string> = {
+  'sharepoint-connector': 'Phase 2: Automatically index SharePoint PDF, Word, and Excel documents and make them searchable through the knowledge base.',
+  'agent-connector': 'Phase 3: Foundry Agent Service will use the knowledge base as an MCP tool to autonomously search for information.',
+}
+
+const comingSoonPhase: Record<string, string> = {
+  'sharepoint-connector': 'Phase 2',
+  'agent-connector': 'Phase 3',
+}
+
 const heroVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
@@ -71,7 +81,7 @@ const cardsContainerVariants = {
   visible: {
     transition: {
       staggerChildren: 0.12,
-      delayChildren: 0.3,
+      delayChildren: 0.45,
     },
   },
 }
@@ -96,7 +106,7 @@ const footerVariants = {
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12 gap-8">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12 gap-12">
       {/* Hero */}
       <motion.div variants={heroVariants} initial="hidden" animate="visible" className="text-center max-w-2xl">
         <div className="mb-6 inline-flex w-16 h-16 rounded-2xl bg-accent-subtle items-center justify-center">
@@ -168,10 +178,13 @@ export function LandingPage() {
           return (
             <motion.div key={demo.id} variants={cardItemVariants}>
               <Card className={cn(
-                'flex flex-col h-full p-6 transition-colors duration-200',
+                'group relative flex h-full flex-col overflow-visible p-6 transition-colors duration-200',
                 'cursor-default',
                 'hover:bg-glass-hover'
               )}>
+                <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-64 -translate-x-1/2 rounded-lg border border-glass-border bg-bg-elevated p-3 text-center text-xs text-fg-muted opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
+                  {comingSoonInfo[demo.id]}
+                </div>
                 <div className="opacity-60">
                   <div className="w-12 h-12 rounded-xl bg-bg-elevated flex items-center justify-center mb-4">
                     <demo.icon className="w-6 h-6 text-fg-subtle" />
@@ -190,31 +203,22 @@ export function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <p className="text-sm text-fg-subtle text-center">Coming in Phase 2</p>
+                <p className="text-sm text-fg-subtle text-center">Coming in {comingSoonPhase[demo.id]}</p>
               </Card>
             </motion.div>
           )
         })}
       </motion.div>
 
-      {/* Stats + Footer */}
-      <motion.div variants={footerVariants} initial="hidden" animate="visible" className="text-center">
-        <div className="flex items-center justify-center gap-8 mb-8">
-          <div>
-            <p className="text-3xl font-bold text-fg-default">3</p>
-            <p className="text-xs text-fg-subtle uppercase tracking-wide mt-1">Demo Scenarios</p>
-          </div>
-          <div className="w-px h-10 bg-stroke-divider" />
-          <div>
-            <p className="text-3xl font-bold text-fg-default">7+</p>
-            <p className="text-xs text-fg-subtle uppercase tracking-wide mt-1">Data Sources</p>
-          </div>
-          <div className="w-px h-10 bg-stroke-divider" />
-          <div>
-            <p className="text-3xl font-bold text-fg-default">GPT-4o</p>
-            <p className="text-xs text-fg-subtle uppercase tracking-wide mt-1">AI Model</p>
-          </div>
-        </div>
+      {/* Foundry IQ Description + Footer */}
+      <motion.div variants={footerVariants} initial="hidden" animate="visible" className="text-center max-w-2xl mx-auto">
+        <h3 className="text-sm font-semibold text-fg-default mb-2">What is Foundry IQ?</h3>
+        <p className="text-xs text-fg-muted mb-3">A managed Knowledge Retrieval engine built on Azure AI Search</p>
+        <ul className="space-y-1 mb-6">
+          <li className="text-xs text-fg-muted">Planning → Retrieval → Assessment → Synthesis — 4-stage Agentic Retrieval</li>
+          <li className="text-xs text-fg-muted">LLM plans the search, evaluates results, and generates evidence-based answers</li>
+          <li className="text-xs text-fg-muted">Citations track every answer back to its source — zero hallucination</li>
+        </ul>
         <p className="text-sm text-fg-muted">
           Powered by Azure AI Search · Microsoft AI GBB Korea
         </p>
