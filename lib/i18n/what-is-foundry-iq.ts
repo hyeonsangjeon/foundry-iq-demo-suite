@@ -1,4 +1,4 @@
-export type Lang = 'en' | 'ko' | 'zh' | 'hi'
+export type Lang = 'en' | 'ko' | 'zh' | 'ja' | 'hi'
 
 export interface I18nData {
   badge: string
@@ -220,6 +220,50 @@ export const i18n: Record<Lang, I18nData> = {
     cta_sub: '从知识库查询到 Trace 可视化 — 体验完整管道。',
     cta_launch: '启动演示套件',
   },
+  ja: {
+    badge: 'パブリックプレビュー — Azure AI Search 基盤',
+    h1_1: 'AIエージェントのための',
+    h1_2: 'ナレッジレイヤー',
+    hero_sub: '統一エンドポイント。マルチソース検索。権限認識グラウンディング。Foundry IQはAzure AI Searchをエージェンティック検索エンジンに変換します — 計画、検索、合成を自動化し、エージェントのハルシネーションを防止します。',
+    cta_demo: 'デモを開始',
+    cta_docs: 'Microsoft ドキュメント ↗',
+    scroll: 'スクロール',
+    pipe_label: 'エージェンティック検索パイプライン',
+    pipe_title: '検索を推論タスクに。',
+    pipe_desc: '従来のRAGは1つのクエリを1つのインデックスに送信します。Foundry IQは検索をマルチステップ推論として扱います — LLMがサブクエリを計画し、ハイブリッド検索を実行し、品質を評価し、引用付きの回答を合成します。',
+    s1_name: '計画',
+    s1_brief: 'LLMが複雑なクエリを集中サブクエリに分解',
+    s2_name: '検索',
+    s2_brief: 'ベクトル＋キーワード検索をすべてのソースで同時実行',
+    s3_name: '評価',
+    s3_brief: '反省的検索 — 結果不十分なら自動再検索',
+    s4_name: '合成',
+    s4_brief: 'インライン引用付きの根拠ある回答',
+    pill_label: 'コア機能',
+    pill_title: 'インテリジェント検索の3つの柱。',
+    pill_desc: 'ナレッジベース、エージェンティック検索、根拠に基づく回答 — 断片化されたRAGパイプラインを単一の再利用可能なナレッジレイヤーに置き換えます。',
+    p1_title: 'ナレッジベース',
+    p1_desc: 'Blob Storage、SharePoint、OneLake、ウェブを1つの再利用可能なエンドポイントに接続。自動インデキシング、チャンキング、ベクトル化を含みます。',
+    p1_stat: 'KB あたりのナレッジソース',
+    p2_title: 'エージェンティック検索',
+    p2_desc: 'LLM推論による自己反省クエリエンジン。サブクエリ計画、ソース選択、並列ハイブリッド検索、品質閾値まで反復します。',
+    p2_stat: 'RAG回答品質向上',
+    p3_title: '根拠に基づく回答',
+    p3_desc: 'すべての回答にソースドキュメントを追跡するインライン引用が含まれます。エージェントが生データに基づいて推論 — ハルシネーションなし、完全な監査追跡。',
+    p3_stat: '引用ベースの応答',
+    iq_label: 'マイクロソフト インテリジェンスレイヤー',
+    iq_title: 'Foundry IQの位置づけ。',
+    iq_desc: '3つのIQワークロードがエージェントに包括的な組織コンテキストを提供します。Foundry IQはナレッジレイヤーとして、適切な権限でエンタープライズデータを接続します。',
+    iq1_desc: 'マネージドナレッジレイヤー。Azure、SharePoint、OneLake、ウェブの構造化・非構造化データを接続。',
+    iq1_tag: 'このデモ',
+    iq2_desc: 'ビジネスデータ向けセマンティックインテリジェンス。OneLakeとPower BI上のオントロジー、セマンティックモデル、グラフ。',
+    iq2_tag: 'ビジネスデータ',
+    iq3_desc: 'M365向けコンテキストインテリジェンス。ドキュメント、会議、チャット、ワークフローからの協業シグナル。',
+    iq3_tag: 'ワークシグナル',
+    cta_title: '実際に体験してください。',
+    cta_sub: 'ナレッジベースクエリからTrace可視化まで — 完全なパイプラインを体験。',
+    cta_launch: 'デモスイートを起動',
+  },
   hi: {
     badge: 'पब्लिक प्रीव्यू — Azure AI Search पर निर्मित',
     h1_1: 'AI एजेंट्स के लिए',
@@ -342,6 +386,28 @@ export const pipeDetail: Record<Lang, PipeDetailData> = {
       text: 'LLM 完全基于检索内容生成连贯答案。每个论断都附有指向特定源文档的内联引用。输出模式：提取内容（原始引用）或带完整来源归属的合成答案。',
     },
   },
+  ja: {
+    plan: {
+      label: 'クエリプランニング',
+      color: 'var(--accent-blue)',
+      text: 'LLMがクエリと会話履歴を分析し、複雑な質問を集中サブクエリに分解します。各サブクエリは特定のナレッジソースをターゲットとし、複数のドキュメント間の情報を接続するマルチホップ推論を可能にします。',
+    },
+    retrieve: {
+      label: 'ハイブリッド検索実行',
+      color: 'var(--accent-cyan)',
+      text: 'すべてのサブクエリがハイブリッド検索でナレッジソース上で同時実行されます — ベクトル類似度とキーワードマッチングを組み合わせます。セマンティックリランキングで最も関連性の高い段落を表示。Blob Storage、SharePoint、OneLake、ウェブソースを単一エンドポイントでサポート。',
+    },
+    assess: {
+      label: '自己評価と反復',
+      color: 'var(--accent-purple)',
+      text: 'ファインチューニングされたセマンティック分類器が検索結果の十分性を評価します。不足がある場合、エンジンは自動的にクエリを書き直して再実行 — 品質閾値を満たすまで反復します。Retrieval Reasoning Effort（minimal → low → medium → high）で設定可能。',
+    },
+    synthesize: {
+      label: '回答合成',
+      color: 'var(--accent-orange)',
+      text: 'LLMが検索されたコンテンツのみに基づいて一貫した回答を生成します。すべての主張は特定のソースドキュメントを指すインライン引用で裏付けられます。出力モード：抽出コンテンツ（生の参照）またはソース帰属付き合成回答。',
+    },
+  },
   hi: {
     plan: {
       label: 'क्वेरी प्लानिंग',
@@ -401,5 +467,6 @@ export const LANGS: { code: Lang; label: string }[] = [
   { code: 'en', label: 'EN' },
   { code: 'ko', label: '한국어' },
   { code: 'zh', label: '中文' },
+  { code: 'ja', label: '日本語' },
   { code: 'hi', label: 'हिन्दी' },
 ]
