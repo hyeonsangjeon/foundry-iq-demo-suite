@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Send20Regular, Bot20Regular, Person20Regular, Settings20Regular, Dismiss20Regular, Code20Regular, ArrowCounterclockwise20Regular } from '@fluentui/react-icons'
+import { Send20Regular, Bot20Regular, Person20Regular, Settings20Regular, Dismiss20Regular, Code20Regular, ArrowCounterclockwise20Regular, ChevronRight20Regular, ChevronDown20Regular } from '@fluentui/react-icons'
 import { AgentAvatar } from '@/components/agent-avatar'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -1160,6 +1160,7 @@ function MessageBubble({ message, agent, showCostEstimates, onOpenSources }: {
   onOpenSources?: (refs: Reference[], activity: Activity[], query?: string) => void
 }) {
   const isUser = message.role === 'user'
+  const [traceExpanded, setTraceExpanded] = useState(false)
 
   // Check if we have trace data (new format)
   const hasTraceData = message.activity && message.activity.length > 0 && message.references
@@ -1248,6 +1249,69 @@ function MessageBubble({ message, agent, showCostEstimates, onOpenSources }: {
           {!isUser && regularRefs.length === 0 && message.activity && message.activity.length > 0 && (
             <div className="mt-3 text-[10px] text-fg-muted italic">
               No sources returned (activity: {message.activity.length} steps)
+            </div>
+          )}
+
+          {/* Collapsible Retrieval Trace Section */}
+          {!isUser && hasTraceData && (
+            <div className="mt-4 pt-4 border-t border-stroke-divider">
+              {/* Summary Bar */}
+              <button
+                type="button"
+                onClick={() => setTraceExpanded(prev => !prev)}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-stroke-divider bg-bg-subtle hover:bg-bg-card transition-colors cursor-pointer text-left"
+                aria-expanded={traceExpanded}
+              >
+                {traceExpanded ? (
+                  <ChevronDown20Regular className="h-4 w-4 text-fg-muted flex-shrink-0" />
+                ) : (
+                  <ChevronRight20Regular className="h-4 w-4 text-fg-muted flex-shrink-0" />
+                )}
+                <span className="text-xs font-medium text-fg-muted">
+                  Retrieval Trace
+                </span>
+                <span className="text-xs text-fg-subtle">·</span>
+                <span className="text-xs text-fg-subtle">
+                  {message.activity!.length} step{message.activity!.length !== 1 ? 's' : ''}
+                </span>
+                <span className="text-xs text-fg-subtle">·</span>
+                <span className="text-xs text-fg-subtle">
+                  {message.activity!.reduce((sum, a) => sum + (a.elapsedMs || 0), 0)}ms
+                </span>
+              </button>
+
+              {/* Expanded TraceExplorer */}
+              <AnimatePresence initial={false}>
+                {traceExpanded && (
+                  <motion.div
+                    key="trace-explorer"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: 'easeInOut' }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-4">
+                      <TraceExplorer
+                        response={{
+                          response: [{
+                            role: 'assistant',
+                            content: message.content.map(c =>
+                              c.type === 'text'
+                                ? { type: 'text', text: c.text }
+                                : c.type === 'image'
+                                  ? { type: 'image', image: { url: c.image.url } }
+                                  : { type: 'text', text: '' }
+                            )
+                          }],
+                          activity: message.activity as any || [],
+                          references: message.references as any || []
+                        }}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
 
