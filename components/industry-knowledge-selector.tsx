@@ -150,7 +150,10 @@ export function IndustryKnowledgeSelector() {
 
         {/* Knowledge Base Cards */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {INDUSTRY_KNOWLEDGE_BASES.map((kb, index) => {
+          {[...INDUSTRY_KNOWLEDGE_BASES].sort((a, b) => {
+            if (a.available === b.available) return 0
+            return a.available ? -1 : 1
+          }).map((kb, index) => {
             const Icon = kb.icon
             const isSelected = selectedKB === kb.id
 
