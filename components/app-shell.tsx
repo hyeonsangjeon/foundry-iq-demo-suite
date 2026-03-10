@@ -173,6 +173,13 @@ function Header({ onMenuClick, showSidebar }: HeaderProps) {
             <span>API docs</span>
             <ArrowUpRight16Regular className="h-3.5 w-3.5" />
           </a>
+
+          <Link
+            href="/what-is-foundry-iq"
+            className="hidden md:flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium text-fg-subtle border border-glass-border hover:text-accent hover:border-accent/30 transition-colors duration-fast"
+          >
+            Foundry IQ?
+          </Link>
           
           <Tooltip content="View on GitHub">
             <a 
@@ -257,6 +264,14 @@ function Sidebar({ navigation, currentPath, isOpen, onClose, collapsed, onToggle
                   collapsed={collapsed}
                 />
               ))}
+              {/* Divider + What is Foundry IQ link */}
+              <div className="pt-3 mt-3 border-t border-stroke-divider">
+                <SidebarLink
+                  item={{ href: '/what-is-foundry-iq', label: 'What is Foundry IQ?', icon: Search20Regular }}
+                  isActive={currentPath === '/what-is-foundry-iq'}
+                  collapsed={collapsed}
+                />
+              </div>
             </nav>
           </div>
         </div>
@@ -298,6 +313,14 @@ function Sidebar({ navigation, currentPath, isOpen, onClose, collapsed, onToggle
                       onClick={onClose}
                     />
                   ))}
+                  {/* Divider + What is Foundry IQ link */}
+                  <div className="pt-3 mt-3 border-t border-stroke-divider">
+                    <SidebarLink
+                      item={{ href: '/what-is-foundry-iq', label: 'What is Foundry IQ?', icon: Search20Regular }}
+                      isActive={currentPath === '/what-is-foundry-iq'}
+                      onClick={onClose}
+                    />
+                  </div>
                 </nav>
               </div>
             </div>

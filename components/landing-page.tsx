@@ -184,8 +184,9 @@ export function LandingPage() {
         <p className="text-sm text-fg-muted mt-1">Azure AI Search &middot; Foundry IQ</p>
         <Link
           href="/what-is-foundry-iq"
-          className="inline-flex items-center gap-1.5 mt-3 text-xs font-medium text-accent hover:text-accent-hover transition-colors duration-150"
+          className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-full text-xs font-semibold text-accent border border-accent/30 bg-accent/5 hover:bg-accent/10 hover:border-accent/50 transition-all duration-200 shadow-[0_0_12px_hsl(var(--color-accent-default)/0.08)] hover:shadow-[0_0_20px_hsl(var(--color-accent-default)/0.15)]"
         >
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
           What is Foundry IQ?
           <ChevronRight20Regular className="w-3.5 h-3.5" />
         </Link>
