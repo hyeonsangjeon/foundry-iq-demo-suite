@@ -110,7 +110,7 @@ export default function WhatIsFoundryIQPage() {
           borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}
       >
-        <div className="max-w-[1100px] mx-auto px-8 py-3.5 flex justify-between items-center">
+        <div className="max-w-[1100px] mx-auto px-5 md:px-8 py-3.5 flex justify-between items-center">
           {/* Left: back link + page title */}
           <div className="flex items-center gap-5">
             <Link
@@ -175,8 +175,8 @@ export default function WhatIsFoundryIQPage() {
 
       {/* ── HERO ─────────────────────────────────────────────────────────────── */}
       <section
-        className="relative z-[2] flex flex-col justify-center items-center text-center"
-        style={{ minHeight: '90vh', paddingTop: '60px', paddingBottom: '60px', padding: '60px 32px' }}
+        className="relative z-[2] flex flex-col justify-center items-center text-center min-h-[auto] md:min-h-[90vh]"
+        style={{ paddingTop: '60px', paddingBottom: '60px', paddingLeft: '20px', paddingRight: '20px' }}
       >
         {/* Badge */}
         <motion.div
@@ -308,7 +308,7 @@ export default function WhatIsFoundryIQPage() {
 
       {/* ── PIPELINE ─────────────────────────────────────────────────────────── */}
       <section className="relative z-[2] py-[110px]">
-        <div className="max-w-[1100px] mx-auto px-8">
+        <div className="max-w-[1100px] mx-auto px-5 md:px-8">
           <Reveal>
             <div
               className="text-[11px] font-medium tracking-[0.2em] uppercase mb-4"
@@ -403,6 +403,13 @@ export default function WhatIsFoundryIQPage() {
                     <div className="text-[11.5px] leading-[1.5]" style={{ color: 'rgba(255,255,255,0.55)' }}>
                       {t[`s${idx + 1}_brief` as keyof typeof t]}
                     </div>
+                    {/* Divider between steps (desktop only) */}
+                    {!isLast && (
+                      <div
+                        className="hidden md:block absolute right-[-1px] top-1/2 -translate-y-1/2 w-[2px] h-[40%] z-[1]"
+                        style={{ background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.15), transparent)' }}
+                      />
+                    )}
                   </button>
                 )
               })}
@@ -450,7 +457,7 @@ export default function WhatIsFoundryIQPage() {
 
       {/* ── THREE PILLARS ─────────────────────────────────────────────────────── */}
       <section className="relative z-[2] py-[110px]">
-        <div className="max-w-[1100px] mx-auto px-8">
+        <div className="max-w-[1100px] mx-auto px-5 md:px-8">
           <Reveal>
             <div
               className="text-[11px] font-medium tracking-[0.2em] uppercase mb-4"
@@ -521,7 +528,7 @@ export default function WhatIsFoundryIQPage() {
 
       {/* ── 3 IQ STRIP ───────────────────────────────────────────────────────── */}
       <section className="relative z-[2] py-[110px]">
-        <div className="max-w-[1100px] mx-auto px-8">
+        <div className="max-w-[1100px] mx-auto px-5 md:px-8">
           <Reveal>
             <div
               className="text-[11px] font-medium tracking-[0.2em] uppercase mb-4"
@@ -620,7 +627,7 @@ export default function WhatIsFoundryIQPage() {
       </section>
 
       {/* ── REFERENCES ───────────────────────────────────────────────────────── */}
-      <div className="relative z-[2] max-w-[1100px] mx-auto px-8">
+      <div className="relative z-[2] max-w-[1100px] mx-auto px-5 md:px-8">
         <Reveal>
           <div
             className="py-10"

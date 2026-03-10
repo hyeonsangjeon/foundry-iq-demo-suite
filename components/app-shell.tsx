@@ -176,7 +176,7 @@ function Header({ onMenuClick, showSidebar }: HeaderProps) {
           
           <Tooltip content="View on GitHub">
             <a 
-              href="https://github.com/farzad528/azure-ai-search-knowledge-retrieval-demo" 
+              href="https://github.com/hyeonsangjeon/private-foundry-iq-task" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-fg-muted transition-colors duration-fast hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-stroke-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas"
