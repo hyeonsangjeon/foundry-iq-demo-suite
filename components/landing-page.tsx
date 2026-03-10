@@ -1,228 +1,194 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { useRef } from 'react'
+import { motion, useInView } from 'framer-motion'
+import Link from 'next/link'
+import { cn } from '@/lib/utils'
 import {
   Search24Regular,
   Document24Regular,
   PlugConnected24Regular,
   ChevronRight20Regular,
 } from '@fluentui/react-icons'
-import { motion } from 'framer-motion'
-import Image from 'next/image'
-import Link from 'next/link'
-import { cn } from '@/lib/utils'
-import { WelcomeSplash } from '@/components/welcome-splash'
 
-const demos = [
-  {
-    id: 'foundry-iq-basic',
-    title: 'Foundry IQ Basic',
-    description: 'Semantic search, multimodal retrieval, and agentic retrieval trace visualization.',
-    features: [
-      'Semantic & keyword hybrid search',
-      'Multimodal document support',
-      'Agentic retrieval trace explorer',
-    ],
-    icon: Search24Regular,
-    href: '/test',
-    status: 'active' as const,
-  },
+// ─── Data ────────────────────────────────────────────────────────────────────
+
+const activeDemo = {
+  id: 'foundry-iq-basic',
+  title: 'Foundry IQ Basic',
+  description:
+    'Semantic search, multimodal retrieval, and agentic retrieval trace visualization — powered by Azure AI Search.',
+  features: [
+    { label: 'Hybrid Search', desc: 'Vector + keyword simultaneous' },
+    { label: 'Agentic Retrieval', desc: '4-stage planning pipeline' },
+    { label: 'Inline Citations', desc: 'Every answer traced to source' },
+    { label: 'Trace Explorer', desc: 'Full retrieval journey visible' },
+  ],
+  href: '/test',
+  icon: Search24Regular,
+}
+
+const comingSoon = [
   {
     id: 'sharepoint-connector',
     title: 'SharePoint Connector',
-    description: 'Index SharePoint documents and search across enterprise content with knowledge bases.',
-    features: [
-      'SharePoint document indexing',
-      'Indexed & Remote knowledge sources',
-      'Real-time user permissions',
-    ],
+    phase: 'Phase 2',
     icon: Document24Regular,
-    href: null,
-    status: 'coming-soon' as const,
+    desc: 'Index SharePoint documents and search across enterprise content.',
   },
   {
     id: 'agent-connector',
     title: 'Agent Connector',
-    description: 'MCP RemoteTool integration where AI agents use knowledge bases as grounding tools.',
-    features: [
-      'MCP RemoteTool protocol',
-      'Agent-as-a-service pattern',
-      'Knowledge bases as tools',
-    ],
+    phase: 'Phase 3',
     icon: PlugConnected24Regular,
-    href: null,
-    status: 'coming-soon' as const,
+    desc: 'MCP RemoteTool integration — AI agents use knowledge bases as grounding tools.',
   },
 ]
 
-const comingSoonInfo: Record<string, string> = {
-  'sharepoint-connector': 'Phase 2: Automatically index SharePoint PDF, Word, and Excel documents and make them searchable through the knowledge base.',
-  'agent-connector': 'Phase 3: Foundry Agent Service will use the knowledge base as an MCP tool to autonomously search for information.',
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function ActiveDemoCard() {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-10%' })
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, ease: [0, 0, 0.2, 1] as const }}
+    >
+      <Link href={activeDemo.href}>
+        <motion.div
+          whileHover={{ y: -6 }}
+          whileTap={{ scale: 0.99 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          className={cn(
+            'group relative overflow-hidden rounded-2xl p-8 md:p-10',
+            'border border-stroke-divider',
+            'bg-bg-elevated/50 backdrop-blur-sm',
+            'hover:border-accent/40',
+            'hover:shadow-[0_0_60px_hsl(var(--color-accent-default)/0.12)]',
+            'transition-all duration-300',
+            'cursor-pointer'
+          )}
+        >
+          <div
+            className="pointer-events-none absolute -top-1/2 -right-1/4 w-1/2 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+            style={{ background: 'radial-gradient(ellipse at center, hsl(var(--color-accent-default)/0.08) 0%, transparent 70%)' }}
+          />
+
+          <div className="flex flex-col md:flex-row md:items-start gap-8">
+            <div className="flex-1 min-w-0">
+              <div className="mb-5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/10 border border-accent/20 text-[11px] font-medium text-accent tracking-wide uppercase">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                Live Demo
+              </div>
+
+              <h3 className="text-3xl md:text-4xl font-bold text-fg-default tracking-tight mb-3">
+                {activeDemo.title}
+              </h3>
+              <p className="text-base text-fg-muted leading-relaxed mb-6 max-w-lg">
+                {activeDemo.description}
+              </p>
+
+              <div className="flex flex-wrap gap-2 mb-8">
+                {activeDemo.features.map((f) => (
+                  <span
+                    key={f.label}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bg-subtle border border-stroke-divider text-xs text-fg-muted"
+                  >
+                    <span className="w-1 h-1 rounded-full bg-accent" />
+                    <span className="font-medium text-fg-default">{f.label}</span>
+                    <span className="hidden sm:inline text-fg-subtle">— {f.desc}</span>
+                  </span>
+                ))}
+              </div>
+
+              <div className="inline-flex items-center gap-2 h-12 px-8 rounded-full bg-accent hover:bg-accent-hover text-fg-on-accent text-sm font-semibold transition-colors duration-150">
+                Launch Demo
+                <ChevronRight20Regular className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
+
+            <div className="hidden md:flex shrink-0 w-28 h-28 rounded-2xl bg-accent/10 border border-accent/20 items-center justify-center">
+              <activeDemo.icon className="w-12 h-12 text-accent" />
+            </div>
+          </div>
+        </motion.div>
+      </Link>
+    </motion.div>
+  )
 }
 
-const comingSoonPhase: Record<string, string> = {
-  'sharepoint-connector': 'Phase 2',
-  'agent-connector': 'Phase 3',
+function ComingSoonCards() {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-10%' })
+
+  return (
+    <div ref={ref} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {comingSoon.map((demo, i) => (
+        <motion.div
+          key={demo.id}
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: i * 0.1, ease: [0, 0, 0.2, 1] as const }}
+        >
+          <div className={cn(
+            'group relative overflow-hidden rounded-xl p-5',
+            'border border-stroke-divider bg-bg-elevated/30 backdrop-blur-sm',
+            'hover:border-stroke-strong hover:bg-bg-elevated/50',
+            'transition-all duration-200'
+          )}>
+            <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-10 w-56 rounded-lg border border-glass-border bg-bg-elevated p-3 text-xs text-fg-muted shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-center">
+              {demo.desc}
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="shrink-0 w-9 h-9 rounded-lg bg-bg-subtle border border-stroke-divider flex items-center justify-center opacity-50">
+                <demo.icon className="w-5 h-5 text-fg-subtle" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm font-semibold text-fg-default truncate">{demo.title}</span>
+                  <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-bg-subtle border border-stroke-divider text-fg-subtle font-mono">
+                    {demo.phase}
+                  </span>
+                </div>
+                <p className="text-xs text-fg-subtle">Coming soon</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  )
 }
 
-const heroVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: [0, 0, 0.2, 1] as const },
-  },
-}
-
-const cardsContainerVariants = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.12,
-      delayChildren: 0.45,
-    },
-  },
-}
-
-const cardItemVariants = {
-  hidden: { opacity: 0, y: 24, scale: 0.96 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.5, ease: [0, 0, 0.2, 1] as const },
-  },
-}
-
-const footerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { duration: 0.5, delay: 0.6 },
-  },
-}
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12 gap-12">
-      {/* Hero */}
-      <motion.div variants={heroVariants} initial="hidden" animate="visible" className="text-center max-w-2xl">
-        <div className="mb-6 inline-flex w-16 h-16 rounded-2xl bg-accent-subtle items-center justify-center">
-          <Image src="/icons/ai-foundry.png" alt="Foundry IQ" width={40} height={40} className="opacity-80" />
-        </div>
-        <h1 className="text-4xl md:text-5xl font-bold text-fg-default tracking-tight mb-3">
-          Foundry IQ Demo Suite
-        </h1>
-        <p className="text-xl text-fg-muted">
-          Intelligent knowledge retrieval for enterprise agents
+    <div className="relative min-h-screen text-fg-default">
+
+      {/* Title */}
+      <div className="pt-12 pb-8 text-center">
+        <h1 className="text-2xl font-semibold text-fg-default">Foundry IQ Demo Suite</h1>
+        <p className="text-sm text-fg-muted mt-1">Intelligent knowledge retrieval &middot; Powered by Azure AI Search</p>
+      </div>
+
+      {/* Demo Cards */}
+      <section className="relative px-6 py-8 max-w-5xl mx-auto flex flex-col gap-6">
+        <ActiveDemoCard />
+        <ComingSoonCards />
+      </section>
+
+      {/* Zone 3: Footer */}
+      <footer className="py-12 text-center border-t border-stroke-divider">
+        <p className="text-xs text-fg-subtle font-mono tracking-wide">
+          Powered by Azure AI Search &middot; Microsoft AI GBB Korea
         </p>
-      </motion.div>
-
-      {/* System Status */}
-      <WelcomeSplash />
-
-      {/* Cards Grid */}
-      <motion.div
-        variants={cardsContainerVariants}
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-5xl px-4"
-      >
-        {demos.map((demo) => {
-          const isActive = demo.status === 'active'
-
-          if (isActive) {
-            return (
-              <motion.div key={demo.id} variants={cardItemVariants}>
-                <motion.div
-                  whileHover={{ y: -4 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                >
-                  <Link href={demo.href!}>
-                    <Card className={cn(
-                      'flex flex-col h-full p-6 transition-all duration-200',
-                      'cursor-pointer',
-                      'hover:shadow-lg hover:border-accent-muted',
-                      'dark:hover:shadow-[0_0_30px_hsl(var(--color-accent-default)/0.15)]'
-                    )}>
-                      <div className="w-12 h-12 rounded-xl bg-accent-subtle flex items-center justify-center mb-4">
-                        <demo.icon className="w-6 h-6 text-accent" />
-                      </div>
-                      <div className="mb-3">
-                        <Badge variant="default">Active</Badge>
-                      </div>
-                      <h3 className="text-xl font-semibold text-fg-default mb-2">{demo.title}</h3>
-                      <p className="text-sm text-fg-muted leading-relaxed mb-4">{demo.description}</p>
-                      <ul className="space-y-1.5 mb-6 flex-1">
-                        {demo.features.map((f, i) => (
-                          <li key={i} className="text-xs text-fg-subtle flex items-center gap-2">
-                            <span className="w-1 h-1 rounded-full bg-accent" />
-                            {f}
-                          </li>
-                        ))}
-                      </ul>
-                      <Button size="default" className="w-full bg-accent hover:bg-accent-hover text-fg-on-accent">
-                        Try Demo
-                        <ChevronRight20Regular className="ml-2 h-4 w-4" />
-                      </Button>
-                    </Card>
-                  </Link>
-                </motion.div>
-              </motion.div>
-            )
-          }
-
-          return (
-            <motion.div key={demo.id} variants={cardItemVariants}>
-              <Card className={cn(
-                'group relative flex h-full flex-col overflow-visible p-6 transition-colors duration-200',
-                'cursor-default',
-                'hover:bg-glass-hover'
-              )}>
-                <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-64 -translate-x-1/2 rounded-lg border border-glass-border bg-bg-elevated p-3 text-center text-xs text-fg-muted opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100">
-                  {comingSoonInfo[demo.id]}
-                </div>
-                <div className="opacity-60">
-                  <div className="w-12 h-12 rounded-xl bg-bg-elevated flex items-center justify-center mb-4">
-                    <demo.icon className="w-6 h-6 text-fg-subtle" />
-                  </div>
-                  <div className="mb-3">
-                    <Badge variant="secondary">Coming Soon</Badge>
-                  </div>
-                </div>
-                <h3 className="text-xl font-semibold text-fg-default mb-2">{demo.title}</h3>
-                <p className="text-sm text-fg-muted leading-relaxed mb-4">{demo.description}</p>
-                <ul className="space-y-1.5 mb-6 flex-1">
-                  {demo.features.map((f, i) => (
-                    <li key={i} className="text-xs text-fg-subtle flex items-center gap-2">
-                      <span className="w-1 h-1 rounded-full bg-fg-subtle" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-sm text-fg-subtle text-center">Coming in {comingSoonPhase[demo.id]}</p>
-              </Card>
-            </motion.div>
-          )
-        })}
-      </motion.div>
-
-      {/* Foundry IQ Description + Footer */}
-      <motion.div variants={footerVariants} initial="hidden" animate="visible" className="text-center max-w-2xl mx-auto">
-        <h3 className="text-sm font-semibold text-fg-default mb-2">What is Foundry IQ?</h3>
-        <p className="text-xs text-fg-muted mb-3">A managed Knowledge Retrieval engine built on Azure AI Search</p>
-        <ul className="space-y-1 mb-6">
-          <li className="text-xs text-fg-muted">Planning → Retrieval → Assessment → Synthesis — 4-stage Agentic Retrieval</li>
-          <li className="text-xs text-fg-muted">LLM plans the search, evaluates results, and generates evidence-based answers</li>
-          <li className="text-xs text-fg-muted">Citations track every answer back to its source — zero hallucination</li>
-        </ul>
-        <p className="text-sm text-fg-muted">
-          Powered by Azure AI Search · Microsoft AI GBB Korea
-        </p>
-      </motion.div>
+      </footer>
     </div>
   )
 }

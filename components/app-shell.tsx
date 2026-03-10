@@ -7,7 +7,6 @@ import { ThemeToggle } from '@/components/theme-toggle'
 import {
   Search20Regular,
   Database20Regular,
-  Bot20Regular,
   Play20Regular,
   Navigation20Regular,
   Dismiss20Regular,
@@ -32,7 +31,6 @@ const navigation: NavItem[] = [
   { href: '/', label: 'Home', icon: Home20Regular },
   { href: '/test', label: 'Foundry IQ', icon: Search20Regular },
   { href: '/knowledge', label: 'Knowledge', icon: Database20Regular },
-  { href: '/agents', label: 'Agents', icon: Bot20Regular },
 ]
 
 interface AppShellProps {
@@ -202,17 +200,10 @@ function Header({ onMenuClick, showSidebar }: HeaderProps) {
           </Tooltip>
           
           <ThemeToggle />
-          <Button variant="ghost" size="icon" aria-label="Account settings" className="rounded-full bg-glass-surface shadow-xs hover:shadow-md">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-subtle overflow-hidden">
-              <Image 
-                src="/icons/avatar.svg" 
-                alt="User" 
-                width={28} 
-                height={28} 
-                className="object-cover"
-              />
-            </div>
-          </Button>
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-glass-border bg-bg-elevated/60 text-xs font-medium text-fg-subtle">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+            MS AI GBB Korea
+          </div>
         </div>
       </div>
     </header>

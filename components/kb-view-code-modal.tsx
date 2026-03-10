@@ -5,7 +5,9 @@ import { Dismiss20Regular, Copy20Regular, Checkmark20Regular } from '@fluentui/r
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-type MessageContent = { type: 'text'; text: string }
+type MessageContent =
+  | { type: 'text'; text: string }
+  | { type: 'image'; image: { url: string } }
 
 type Message = {
   id: string
@@ -115,7 +117,7 @@ export function KBViewCodeModal({ isOpen, onClose, agentId, agentName, messages,
   const formatMessagesForAPI = (msgs: Message[]) => {
     return msgs.map(msg => ({
       role: msg.role,
-      content: msg.content.map(c => ({ type: 'text', text: c.text }))
+      content: msg.content.filter(c => c.type === 'text').map(c => ({ type: 'text', text: (c as { type: 'text'; text: string }).text }))
     }))
   }
 
@@ -459,8 +461,8 @@ retrieveFromAgent().catch(console.error);`
   // Generate .NET code
   const generateDotNetCode = () => {
     const messagesFormatted = messages.map(msg => {
-      const contentFormatted = msg.content.map(c => {
-        return `                    new MessageContent { Type = "text", Text = ${JSON.stringify(c.text)} }`
+      const contentFormatted = msg.content.filter(c => c.type === 'text').map(c => {
+        return `                    new MessageContent { Type = "text", Text = ${JSON.stringify((c as { type: 'text'; text: string }).text)} }`
       }).join(',\n')
 
       return `            new Message
@@ -598,10 +600,10 @@ if (response.Activity != null && response.Activity.Any())
   // Generate Java code
   const generateJavaCode = () => {
     const messagesFormatted = messages.map((msg, idx) => {
-      const contentItems = msg.content.map((c, cidx) => {
+      const contentItems = msg.content.filter(c => c.type === 'text').map((c, cidx) => {
         return `                new MessageContent()
                     .setType("text")
-                    .setText(${JSON.stringify(c.text)})`
+                    .setText(${JSON.stringify((c as { type: 'text'; text: string }).text)})`
       }).join(',\n')
 
       return `            new Message()

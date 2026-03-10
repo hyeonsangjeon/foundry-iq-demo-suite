@@ -15,6 +15,7 @@ tasks/
 .env*.local
 .env
 .env.production
+.env.local
 .env.azure-swa
 DEPLOYMENT_COMPLETE.md
 

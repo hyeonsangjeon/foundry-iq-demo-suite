@@ -235,11 +235,4 @@
     display: none; /* Safari and Chrome */
   }
 
-  /* Spotlight tour highlight ring applied dynamically via JS */
-  .tour-highlight-ring {
-    outline: 2px solid hsl(var(--color-accent-default));
-    outline-offset: 3px;
-    border-radius: 8px;
-    transition: outline 200ms ease, outline-offset 200ms ease;
-  }
 }

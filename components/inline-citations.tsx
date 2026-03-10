@@ -1,6 +1,8 @@
 "use client"
 
 import React from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { KnowledgeBaseReference, KnowledgeBaseActivityRecord } from '@/types/knowledge-retrieval'
 import { CitationHoverCard, getShortDomainLabel, getDocumentName } from '@/components/citation-hover-card'
 import { SourceKindIcon } from '@/components/source-kind-icon'
@@ -34,91 +36,99 @@ export const InlineCitationsText: React.FC<InlineCitationsTextProps> = ({
 }) => {
   const render = React.useMemo(() => {
     if (!text) return null
-    const nodes: React.ReactNode[] = []
-    const regex = /\[ref_id:(\d+)\]/g
-    let lastIndex = 0
-    let match: RegExpExecArray | null
 
-    while ((match = regex.exec(text)) !== null) {
-      // Add text before citation
-      if (match.index > lastIndex) {
-        nodes.push(text.slice(lastIndex, match.index))
+    // Split text by [ref_id:N] markers, keeping delimiters
+    const parts = text.split(/(\[ref_id:\d+\])/g)
+
+    return parts.map((part, i) => {
+      const refMatch = part.match(/^\[ref_id:(\d+)\]$/)
+      if (refMatch) {
+        const refIdx = parseInt(refMatch[1], 10)
+        const ref = references[refIdx]
+
+        if (ref) {
+          const activityEntry = activity.find((a: KnowledgeBaseActivityRecord) => a.id === ref.activitySource)
+          const documentName = getDocumentName(ref)
+
+          const pill = (
+            <button
+              key={`cite-${i}`}
+              type="button"
+              onClick={() => {
+                if (onActivate) onActivate(refIdx, ref)
+                const el = document.getElementById(`ref-${messageId}-${refIdx}`)
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  el.classList.add('ring-2', 'ring-accent', 'ring-offset-1')
+                  setTimeout(() => el.classList.remove('ring-2', 'ring-accent', 'ring-offset-1'), 1400)
+                }
+              }}
+              aria-label={`View reference: ${documentName}`}
+              className={cn(
+                "inline-flex items-center gap-1.5 align-baseline",
+                "ml-1 px-2 py-0.5 rounded",
+                "bg-bg-subtle hover:bg-bg-hover",
+                "border border-stroke-divider hover:border-accent/40",
+                "text-[11px] text-fg-muted hover:text-fg-default",
+                "transition-all duration-150",
+                "focus:outline-none focus:ring-1 focus:ring-accent",
+                "cursor-pointer"
+              )}
+            >
+              <SourceKindIcon kind={ref.type} size={12} variant="plain" />
+              <span className="truncate max-w-[180px]">{documentName}</span>
+            </button>
+          )
+
+          return (
+            <CitationHoverCard
+              key={`hover-${i}`}
+              reference={ref}
+              activity={activityEntry}
+              side="top"
+              align="center"
+            >
+              {pill}
+            </CitationHoverCard>
+          )
+        } else {
+          return (
+            <span
+              key={`cite-${i}`}
+              className="inline-flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded bg-bg-subtle text-[10px] text-fg-subtle"
+            >
+              [{refIdx + 1}]
+            </span>
+          )
+        }
       }
 
-      const refIdx = parseInt(match[1], 10)
-      const ref = references[refIdx]
-
-      if (ref) {
-        // Find the activity that retrieved this reference
-        const activityEntry = activity.find((a: KnowledgeBaseActivityRecord) => a.id === ref.activitySource)
-        const documentName = getDocumentName(ref)
-
-        const pill = (
-          <button
-            key={`cite-${match.index}`}
-            type="button"
-            onClick={() => {
-              if (onActivate) onActivate(refIdx, ref)
-              // Scroll to reference in drawer/panel
-              const el = document.getElementById(`ref-${messageId}-${refIdx}`)
-              if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                el.classList.add('ring-2', 'ring-accent', 'ring-offset-1')
-                setTimeout(() => el.classList.remove('ring-2', 'ring-accent', 'ring-offset-1'), 1400)
-              }
-            }}
-            aria-label={`View reference: ${documentName}`}
-            className={cn(
-              "inline-flex items-center gap-1.5 align-baseline",
-              "ml-1 px-2 py-0.5 rounded",
-              "bg-bg-subtle hover:bg-bg-hover",
-              "border border-stroke-divider hover:border-accent/40",
-              "text-[11px] text-fg-muted hover:text-fg-default",
-              "transition-all duration-150",
-              "focus:outline-none focus:ring-1 focus:ring-accent",
-              "cursor-pointer"
-            )}
-          >
-            <SourceKindIcon kind={ref.type} size={12} variant="plain" />
-            <span className="truncate max-w-[180px]">{documentName}</span>
-          </button>
-        )
-
-        nodes.push(
-          <CitationHoverCard
-            key={`hover-${match.index}`}
-            reference={ref}
-            activity={activityEntry}
-            side="top"
-            align="center"
-          >
-            {pill}
-          </CitationHoverCard>
-        )
-      } else {
-        // Fallback for missing reference
-        nodes.push(
-          <span
-            key={`cite-${match.index}`}
-            className="inline-flex items-center gap-1 ml-1 px-1.5 py-0.5 rounded bg-bg-subtle text-[10px] text-fg-subtle"
-          >
-            [{refIdx + 1}]
-          </span>
-        )
-      }
-
-      lastIndex = regex.lastIndex
-    }
-
-    // Add remaining text
-    if (lastIndex < text.length) {
-      nodes.push(text.slice(lastIndex))
-    }
-
-    return nodes
+      // Text segment — render with ReactMarkdown
+      if (!part) return null
+      return (
+        <ReactMarkdown
+          key={`md-${i}`}
+          remarkPlugins={[remarkGfm]}
+          components={{
+            p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>,
+            ul: ({ children }) => <ul className="list-disc pl-5 mb-3 space-y-1">{children}</ul>,
+            ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 space-y-1">{children}</ol>,
+            li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+            strong: ({ children }) => <strong className="font-semibold text-fg-default">{children}</strong>,
+            em: ({ children }) => <em className="italic">{children}</em>,
+            h1: ({ children }) => <h1 className="text-lg font-bold mb-2 mt-3">{children}</h1>,
+            h2: ({ children }) => <h2 className="text-base font-bold mb-2 mt-3">{children}</h2>,
+            h3: ({ children }) => <h3 className="text-sm font-semibold mb-1 mt-2">{children}</h3>,
+            code: ({ children }) => <code className="px-1.5 py-0.5 rounded bg-bg-subtle text-[12px] font-mono">{children}</code>,
+          }}
+        >
+          {part}
+        </ReactMarkdown>
+      )
+    })
   }, [text, references, activity, messageId, onActivate])
 
-  return <span className={className}>{render}</span>
+  return <div className={className}>{render}</div>
 }
 
 /**

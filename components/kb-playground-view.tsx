@@ -53,7 +53,38 @@ type KnowledgeAgent = {
   }>
 }
 
-type MessageContent = { type: 'text'; text: string }
+type MessageContent =
+  | { type: 'text'; text: string }
+  | { type: 'image'; image: { url: string } }
+
+/** Rewrite Azure Blob URLs through our API proxy to hide SAS tokens from the client */
+function proxyBlobUrl(url: string): string {
+  if (url.includes('.blob.core.windows.net')) {
+    return `/api/blob-image?url=${encodeURIComponent(url)}`
+  }
+  return url
+}
+
+/** Parse markdown image syntax ![alt](url) and [IMAGE_URL: url] from text into mixed content */
+function parseImagesFromText(text: string): MessageContent[] {
+  const pattern = /!\[[^\]]*\]\(([^)]+)\)|\[IMAGE_URL:\s*([^\]]+)\]/g
+  const parts: MessageContent[] = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = pattern.exec(text)) !== null) {
+    const before = text.slice(lastIndex, match.index).trim()
+    if (before) parts.push({ type: 'text', text: before })
+    const url = (match[1] || match[2] || '').trim()
+    if (url) parts.push({ type: 'image', image: { url: proxyBlobUrl(url) } })
+    lastIndex = match.index + match[0].length
+  }
+
+  const after = text.slice(lastIndex).trim()
+  if (after) parts.push({ type: 'text', text: after })
+
+  return parts.length > 0 ? parts : [{ type: 'text', text }]
+}
 
 type Message = {
   id: string
@@ -437,11 +468,11 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       const azureMessages = [
         ...messages.map((m) => ({
           role: m.role as 'user' | 'assistant' | 'system',
-          content: m.content.map(c => ({ type: 'text', text: c.text }))
+          content: m.content.filter(c => c.type === 'text').map(c => ({ type: 'text', text: (c as { type: 'text'; text: string }).text }))
         })),
         {
           role: 'user' as const,
-          content: contentParts.map(c => ({ type: 'text', text: c.text }))
+          content: contentParts.filter(c => c.type === 'text').map(c => ({ type: 'text', text: (c as { type: 'text'; text: string }).text }))
         }
       ]
 
@@ -517,16 +548,26 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         activity: response.activity
       })
 
-      let assistantText = 'I apologize, but I was unable to generate a response.'
+      let contentItems: MessageContent[] = []
       if (response.response && response.response.length > 0) {
-        const rc = response.response[0].content
-        if (rc && rc.length > 0) assistantText = rc[0].text || assistantText
+        const rc = response.response[0].content || []
+        for (const c of rc) {
+          if ((c as any).type === 'image' && (c as any).image?.url) {
+            contentItems.push({ type: 'image', image: { url: proxyBlobUrl((c as any).image.url) } })
+          } else {
+            const text = (c as any).text || ''
+            if (text) contentItems.push(...parseImagesFromText(text))
+          }
+        }
+      }
+      if (contentItems.length === 0) {
+        contentItems = [{ type: 'text', text: 'I apologize, but I was unable to generate a response.' }]
       }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: [{ type: 'text', text: assistantText }],
+        content: contentItems,
         timestamp: new Date(),
         references: response.references || [],
         activity: response.activity || []
@@ -626,11 +667,11 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       const azureMessages = [
         ...messages.map((m) => ({
           role: m.role as 'user' | 'assistant' | 'system',
-          content: m.content.map(c => ({ type: 'text', text: c.text }))
+          content: m.content.filter(c => c.type === 'text').map(c => ({ type: 'text', text: (c as { type: 'text'; text: string }).text }))
         })),
         {
           role: 'user' as const,
-          content: contentParts.map(c => ({ type: 'text', text: c.text }))
+          content: contentParts.filter(c => c.type === 'text').map(c => ({ type: 'text', text: (c as { type: 'text'; text: string }).text }))
         }
       ]
 
@@ -681,16 +722,26 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         activity: response.activity
       })
 
-      let assistantText = 'I apologize, but I was unable to generate a response.'
+      let contentItems: MessageContent[] = []
       if (response.response && response.response.length > 0) {
-        const rc = response.response[0].content
-        if (rc && rc.length > 0) assistantText = rc[0].text || assistantText
+        const rc = response.response[0].content || []
+        for (const c of rc) {
+          if ((c as any).type === 'image' && (c as any).image?.url) {
+            contentItems.push({ type: 'image', image: { url: proxyBlobUrl((c as any).image.url) } })
+          } else {
+            const text = (c as any).text || ''
+            if (text) contentItems.push(...parseImagesFromText(text))
+          }
+        }
+      }
+      if (contentItems.length === 0) {
+        contentItems = [{ type: 'text', text: 'I apologize, but I was unable to generate a response.' }]
       }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: [{ type: 'text', text: assistantText }],
+        content: contentItems,
         timestamp: new Date(),
         references: response.references || [],
         activity: response.activity || []
@@ -1126,7 +1177,9 @@ function MessageBubble({ message, agent, showCostEstimates, onOpenSources }: {
   })) || []
 
   return (
-    <div className={cn('flex items-start gap-4', isUser && 'flex-row-reverse')}>
+    <div
+      className={cn('flex items-start gap-4', isUser && 'flex-row-reverse')}
+    >
       <div className={cn(
         'p-2 rounded-full',
         isUser ? 'bg-bg-subtle' : 'bg-accent-subtle'
@@ -1146,17 +1199,36 @@ function MessageBubble({ message, agent, showCostEstimates, onOpenSources }: {
             : 'bg-bg-card border border-stroke-divider'
         )}>
           <div className="prose prose-sm max-w-none space-y-3 overflow-x-auto">
-            {message.content.map((content, index) => (
-              <p key={index} className="whitespace-pre-wrap break-words">
-                <InlineCitationsText
-                  text={content.text}
-                  references={message.references as any}
-                  activity={message.activity as any}
-                  messageId={message.id}
-                  onActivate={() => onOpenSources?.(regularRefs, message.activity || [], isUser ? undefined : message.content[0]?.text)}
-                />
-              </p>
-            ))}
+            {message.content.map((content, index) => {
+              if (content.type === 'image') {
+                return (
+                  <div key={index} className="my-4 group relative">
+                    <div className="rounded-xl overflow-hidden border border-glass-border shadow-md hover:shadow-xl transition-shadow duration-300 bg-bg-elevated">
+                      <img
+                        src={content.image.url}
+                        alt="NASA satellite observation"
+                        className="w-full max-h-[32rem] object-contain cursor-pointer transition-transform duration-300 group-hover:scale-[1.02]"
+                        loading="lazy"
+                        onClick={() => window.open(content.image.url, '_blank')}
+                      />
+                    </div>
+                    <p className="mt-1.5 text-[11px] text-fg-subtle text-center">NASA Earth Observation — click to enlarge</p>
+                  </div>
+                )
+              }
+              const firstText = message.content.find(c => c.type === 'text')
+              return (
+                <p key={index} className="whitespace-pre-wrap break-words">
+                  <InlineCitationsText
+                    text={content.text}
+                    references={message.references as any}
+                    activity={message.activity as any}
+                    messageId={message.id}
+                    onActivate={() => onOpenSources?.(regularRefs, message.activity || [], firstText?.type === 'text' ? firstText.text : undefined)}
+                  />
+                </p>
+              )
+            })}
           </div>
 
           {/* Perplexity-style Sources Button - Opens Drawer */}
@@ -1164,7 +1236,10 @@ function MessageBubble({ message, agent, showCostEstimates, onOpenSources }: {
             <div className="mt-4 pt-4 border-t border-stroke-divider">
               <SourcesCountButton
                 references={regularRefs as any}
-                onClick={() => onOpenSources?.(regularRefs, message.activity || [], isUser ? undefined : message.content[0]?.text)}
+                onClick={() => {
+                  const firstText = message.content.find(c => c.type === 'text')
+                  onOpenSources?.(regularRefs, message.activity || [], isUser ? undefined : (firstText?.type === 'text' ? firstText.text : undefined))
+                }}
               />
             </div>
           )}

@@ -10,7 +10,10 @@ import {
   HeartPulse20Regular,
   MoneyHand20Regular,
   ShoppingBag20Regular,
-  Building20Regular
+  Building20Regular,
+  Globe20Regular,
+  ShieldCheckmark20Regular,
+  EarthLeaf20Regular
 } from '@fluentui/react-icons'
 import { useRouter } from 'next/navigation'
 
@@ -81,6 +84,39 @@ const INDUSTRY_KNOWLEDGE_BASES: IndustryKnowledgeBase[] = [
     iconColor: 'text-slate-600 dark:text-slate-400',
     agentName: 'zava-knowledge-base',
     available: false
+  },
+  {
+    id: 'nasa',
+    name: 'NASA Earth Science KB',
+    industry: 'Earth Science & Space',
+    description: 'NASA Earth at Night observations covering climate data, satellite imagery analysis, and earth science research',
+    icon: Globe20Regular,
+    iconBg: 'bg-cyan-500/10',
+    iconColor: 'text-cyan-600 dark:text-cyan-400',
+    agentName: 'nasa-earth-book',
+    available: true
+  },
+  {
+    id: 'health-plan',
+    name: 'Health Plan KB',
+    industry: 'Insurance & Benefits',
+    description: 'Northwind and Contoso health insurance plans with coverage details, deductibles, benefits, and policy terms',
+    icon: ShieldCheckmark20Regular,
+    iconBg: 'bg-violet-500/10',
+    iconColor: 'text-violet-600 dark:text-violet-400',
+    agentName: 'health-plan-kb',
+    available: true
+  },
+  {
+    id: 'sustainable-ai',
+    name: 'Sustainable AI KB',
+    industry: 'Technology & Sustainability',
+    description: 'AI environmental impact research, energy efficiency metrics, green computing practices, and sustainability diagrams',
+    icon: EarthLeaf20Regular,
+    iconBg: 'bg-emerald-500/10',
+    iconColor: 'text-emerald-600 dark:text-emerald-400',
+    agentName: 'sustainable-ai-kb',
+    available: true
   }
 ]
 

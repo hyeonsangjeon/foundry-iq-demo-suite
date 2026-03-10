@@ -68,12 +68,22 @@ function getSourceDomain(ref: KnowledgeBaseReference): string {
  * Get document title for display
  */
 function getDocumentTitle(ref: KnowledgeBaseReference): string {
-  if (ref.type === 'web' && (ref as any).title) {
+  // 1. ref top-level title (all types)
+  if ((ref as any).title) {
     return (ref as any).title
   }
+  // 2. sourceData.title
   if (ref.sourceData?.title) {
     return ref.sourceData.title
   }
+  // 3. Well-known name fields in sourceData
+  const nameFallbacks = ['HotelName', 'name', 'Name', 'filename', 'fileName', 'DocumentName', 'ProductName']
+  for (const field of nameFallbacks) {
+    if (ref.sourceData?.[field] && typeof ref.sourceData[field] === 'string') {
+      return ref.sourceData[field]
+    }
+  }
+  // 4. Type-specific fallback
   switch (ref.type) {
     case 'azureBlob': {
       const blobUrl = (ref as any).blobUrl || ''
@@ -88,8 +98,11 @@ function getDocumentTitle(ref: KnowledgeBaseReference): string {
       const docUrl = (ref as any).docUrl || ''
       return decodeURIComponent(docUrl.split('/').pop() || ref.id)
     }
-    case 'searchIndex':
-      return (ref as any).docKey || ref.id
+    case 'searchIndex': {
+      const docKey = (ref as any).docKey || ''
+      if (docKey && isNaN(Number(docKey))) return docKey
+      return ref.id
+    }
     default:
       return ref.id
   }
@@ -117,7 +130,7 @@ function getSnippet(ref: KnowledgeBaseReference): string | null {
     return cleanTextSnippet(content.slice(0, 300))
   }
 
-  const textFields = ['text', 'description', 'summary', 'body', 'chunk', 'chunk_content']
+  const textFields = ['Description', 'text', 'description', 'summary', 'body', 'chunk', 'chunk_content']
   for (const field of textFields) {
     if (ref.sourceData[field] && typeof ref.sourceData[field] === 'string') {
       return cleanTextSnippet(ref.sourceData[field].slice(0, 300))

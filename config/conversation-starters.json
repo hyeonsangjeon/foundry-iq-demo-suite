@@ -153,18 +153,18 @@
           "tags": ["renovation", "reviews"]
         },
         {
-          "id": "pet-friendly-nyc",
-          "label": "Pet Friendly NYC",
-          "prompt": "Are there any pet-friendly hotels in New York with parking included?",
-          "complexity": "Advanced",
-          "tags": ["pet-friendly", "parking", "new-york"]
+          "id": "wifi-breakfast",
+          "label": "WiFi & Breakfast",
+          "prompt": "Which hotels offer free WiFi and continental breakfast?",
+          "complexity": "Simple",
+          "tags": ["wifi", "breakfast", "amenities"]
         },
         {
-          "id": "compare-categories",
-          "label": "Compare Categories",
-          "prompt": "Compare the average ratings and price ranges between Boutique and Resort category hotels. Which offers better value?",
-          "complexity": "Advanced",
-          "tags": ["multi-source", "comparison", "categories"]
+          "id": "ocean-views",
+          "label": "Waterfront Hotels",
+          "prompt": "What are the best-rated hotels with ocean or waterfront views?",
+          "complexity": "Moderate",
+          "tags": ["ocean", "waterfront", "rating"]
         }
       ]
     },
@@ -191,6 +191,147 @@
           "prompt": "Using the Zava knowledge base, explain how the supply chain works end-to-end. Then identify which facilities would face the biggest operational risk during a major marathon weekend in a city like St. Louis or Seattle, using marathon road-closure data. Recommend adjustments to shipping or staffing.",
           "complexity": "Advanced",
           "tags": ["multi-source", "supply-chain", "marathon"]
+        }
+      ]
+    },
+    {
+      "agentIds": ["nasa-earth-book"],
+      "starters": [
+        {
+          "id": "nasa-nighttime",
+          "label": "Earth at Night from Space",
+          "prompt": "What does Earth look like at night from space?",
+          "complexity": "Simple",
+          "tags": ["satellite", "earth-at-night", "image"]
+        },
+        {
+          "id": "nasa-satellites",
+          "label": "NASA Earth Observation Satellites",
+          "prompt": "What satellites does NASA use to observe Earth at night?",
+          "complexity": "Moderate",
+          "tags": ["satellites", "observation"]
+        },
+        {
+          "id": "nasa-deforestation",
+          "label": "Deforestation Monitoring",
+          "prompt": "How does NASA monitor deforestation from space?",
+          "complexity": "Moderate",
+          "tags": ["deforestation", "satellite"]
+        },
+        {
+          "id": "nasa-ocean-temp",
+          "label": "Ocean Temperature",
+          "prompt": "What are the major findings about ocean temperature changes?",
+          "complexity": "Simple",
+          "tags": ["ocean", "temperature"]
+        },
+        {
+          "id": "nasa-ice-loss",
+          "label": "Arctic vs Antarctic Ice",
+          "prompt": "Compare Arctic and Antarctic ice loss patterns",
+          "complexity": "Advanced",
+          "tags": ["multi-source", "ice", "comparison"]
+        },
+        {
+          "id": "nasa-weather",
+          "label": "Weather Prediction",
+          "prompt": "How do satellite observations help predict weather patterns?",
+          "complexity": "Advanced",
+          "tags": ["multi-source", "satellite", "weather"]
+        }
+      ]
+    },
+    {
+      "agentIds": ["health-plan-kb"],
+      "starters": [
+        {
+          "id": "hp-dental",
+          "label": "Dental Coverage",
+          "prompt": "What does Northwind Health Plus cover for dental care?",
+          "complexity": "Simple",
+          "tags": ["dental", "coverage"]
+        },
+        {
+          "id": "hp-deductibles",
+          "label": "Compare Deductibles",
+          "prompt": "Compare the deductibles between Northwind and Contoso plans",
+          "complexity": "Moderate",
+          "tags": ["deductibles", "comparison"]
+        },
+        {
+          "id": "hp-physical-therapy",
+          "label": "Physical Therapy",
+          "prompt": "Is physical therapy covered under the standard plan?",
+          "complexity": "Simple",
+          "tags": ["therapy", "coverage"]
+        },
+        {
+          "id": "hp-emergency",
+          "label": "Emergency Services",
+          "prompt": "What emergency services are covered under Northwind Health Plus?",
+          "complexity": "Moderate",
+          "tags": ["emergency", "coverage"]
+        },
+        {
+          "id": "hp-mental-health",
+          "label": "Mental Health Coverage",
+          "prompt": "Does Northwind Health Plus cover mental health services?",
+          "complexity": "Moderate",
+          "tags": ["mental-health", "coverage"]
+        },
+        {
+          "id": "hp-preventive",
+          "label": "Preventive Care",
+          "prompt": "What preventive care services are included at no cost?",
+          "complexity": "Simple",
+          "tags": ["preventive", "free"]
+        }
+      ]
+    },
+    {
+      "agentIds": ["sustainable-ai-kb"],
+      "starters": [
+        {
+          "id": "sai-carbon-footprint",
+          "label": "LLM Carbon Footprint",
+          "prompt": "What is the carbon footprint of training large language models?",
+          "complexity": "Simple",
+          "tags": ["carbon", "training"]
+        },
+        {
+          "id": "sai-energy-diagrams",
+          "label": "Energy Consumption",
+          "prompt": "Show me diagrams about AI energy consumption",
+          "complexity": "Moderate",
+          "tags": ["energy", "diagrams"]
+        },
+        {
+          "id": "sai-ms-practices",
+          "label": "Microsoft Best Practices",
+          "prompt": "What sustainable practices does Microsoft recommend for AI workloads?",
+          "complexity": "Moderate",
+          "tags": ["microsoft", "best-practices"]
+        },
+        {
+          "id": "sai-climate-change",
+          "label": "AI & Climate Change",
+          "prompt": "How does AI contribute to climate change?",
+          "complexity": "Moderate",
+          "tags": ["climate", "impact"]
+        },
+        {
+          "id": "sai-water-usage",
+          "label": "AI Water Usage",
+          "prompt": "What is the water usage of large AI training runs?",
+          "complexity": "Moderate",
+          "tags": ["water", "training", "data-center"]
+        },
+        {
+          "id": "sai-measure-impact",
+          "label": "Measure AI Environmental Impact",
+          "prompt": "How can organizations measure the environmental impact of their AI systems?",
+          "complexity": "Advanced",
+          "tags": ["multi-source", "measurement", "impact"]
         }
       ]
     }

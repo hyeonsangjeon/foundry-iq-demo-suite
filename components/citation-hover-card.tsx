@@ -79,17 +79,22 @@ function getReferenceDomain(ref: KnowledgeBaseReference): string {
  * Get document title for a reference
  */
 function getReferenceTitle(ref: KnowledgeBaseReference): string {
-  // Web references have explicit title
-  if (ref.type === 'web' && (ref as any).title) {
+  // 1. ref top-level title (all types — API populates this)
+  if ((ref as any).title) {
     return (ref as any).title
   }
-
-  // Try to get from source data
+  // 2. sourceData.title
   if (ref.sourceData?.title) {
     return ref.sourceData.title
   }
-
-  // Extract from URL/path
+  // 3. Well-known name fields
+  const nameFallbacks = ['HotelName', 'name', 'Name', 'filename', 'fileName', 'DocumentName', 'ProductName']
+  for (const field of nameFallbacks) {
+    if (ref.sourceData?.[field] && typeof ref.sourceData[field] === 'string') {
+      return ref.sourceData[field]
+    }
+  }
+  // 4. Type-specific fallback
   switch (ref.type) {
     case 'azureBlob': {
       const blobUrl = (ref as any).blobUrl || ''
@@ -107,8 +112,11 @@ function getReferenceTitle(ref: KnowledgeBaseReference): string {
       const filename = docUrl.split('/').pop() || ''
       return decodeURIComponent(filename)
     }
-    case 'searchIndex':
-      return (ref as any).docKey || ref.id
+    case 'searchIndex': {
+      const docKey = (ref as any).docKey || ''
+      if (docKey && isNaN(Number(docKey))) return docKey
+      return ref.id
+    }
     default:
       return ref.id
   }
@@ -140,7 +148,7 @@ function getReferenceSnippet(ref: KnowledgeBaseReference): string | null {
   }
 
   // Try any text-like fields in sourceData
-  const textFields = ['text', 'description', 'summary', 'body', 'chunk', 'chunk_content']
+  const textFields = ['Description', 'text', 'description', 'summary', 'body', 'chunk', 'chunk_content']
   for (const field of textFields) {
     if (ref.sourceData[field] && typeof ref.sourceData[field] === 'string') {
       return cleanTextSnippet(ref.sourceData[field].slice(0, 300))
@@ -249,17 +257,22 @@ export function getShortDomainLabel(ref: KnowledgeBaseReference): string {
  * Returns a meaningful name like "gpt-5-system-card.pdf" instead of just domain
  */
 export function getDocumentName(ref: KnowledgeBaseReference): string {
-  // Try to get title from sourceData first
+  // 1. ref top-level title (all types)
+  if ((ref as any).title) {
+    return truncateLabel((ref as any).title, 30)
+  }
+  // 2. sourceData.title
   if (ref.sourceData?.title) {
     return truncateLabel(ref.sourceData.title, 30)
   }
-
-  // Web references have explicit title
-  if (ref.type === 'web' && (ref as any).title) {
-    return truncateLabel((ref as any).title, 30)
+  // 3. Well-known name fields
+  const nameFallbacks = ['HotelName', 'name', 'Name', 'filename', 'fileName', 'DocumentName', 'ProductName']
+  for (const field of nameFallbacks) {
+    if (ref.sourceData?.[field] && typeof ref.sourceData[field] === 'string') {
+      return truncateLabel(ref.sourceData[field], 30)
+    }
   }
-
-  // Extract filename from URL/path
+  // 4. Type-specific fallback
   switch (ref.type) {
     case 'azureBlob': {
       const blobUrl = (ref as any).blobUrl || ''
@@ -282,15 +295,13 @@ export function getDocumentName(ref: KnowledgeBaseReference): string {
     }
     case 'searchIndex': {
       const docKey = (ref as any).docKey || ''
-      if (docKey) {
-        // docKey might be a path like "container/folder/file.pdf"
+      if (docKey && isNaN(Number(docKey))) {
         const filename = docKey.split('/').pop() || docKey
         return truncateLabel(decodeURIComponent(filename), 30)
       }
       break
     }
     case 'web': {
-      // For web, try URL path or use domain
       try {
         const url = new URL((ref as any).url || '')
         const pathParts = url.pathname.split('/').filter(Boolean)
@@ -303,8 +314,6 @@ export function getDocumentName(ref: KnowledgeBaseReference): string {
       }
     }
   }
-
-  // Fallback to ID
   return truncateLabel(ref.id, 30)
 }
 
