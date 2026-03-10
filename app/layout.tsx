@@ -19,8 +19,8 @@ const jetBrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Foundry IQ Demo',
-  description: 'Intelligent knowledge retrieval and agentic chat experiences powered by Azure AI Search and Foundry Agent Service',
+  title: 'Knowledge Retrieval Studio',
+  description: 'Azure AI Search · Foundry IQ — Agentic Retrieval, SharePoint Indexing, MCP Agent Grounding',
 }
 
 export default function RootLayout({

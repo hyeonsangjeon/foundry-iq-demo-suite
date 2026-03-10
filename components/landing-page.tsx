@@ -15,9 +15,10 @@ import {
 
 const activeDemo = {
   id: 'foundry-iq-basic',
-  title: 'Foundry IQ Basic',
+  title: 'Agentic Retrieval',
+  subtitle: 'Azure AI Search',
   description:
-    'Semantic search, multimodal retrieval, and agentic retrieval trace visualization — powered by Azure AI Search.',
+    'Query planning, hybrid search, iterative retrieval, and answer synthesis — with full trace visibility and inline citations.',
   features: [
     { label: 'Hybrid Search', desc: 'Vector + keyword simultaneous' },
     { label: 'Agentic Retrieval', desc: '4-stage planning pipeline' },
@@ -31,17 +32,19 @@ const activeDemo = {
 const comingSoon = [
   {
     id: 'sharepoint-connector',
-    title: 'SharePoint Connector',
+    title: 'SharePoint Indexing',
+    subtitle: 'Azure AI Search',
     phase: 'Phase 2',
     icon: Document24Regular,
-    desc: 'Index SharePoint documents and search across enterprise content.',
+    desc: 'Index SharePoint documents and search across enterprise content with semantic retrieval.',
   },
   {
     id: 'agent-connector',
-    title: 'Agent Connector',
+    title: 'MCP Agent Grounding',
+    subtitle: 'Azure AI Search',
     phase: 'Phase 3',
     icon: PlugConnected24Regular,
-    desc: 'MCP RemoteTool integration — AI agents use knowledge bases as grounding tools.',
+    desc: 'MCP RemoteTool integration — AI agents use knowledge bases as grounding sources.',
   },
 ]
 
@@ -85,6 +88,9 @@ function ActiveDemoCard() {
                 Live Demo
               </div>
 
+              <div className="text-xs font-mono text-accent/70 uppercase tracking-widest mb-1">
+                {activeDemo.subtitle}
+              </div>
               <h3 className="text-3xl md:text-4xl font-bold text-fg-default tracking-tight mb-3">
                 {activeDemo.title}
               </h3>
@@ -149,6 +155,7 @@ function ComingSoonCards() {
                 <demo.icon className="w-5 h-5 text-fg-subtle" />
               </div>
               <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-mono text-fg-subtle uppercase tracking-wide">{demo.subtitle}</div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-sm font-semibold text-fg-default truncate">{demo.title}</span>
                   <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-bg-subtle border border-stroke-divider text-fg-subtle font-mono">
@@ -173,8 +180,8 @@ export function LandingPage() {
 
       {/* Title */}
       <div className="pt-12 pb-8 text-center">
-        <h1 className="text-2xl font-semibold text-fg-default">Foundry IQ Demo Suite</h1>
-        <p className="text-sm text-fg-muted mt-1">Intelligent knowledge retrieval &middot; Powered by Azure AI Search</p>
+        <h1 className="text-2xl font-semibold text-fg-default">Knowledge Retrieval Studio</h1>
+        <p className="text-sm text-fg-muted mt-1">Azure AI Search &middot; Foundry IQ</p>
       </div>
 
       {/* Demo Cards */}
