@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What is Foundry IQ? — The Knowledge Layer for AI Agents</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+Devanagari:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-deep: #06080d;
+  --bg-card: rgba(255,255,255,0.03);
+  --bg-card-hover: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.08);
+  --glass-border-hover: rgba(255,255,255,0.15);
+  --text-primary: #e8eaed;
+  --text-secondary: rgba(255,255,255,0.55);
+  --text-tertiary: rgba(255,255,255,0.30);
+  --accent-blue: #4da6ff;
+  --accent-cyan: #38d9d4;
+  --accent-purple: #9b7aff;
+  --accent-orange: #ff8c42;
+  --accent-green: #34d399;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Outfit', 'Noto Sans KR', 'Noto Sans SC', 'Noto Sans Devanagari', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body { min-height: 100vh; position: relative; }
+
+/* ===== AMBIENT BG ===== */
+.ambient-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.orb { position: absolute; border-radius: 50%; filter: blur(120px); will-change: transform; }
+.orb-1 { width: 900px; height: 600px; background: radial-gradient(ellipse, rgba(77,166,255,0.10) 0%, transparent 70%); top: -15%; left: 30%; animation: f1 25s ease-in-out infinite; }
+.orb-2 { width: 700px; height: 500px; background: radial-gradient(ellipse, rgba(155,122,255,0.08) 0%, transparent 70%); top: 40%; right: -10%; animation: f2 30s ease-in-out infinite; }
+.orb-3 { width: 600px; height: 400px; background: radial-gradient(ellipse, rgba(56,217,212,0.06) 0%, transparent 70%); bottom: -10%; left: -5%; animation: f3 20s ease-in-out infinite; }
+@keyframes f1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(40px,30px); } }
+@keyframes f2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-30px,-40px); } }
+@keyframes f3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(20px,-20px); } }
+
+.noise { position: fixed; inset: 0; z-index: 1; opacity: 0.025; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat; background-size: 256px;
+}
+
+/* ===== LAYOUT ===== */
+.container { position: relative; z-index: 2; max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+
+/* ===== NAV ===== */
+.nav-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 14px 32px;
+  backdrop-filter: blur(20px) saturate(1.4);
+  background: rgba(6,8,13,0.75);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.nav-left { display: flex; align-items: center; gap: 20px; }
+.nav-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--text-secondary); text-decoration: none;
+  font-size: 13px; font-weight: 500; letter-spacing: 0.02em;
+  transition: color 0.2s;
+}
+.nav-back:hover { color: var(--text-primary); }
+.nav-back svg { width: 16px; height: 16px; }
+.nav-title {
+  font-weight: 700; font-size: 14px; color: var(--text-primary);
+  padding-left: 20px; border-left: 1px solid var(--glass-border);
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* ===== LANGUAGE SWITCHER ===== */
+.lang-switcher {
+  display: flex; gap: 4px;
+  padding: 3px; border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-border);
+}
+.lang-btn {
+  padding: 6px 14px; border-radius: 8px; border: none;
+  background: transparent; color: var(--text-secondary);
+  font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.03em; cursor: pointer;
+  transition: all 0.2s;
+}
+.lang-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+.lang-btn.active {
+  color: var(--bg-deep);
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+  box-shadow: 0 2px 12px rgba(77,166,255,0.25);
+}
+
+/* ===== HERO ===== */
+.hero {
+  min-height: 100vh; display: flex; flex-direction: column;
+  justify-content: center; align-items: center; text-align: center;
+  padding-top: 80px;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 16px; border-radius: 100px;
+  border: 1px solid var(--glass-border); background: var(--bg-card);
+  font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  margin-bottom: 40px; letter-spacing: 0.04em;
+  opacity: 0; animation: fadeUp 0.6s ease 0.2s forwards;
+}
+.badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 8px rgba(52,211,153,0.5); }
+
+.hero h1 {
+  font-size: clamp(44px, 6.5vw, 82px); font-weight: 800;
+  line-height: 1.08; letter-spacing: -0.04em;
+  margin-bottom: 24px;
+  opacity: 0; animation: fadeUp 0.6s ease 0.4s forwards;
+}
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 50%, var(--accent-purple) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.hero-sub {
+  font-size: clamp(15px, 1.8vw, 19px); font-weight: 300;
+  color: var(--text-secondary); max-width: 620px; line-height: 1.65;
+  margin-bottom: 48px;
+  opacity: 0; animation: fadeUp 0.6s ease 0.6s forwards;
+}
+.hero-cta-row {
+  display: flex; gap: 16px; align-items: center;
+  opacity: 0; animation: fadeUp 0.6s ease 0.8s forwards;
+}
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 14px 32px; border-radius: 100px; border: none;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+  color: #000; font-family: 'Outfit', sans-serif;
+  font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.3s;
+  box-shadow: 0 0 30px rgba(77,166,255,0.2);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(77,166,255,0.35); }
+.btn-primary svg { width: 16px; height: 16px; }
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 28px; border-radius: 100px;
+  border: 1px solid var(--glass-border); background: transparent;
+  color: var(--text-secondary); font-family: 'Outfit', sans-serif;
+  font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none;
+  transition: all 0.2s;
+}
+.btn-ghost:hover { border-color: var(--glass-border-hover); color: var(--text-primary); }
+
+.scroll-hint {
+  position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  opacity: 0; animation: fadeUp 0.6s ease 1.1s forwards;
+}
+.scroll-hint span { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-tertiary); font-family: 'JetBrains Mono', monospace; }
+.scroll-line { width: 1px; height: 28px; background: linear-gradient(to bottom, var(--text-tertiary), transparent); animation: bob 2s ease-in-out infinite; }
+@keyframes bob { 0%,100% { transform: scaleY(1); opacity: 0.5; } 50% { transform: scaleY(0.5); opacity: 1; } }
+
+/* ===== SECTIONS ===== */
+.section { padding: 110px 0; }
+.section-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent-cyan); margin-bottom: 16px;
+}
+.section-title { font-size: clamp(30px, 3.8vw, 46px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 16px; }
+.section-desc { font-size: 16px; font-weight: 300; color: var(--text-secondary); max-width: 640px; line-height: 1.7; margin-bottom: 52px; }
+
+/* ===== PIPELINE ===== */
+.pipeline-flow { display: flex; gap: 0; width: 100%; }
+.pipeline-step {
+  flex: 1; position: relative; padding: 26px 18px;
+  border: 1px solid var(--glass-border); background: var(--bg-card);
+  backdrop-filter: blur(16px); cursor: pointer;
+  transition: all 0.3s; display: flex; flex-direction: column;
+  align-items: center; text-align: center;
+}
+.pipeline-step:first-child { border-radius: 14px 0 0 14px; }
+.pipeline-step:last-child { border-radius: 0 14px 14px 0; }
+.pipeline-step:not(:last-child)::after {
+  content: ''; position: absolute; right: -1px; top: 50%; transform: translateY(-50%);
+  width: 2px; height: 40%;
+  background: linear-gradient(to bottom, transparent, var(--glass-border-hover), transparent); z-index: 1;
+}
+.pipeline-step:hover, .pipeline-step.active { background: var(--bg-card-hover); border-color: var(--glass-border-hover); }
+.pipeline-step.active { z-index: 2; }
+.step-num { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.15em; margin-bottom: 10px; }
+.step-icon {
+  width: 42px; height: 42px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px; margin-bottom: 12px; transition: transform 0.3s, box-shadow 0.3s;
+}
+.pipeline-step:hover .step-icon, .pipeline-step.active .step-icon { transform: translateY(-2px); }
+.si-plan { background: rgba(77,166,255,0.12); color: var(--accent-blue); }
+.si-retrieve { background: rgba(56,217,212,0.12); color: var(--accent-cyan); }
+.si-assess { background: rgba(155,122,255,0.12); color: var(--accent-purple); }
+.si-synth { background: rgba(255,140,66,0.12); color: var(--accent-orange); }
+.pipeline-step.active .si-plan { box-shadow: 0 0 28px rgba(77,166,255,0.25); }
+.pipeline-step.active .si-retrieve { box-shadow: 0 0 28px rgba(56,217,212,0.25); }
+.pipeline-step.active .si-assess { box-shadow: 0 0 28px rgba(155,122,255,0.25); }
+.pipeline-step.active .si-synth { box-shadow: 0 0 28px rgba(255,140,66,0.25); }
+.step-name { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 6px; }
+.step-brief { font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; }
+
+.pipe-detail {
+  margin-top: 20px; padding: 28px 32px; border-radius: 14px;
+  border: 1px solid var(--glass-border); background: var(--bg-card);
+  backdrop-filter: blur(16px); min-height: 120px; transition: all 0.3s;
+}
+.pipe-detail-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+.pipe-detail p { font-size: 14.5px; color: var(--text-secondary); line-height: 1.7; }
+
+/* ===== PILLARS ===== */
+.pillars-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.pillar-card {
+  padding: 32px 24px; border-radius: 18px;
+  border: 1px solid var(--glass-border); background: var(--bg-card);
+  backdrop-filter: blur(16px); transition: all 0.35s; position: relative; overflow: hidden;
+}
+.pillar-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  opacity: 0; transition: opacity 0.3s;
+}
+.pillar-card:nth-child(1)::before { background: linear-gradient(90deg, transparent, var(--accent-blue), transparent); }
+.pillar-card:nth-child(2)::before { background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent); }
+.pillar-card:nth-child(3)::before { background: linear-gradient(90deg, transparent, var(--accent-purple), transparent); }
+.pillar-card:hover { border-color: var(--glass-border-hover); background: var(--bg-card-hover); transform: translateY(-4px); }
+.pillar-card:hover::before { opacity: 1; }
+.pillar-icon {
+  width: 48px; height: 48px; border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; margin-bottom: 18px;
+}
+.pillar-card:nth-child(1) .pillar-icon { background: rgba(77,166,255,0.10); }
+.pillar-card:nth-child(2) .pillar-icon { background: rgba(56,217,212,0.10); }
+.pillar-card:nth-child(3) .pillar-icon { background: rgba(155,122,255,0.10); }
+.pillar-title { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 10px; }
+.pillar-desc { font-size: 13.5px; color: var(--text-secondary); line-height: 1.65; }
+.pillar-stat {
+  margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--glass-border);
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.04em;
+}
+.pillar-stat strong { font-size: 22px; font-weight: 700; color: var(--text-primary); display: block; margin-bottom: 2px; font-family: 'Outfit', sans-serif; }
+.pillar-stat a { color: var(--accent-blue); text-decoration: none; font-size: 10px; font-family: 'JetBrains Mono', monospace; transition: color 0.2s; display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; }
+.pillar-stat a:hover { color: var(--accent-cyan); text-decoration: underline; }
+.pillar-stat a svg { width: 10px; height: 10px; }
+
+/* ===== 3 IQ ===== */
+.iq-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.iq-item {
+  padding: 22px; border-radius: 14px;
+  border: 1px solid var(--glass-border); background: var(--bg-card);
+  text-align: center; transition: all 0.3s;
+}
+.iq-item:hover { border-color: var(--glass-border-hover); }
+.iq-item.active-iq { border-color: rgba(77,166,255,0.25); background: rgba(77,166,255,0.04); }
+.iq-name { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+.iq-desc { font-size: 12.5px; color: var(--text-secondary); line-height: 1.55; }
+.iq-tag {
+  display: inline-block; margin-top: 12px; padding: 4px 12px; border-radius: 100px;
+  font-size: 10px; font-weight: 600; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.iq-item.active-iq .iq-tag { background: rgba(77,166,255,0.12); color: var(--accent-blue); }
+.iq-item:not(.active-iq) .iq-tag { background: rgba(255,255,255,0.04); color: var(--text-tertiary); }
+
+/* ===== CTA ===== */
+.cta-section { padding: 100px 0 60px; text-align: center; }
+.cta-section h2 { font-size: clamp(26px, 3.2vw, 40px); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 20px; }
+.cta-section .sub { font-size: 15px; color: var(--text-secondary); margin-bottom: 32px; }
+
+/* ===== REFS ===== */
+.refs { padding: 40px 0 20px; border-top: 1px solid var(--glass-border); }
+.refs-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 14px; }
+.refs-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.refs-list a { color: var(--accent-blue); text-decoration: none; font-size: 12.5px; transition: color 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+.refs-list a:hover { color: var(--accent-cyan); text-decoration: underline; }
+.refs-list a svg { width: 12px; height: 12px; flex-shrink: 0; }
+.ext-icon { width: 12px; height: 12px; }
+
+/* ===== FOOTER ===== */
+.footer { padding: 28px 0; border-top: 1px solid var(--glass-border); text-align: center; }
+.footer p { font-size: 12px; color: var(--text-tertiary); }
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .container { padding: 0 20px; }
+  .lang-switcher { gap: 2px; }
+  .lang-btn { padding: 5px 10px; font-size: 11px; }
+  .pipeline-flow { flex-direction: column; gap: 8px; }
+  .pipeline-step { border-radius: 10px !important; }
+  .pipeline-step:not(:last-child)::after { display: none; }
+  .pillars-grid, .iq-strip { grid-template-columns: 1fr; }
+  .hero { padding-top: 100px; min-height: auto; padding-bottom: 60px; }
+  .hero-cta-row { flex-direction: column; }
+  .nav-title { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="ambient-bg"><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div></div>
+<div class="noise"></div>
+
+<!-- NAV -->
+<nav class="nav-bar">
+  <div class="nav-left">
+    <a href="/" class="nav-back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Demo Suite
+    </a>
+    <div class="nav-title"><span class="nav-dot"></span> What is Foundry IQ?</div>
+  </div>
+  <div class="lang-switcher">
+    <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" data-lang="ko" onclick="setLang('ko')">한국어</button>
+    <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">中文</button>
+    <button class="lang-btn" data-lang="hi" onclick="setLang('hi')">हिन्दी</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge"><span class="badge-dot"></span> <span data-i18n="badge"></span></div>
+  <h1><span class="gradient-text" data-i18n="h1_1"></span><br><span data-i18n="h1_2"></span></h1>
+  <p class="hero-sub" data-i18n="hero_sub"></p>
+  <div class="hero-cta-row">
+    <a href="/test" class="btn-primary" data-i18n-html="cta_demo"></a>
+    <a href="https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/what-is-foundry-iq" target="_blank" class="btn-ghost" data-i18n="cta_docs"></a>
+  </div>
+  <div class="scroll-hint"><span data-i18n="scroll"></span><div class="scroll-line"></div></div>
+</section>
+
+<!-- PIPELINE -->
+<section id="pipeline" class="section">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label" data-i18n="pipe_label"></div>
+      <h2 class="section-title" data-i18n="pipe_title"></h2>
+      <p class="section-desc" data-i18n="pipe_desc"></p>
+    </div>
+    <div class="pipeline-flow reveal">
+      <div class="pipeline-step active" data-step="plan" onclick="activateStep('plan')">
+        <div class="step-num">STEP 01</div>
+        <div class="step-icon si-plan">⚡</div>
+        <div class="step-name" data-i18n="s1_name"></div>
+        <div class="step-brief" data-i18n="s1_brief"></div>
+      </div>
+      <div class="pipeline-step" data-step="retrieve" onclick="activateStep('retrieve')">
+        <div class="step-num">STEP 02</div>
+        <div class="step-icon si-retrieve">🔍</div>
+        <div class="step-name" data-i18n="s2_name"></div>
+        <div class="step-brief" data-i18n="s2_brief"></div>
+      </div>
+      <div class="pipeline-step" data-step="assess" onclick="activateStep('assess')">
+        <div class="step-num">STEP 03</div>
+        <div class="step-icon si-assess">🔄</div>
+        <div class="step-name" data-i18n="s3_name"></div>
+        <div class="step-brief" data-i18n="s3_brief"></div>
+      </div>
+      <div class="pipeline-step" data-step="synthesize" onclick="activateStep('synthesize')">
+        <div class="step-num">STEP 04</div>
+        <div class="step-icon si-synth">✨</div>
+        <div class="step-name" data-i18n="s4_name"></div>
+        <div class="step-brief" data-i18n="s4_brief"></div>
+      </div>
+    </div>
+    <div class="pipe-detail reveal" id="pipeDetail">
+      <div class="pipe-detail-label" id="detailLabel"></div>
+      <p id="detailText"></p>
+    </div>
+  </div>
+</section>
+
+<!-- PILLARS -->
+<section id="pillars" class="section">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label" data-i18n="pill_label"></div>
+      <h2 class="section-title" data-i18n="pill_title"></h2>
+      <p class="section-desc" data-i18n="pill_desc"></p>
+    </div>
+    <div class="pillars-grid">
+      <div class="pillar-card reveal">
+        <div class="pillar-icon">📚</div>
+        <div class="pillar-title" data-i18n="p1_title"></div>
+        <p class="pillar-desc" data-i18n="p1_desc"></p>
+        <div class="pillar-stat"><strong>10+</strong><span data-i18n="p1_stat"></span><br>
+          <a href="https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/foundry-iq-boost-response-relevance-by-36-with-agentic-retrieval/4470720" target="_blank">
+            <svg class="ext-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+            Microsoft Tech Community
+          </a>
+        </div>
+      </div>
+      <div class="pillar-card reveal">
+        <div class="pillar-icon">🧠</div>
+        <div class="pillar-title" data-i18n="p2_title"></div>
+        <p class="pillar-desc" data-i18n="p2_desc"></p>
+        <div class="pillar-stat">
+          <strong>+36%</strong><span data-i18n="p2_stat"></span><br>
+          <a href="https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/foundry-iq-boost-response-relevance-by-36-with-agentic-retrieval/4470720" target="_blank">
+            <svg class="ext-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+            Microsoft Tech Community
+          </a>
+        </div>
+      </div>
+      <div class="pillar-card reveal">
+        <div class="pillar-icon">🎯</div>
+        <div class="pillar-title" data-i18n="p3_title"></div>
+        <p class="pillar-desc" data-i18n="p3_desc"></p>
+        <div class="pillar-stat"><strong>100%</strong><span data-i18n="p3_stat"></span><br>
+          <a href="https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/what-is-foundry-iq" target="_blank">
+            <svg class="ext-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+            Microsoft Learn
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 IQ -->
+<section id="context" class="section">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-label" data-i18n="iq_label"></div>
+      <h2 class="section-title" data-i18n="iq_title"></h2>
+      <p class="section-desc" data-i18n="iq_desc"></p>
+    </div>
+    <div class="iq-strip reveal">
+      <div class="iq-item active-iq">
+        <div class="iq-name">Foundry IQ</div>
+        <p class="iq-desc" data-i18n="iq1_desc"></p>
+        <span class="iq-tag" data-i18n="iq1_tag"></span>
+      </div>
+      <div class="iq-item">
+        <div class="iq-name">Fabric IQ</div>
+        <p class="iq-desc" data-i18n="iq2_desc"></p>
+        <span class="iq-tag" data-i18n="iq2_tag"></span>
+      </div>
+      <div class="iq-item">
+        <div class="iq-name">Work IQ</div>
+        <p class="iq-desc" data-i18n="iq3_desc"></p>
+        <span class="iq-tag" data-i18n="iq3_tag"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container reveal">
+    <h2 data-i18n="cta_title"></h2>
+    <p class="sub" data-i18n="cta_sub"></p>
+    <a href="/test" class="btn-primary" data-i18n-html="cta_launch"></a>
+  </div>
+</section>
+
+<!-- REFERENCES -->
+<div class="container">
+  <div class="refs reveal">
+    <div class="refs-title">References</div>
+    <ul class="refs-list">
+      <li><a href="https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/what-is-foundry-iq" target="_blank"><svg class="ext-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>What is Foundry IQ? — Microsoft Learn</a></li>
+      <li><a href="https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/foundry-iq-unlocking-ubiquitous-knowledge-for-agents/4470812" target="_blank"><svg class="ext-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>Foundry IQ: Unlock knowledge retrieval for agents — Tech Community</a></li>
+      <li><a href="https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/foundry-iq-boost-response-relevance-by-36-with-agentic-retrieval/4470720" target="_blank"><svg class="ext-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>+36% response relevance with agentic retrieval — Tech Community</a></li>
+      <li><a href="https://learn.microsoft.com/en-us/azure/search/agentic-retrieval-overview" target="_blank"><svg class="ext-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>Agentic Retrieval Overview — Microsoft Learn</a></li>
+      <li><a href="https://devblogs.microsoft.com/foundry/foundry-iq-agent-framework-integration/" target="_blank"><svg class="ext-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>Foundry IQ in Agent Framework — DevBlog</a></li>
+    </ul>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer"><div class="container"><p>Powered by Azure AI Search — Microsoft AI GBB Asia</p></div></footer>
+
+<script>
+const ARROW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+
+const i18n = {
+  en: {
+    badge: "Public Preview — Built on Azure AI Search",
+    h1_1: "The Knowledge Layer", h1_2: "for AI Agents",
+    hero_sub: "One unified endpoint. Multi-source retrieval. Permission-aware grounding. Foundry IQ turns Azure AI Search into an agentic retrieval engine that plans, searches, and synthesizes — so your agents don't hallucinate.",
+    cta_demo: "Launch Demo", cta_docs: "Microsoft Docs ↗", scroll: "Scroll",
+    pipe_label: "AGENTIC RETRIEVAL PIPELINE", pipe_title: "Retrieval as a reasoning task.",
+    pipe_desc: "Traditional RAG sends one query to one index. Foundry IQ treats retrieval as a multi-step reasoning process — an LLM plans sub-queries, executes hybrid search, self-assesses quality, and synthesizes grounded answers with citations.",
+    s1_name: "Plan", s1_brief: "LLM decomposes complex queries into focused sub-queries",
+    s2_name: "Retrieve", s2_brief: "Vector + keyword search across all sources simultaneously",
+    s3_name: "Assess", s3_brief: "Reflective search — iterates if results are insufficient",
+    s4_name: "Synthesize", s4_brief: "Grounded answer with inline citations",
+    pill_label: "CORE CAPABILITIES", pill_title: "Three pillars of intelligent retrieval.",
+    pill_desc: "Knowledge Bases, Agentic Retrieval, and Grounded Answers — replacing fragmented RAG pipelines with a single, reusable knowledge layer.",
+    p1_title: "Knowledge Bases", p1_desc: "Topic-centric collections connecting Blob Storage, SharePoint, OneLake, and the web into one reusable endpoint. Automatic indexing, chunking, and vectorization included.",
+    p1_stat: "knowledge sources per KB",
+    p2_title: "Agentic Retrieval", p2_desc: "Self-reflective query engine powered by LLM reasoning. Plans sub-queries, selects sources, runs parallel hybrid search, and iterates until quality thresholds are met.",
+    p2_stat: "RAG answer quality improvement",
+    p3_title: "Grounded Answers", p3_desc: "Every answer includes inline citations traced to source documents. Agents reason over raw data — no hallucination, full auditability.",
+    p3_stat: "citation-backed responses",
+    iq_label: "MICROSOFT INTELLIGENCE LAYER", iq_title: "Where Foundry IQ fits.",
+    iq_desc: "Three IQ workloads provide agents with comprehensive organizational context. Foundry IQ is the knowledge layer — connecting enterprise data with the right permissions.",
+    iq1_desc: "Managed knowledge layer. Connects structured & unstructured data across Azure, SharePoint, OneLake, and the web.",
+    iq1_tag: "THIS DEMO", iq2_desc: "Semantic intelligence for business data. Ontologies, semantic models, and graphs over OneLake and Power BI.",
+    iq2_tag: "BUSINESS DATA", iq3_desc: "Contextual intelligence for M365. Collaboration signals from documents, meetings, chats, and workflows.",
+    iq3_tag: "WORK SIGNALS",
+    cta_title: "See it in action.", cta_sub: "From Knowledge Base query to Trace visualization — experience the full pipeline.",
+    cta_launch: "Launch Demo Suite"
+  },
+  ko: {
+    badge: "퍼블릭 프리뷰 — Azure AI Search 기반",
+    h1_1: "AI 에이전트를 위한", h1_2: "지식 계층",
+    hero_sub: "하나의 통합 엔드포인트. 다중 소스 검색. 권한 인식 그라운딩. Foundry IQ는 Azure AI Search를 에이전틱 검색 엔진으로 전환합니다 — 계획, 검색, 합성을 자동화하여 에이전트의 할루시네이션을 방지합니다.",
+    cta_demo: "데모 시작", cta_docs: "Microsoft 문서 ↗", scroll: "스크롤",
+    pipe_label: "에이전틱 검색 파이프라인", pipe_title: "검색을 추론 과제로.",
+    pipe_desc: "기존 RAG는 하나의 쿼리를 하나의 인덱스에 보냅니다. Foundry IQ는 검색을 다단계 추론으로 취급합니다 — LLM이 서브쿼리를 계획하고, 하이브리드 검색을 실행하고, 품질을 평가하고, 인용 포함 답변을 생성합니다.",
+    s1_name: "계획", s1_brief: "LLM이 복잡한 쿼리를 세부 서브쿼리로 분해",
+    s2_name: "검색", s2_brief: "벡터 + 키워드 검색을 모든 소스에서 동시 실행",
+    s3_name: "평가", s3_brief: "반성적 검색 — 결과 부족 시 자동 재검색",
+    s4_name: "합성", s4_brief: "인라인 인용 포함 근거 기반 답변",
+    pill_label: "핵심 기능", pill_title: "지능형 검색의 세 가지 축.",
+    pill_desc: "Knowledge Base, 에이전틱 검색, 근거 기반 답변 — 파편화된 RAG 파이프라인을 하나의 재사용 가능한 지식 계층으로 대체합니다.",
+    p1_title: "Knowledge Base", p1_desc: "Blob Storage, SharePoint, OneLake, 웹 등 여러 데이터 소스를 하나의 재사용 가능한 엔드포인트로 연결합니다. 자동 인덱싱, 청킹, 벡터화 포함.",
+    p1_stat: "KB당 지식 소스",
+    p2_title: "에이전틱 검색", p2_desc: "LLM 추론 기반의 자기 반성적 쿼리 엔진. 서브쿼리 계획, 소스 선택, 병렬 하이브리드 검색, 품질 충족까지 반복합니다.",
+    p2_stat: "RAG 답변 품질 향상",
+    p3_title: "근거 기반 답변", p3_desc: "모든 답변에 소스 문서 추적 인라인 인용이 포함됩니다. 에이전트가 원시 데이터를 기반으로 추론 — 할루시네이션 없음, 완전한 감사 추적.",
+    p3_stat: "인용 기반 응답",
+    iq_label: "마이크로소프트 인텔리전스 레이어", iq_title: "Foundry IQ의 위치.",
+    iq_desc: "세 가지 IQ 워크로드가 에이전트에 종합적인 조직 컨텍스트를 제공합니다. Foundry IQ는 지식 계층으로서 올바른 권한으로 기업 데이터를 연결합니다.",
+    iq1_desc: "관리형 지식 계층. Azure, SharePoint, OneLake, 웹의 정형/비정형 데이터를 연결합니다.",
+    iq1_tag: "이 데모", iq2_desc: "비즈니스 데이터를 위한 시맨틱 인텔리전스. OneLake과 Power BI의 온톨로지, 시맨틱 모델, 그래프.",
+    iq2_tag: "비즈니스 데이터", iq3_desc: "M365를 위한 컨텍스트 인텔리전스. 문서, 미팅, 채팅, 워크플로의 협업 시그널.",
+    iq3_tag: "업무 시그널",
+    cta_title: "직접 체험해보세요.", cta_sub: "Knowledge Base 쿼리부터 Trace 시각화까지 — 전체 파이프라인을 경험하세요.",
+    cta_launch: "데모 시작하기"
+  },
+  zh: {
+    badge: "公共预览版 — 基于 Azure AI Search",
+    h1_1: "AI 智能体的", h1_2: "知识层",
+    hero_sub: "统一端点、多源检索、权限感知接地。Foundry IQ 将 Azure AI Search 转变为代理检索引擎 — 自动规划、搜索和合成，确保智能体不会产生幻觉。",
+    cta_demo: "启动演示", cta_docs: "Microsoft 文档 ↗", scroll: "滚动",
+    pipe_label: "代理检索管道", pipe_title: "检索即推理任务。",
+    pipe_desc: "传统 RAG 将单个查询发送到单个索引。Foundry IQ 将检索视为多步推理 — LLM 规划子查询、执行混合搜索、自我评估质量，并生成带引用的接地答案。",
+    s1_name: "规划", s1_brief: "LLM 将复杂查询分解为聚焦的子查询",
+    s2_name: "检索", s2_brief: "向量 + 关键字搜索在所有源上同时执行",
+    s3_name: "评估", s3_brief: "反思性搜索 — 结果不足时自动迭代",
+    s4_name: "合成", s4_brief: "带内联引用的接地答案",
+    pill_label: "核心能力", pill_title: "智能检索的三大支柱。",
+    pill_desc: "知识库、代理检索和接地答案 — 用单一可复用的知识层替代碎片化的 RAG 管道。",
+    p1_title: "知识库", p1_desc: "以主题为中心，将 Blob 存储、SharePoint、OneLake、网络连接为一个可复用端点。包含自动索引、分块和向量化。",
+    p1_stat: "每个 KB 的知识源数",
+    p2_title: "代理检索", p2_desc: "由 LLM 推理驱动的自反查询引擎。规划子查询、选择源、并行混合搜索，迭代直到满足质量阈值。",
+    p2_stat: "RAG 答案质量提升",
+    p3_title: "接地答案", p3_desc: "每个答案都附带追溯到源文档的内联引用。智能体基于原始数据推理 — 无幻觉，完全可审计。",
+    p3_stat: "引用支持的响应",
+    iq_label: "微软智能层", iq_title: "Foundry IQ 的定位。",
+    iq_desc: "三个 IQ 工作负载为智能体提供全面的组织上下文。Foundry IQ 是知识层 — 以正确的权限连接企业数据。",
+    iq1_desc: "托管知识层。连接 Azure、SharePoint、OneLake 和网络上的结构化和非结构化数据。",
+    iq1_tag: "本演示", iq2_desc: "面向业务数据的语义智能。OneLake 和 Power BI 上的本体、语义模型和图谱。",
+    iq2_tag: "业务数据", iq3_desc: "面向 M365 的上下文智能。来自文档、会议、聊天和工作流的协作信号。",
+    iq3_tag: "工作信号",
+    cta_title: "实际体验。", cta_sub: "从知识库查询到 Trace 可视化 — 体验完整管道。",
+    cta_launch: "启动演示套件"
+  },
+  hi: {
+    badge: "पब्लिक प्रीव्यू — Azure AI Search पर निर्मित",
+    h1_1: "AI एजेंट्स के लिए", h1_2: "नॉलेज लेयर",
+    hero_sub: "एक एकीकृत एंडपॉइंट। मल्टी-सोर्स रिट्रीवल। परमिशन-अवेयर ग्राउंडिंग। Foundry IQ, Azure AI Search को एजेंटिक रिट्रीवल इंजन में बदलता है — प्लान, सर्च, और सिंथेसाइज़ करता है ताकि एजेंट्स हैलुसिनेट न करें।",
+    cta_demo: "डेमो लॉन्च", cta_docs: "Microsoft डॉक्स ↗", scroll: "स्क्रॉल",
+    pipe_label: "एजेंटिक रिट्रीवल पाइपलाइन", pipe_title: "रिट्रीवल एक रीज़निंग टास्क।",
+    pipe_desc: "पारंपरिक RAG एक क्वेरी को एक इंडेक्स पर भेजता है। Foundry IQ रिट्रीवल को मल्टी-स्टेप रीज़निंग मानता है — LLM सब-क्वेरीज़ प्लान करता है, हाइब्रिड सर्च करता है, क्वालिटी असेस करता है, और साइटेशन के साथ उत्तर सिंथेसाइज़ करता है।",
+    s1_name: "प्लान", s1_brief: "LLM जटिल क्वेरीज़ को फोकस्ड सब-क्वेरीज़ में विभाजित करता है",
+    s2_name: "रिट्रीव", s2_brief: "सभी सोर्स पर एक साथ वेक्टर + कीवर्ड सर्च",
+    s3_name: "असेस", s3_brief: "रिफ्लेक्टिव सर्च — अपर्याप्त पर पुनरावृत्ति",
+    s4_name: "सिंथेसाइज़", s4_brief: "इनलाइन साइटेशन के साथ ग्राउंडेड उत्तर",
+    pill_label: "मुख्य क्षमताएँ", pill_title: "इंटेलिजेंट रिट्रीवल के तीन स्तंभ।",
+    pill_desc: "नॉलेज बेस, एजेंटिक रिट्रीवल, और ग्राउंडेड आंसर्स — फ्रैगमेंटेड RAG पाइपलाइन्स को एक रियूज़ेबल नॉलेज लेयर से रिप्लेस करते हैं।",
+    p1_title: "नॉलेज बेस", p1_desc: "Blob Storage, SharePoint, OneLake, वेब को एक रियूज़ेबल एंडपॉइंट से जोड़ता है। ऑटोमैटिक इंडेक्सिंग, चंकिंग, वेक्टराइज़ेशन शामिल।",
+    p1_stat: "प्रति KB नॉलेज सोर्स",
+    p2_title: "एजेंटिक रिट्रीवल", p2_desc: "LLM रीज़निंग द्वारा संचालित सेल्फ-रिफ्लेक्टिव क्वेरी इंजन। सब-क्वेरीज़ प्लान, सोर्स सेलेक्ट, पैरेलल हाइब्रिड सर्च, क्वालिटी तक इटरेट।",
+    p2_stat: "RAG उत्तर गुणवत्ता सुधार",
+    p3_title: "ग्राउंडेड आंसर्स", p3_desc: "हर उत्तर सोर्स डॉक्यूमेंट्स से ट्रेस किए गए इनलाइन साइटेशन के साथ। एजेंट्स रॉ डेटा पर रीज़न करते हैं — कोई हैलुसिनेशन नहीं।",
+    p3_stat: "साइटेशन-बैक्ड रिस्पॉन्सेज़",
+    iq_label: "माइक्रोसॉफ्ट इंटेलिजेंस लेयर", iq_title: "Foundry IQ कहाँ फिट होता है।",
+    iq_desc: "तीन IQ वर्कलोड एजेंट्स को संगठनात्मक कॉन्टेक्स्ट प्रदान करते हैं। Foundry IQ नॉलेज लेयर है — सही परमिशन से एंटरप्राइज़ डेटा कनेक्ट करता है।",
+    iq1_desc: "मैनेज्ड नॉलेज लेयर। Azure, SharePoint, OneLake, वेब पर डेटा कनेक्ट करता है।",
+    iq1_tag: "यह डेमो", iq2_desc: "बिज़नेस डेटा के लिए सिमैंटिक इंटेलिजेंस। OneLake और Power BI पर ऑन्टोलॉजीज़ और ग्राफ्स।",
+    iq2_tag: "बिज़नेस डेटा", iq3_desc: "M365 के लिए कॉन्टेक्स्चुअल इंटेलिजेंस। डॉक्यूमेंट्स, मीटिंग्स, चैट्स से सिग्नल्स।",
+    iq3_tag: "वर्क सिग्नल्स",
+    cta_title: "एक्शन में देखें।", cta_sub: "नॉलेज बेस क्वेरी से Trace विज़ुअलाइज़ेशन तक — पूरी पाइपलाइन अनुभव करें।",
+    cta_launch: "डेमो सुइट लॉन्च"
+  }
+};
+
+const pipeDetail = {
+  en: {
+    plan: { label: "QUERY PLANNING", color: "var(--accent-blue)", text: "The LLM analyzes your query and conversation history, then decomposes complex questions into focused sub-queries. Each sub-query targets specific knowledge sources, enabling multi-hop reasoning — answering questions that require connecting information across multiple documents." },
+    retrieve: { label: "HYBRID SEARCH EXECUTION", color: "var(--accent-cyan)", text: "All sub-queries run simultaneously across knowledge sources using hybrid search — combining vector similarity with keyword matching. Semantic reranking surfaces the most relevant passages. Supports Blob Storage, SharePoint, OneLake, and web sources through a single endpoint." },
+    assess: { label: "SELF-ASSESSMENT & ITERATION", color: "var(--accent-purple)", text: "A fine-tuned semantic classifier evaluates whether retrieved results sufficiently answer the query. If gaps exist, the engine automatically rewrites and re-executes queries — iterating until quality thresholds are met. Configurable via Retrieval Reasoning Effort (minimal → low → medium → high)." },
+    synthesize: { label: "ANSWER SYNTHESIS", color: "var(--accent-orange)", text: "The LLM generates a coherent answer grounded entirely in retrieved content. Every claim is backed by inline citations pointing to specific source documents. Output modes: extractive content (raw references) or synthesized answers with full source attribution." }
+  },
+  ko: {
+    plan: { label: "쿼리 계획", color: "var(--accent-blue)", text: "LLM이 쿼리와 대화 히스토리를 분석하여 복잡한 질문을 세부 서브쿼리로 분해합니다. 각 서브쿼리는 특정 지식 소스를 타겟으로 하며, 여러 문서의 정보를 연결하는 멀티홉 추론이 가능합니다." },
+    retrieve: { label: "하이브리드 검색 실행", color: "var(--accent-cyan)", text: "모든 서브쿼리가 하이브리드 검색으로 동시 실행됩니다 — 벡터 유사도와 키워드 매칭을 결합합니다. 시맨틱 리랭킹으로 가장 관련성 높은 구절을 찾습니다. 단일 엔드포인트로 Blob Storage, SharePoint, OneLake, 웹 소스를 지원합니다." },
+    assess: { label: "자체 평가 및 반복", color: "var(--accent-purple)", text: "파인튜닝된 시맨틱 분류기가 검색 결과의 충분성을 평가합니다. 부족하면 쿼리를 자동 재작성하고 재실행 — 품질 임계치를 충족할 때까지 반복합니다. Retrieval Reasoning Effort(minimal → low → medium → high)로 조절 가능." },
+    synthesize: { label: "답변 합성", color: "var(--accent-orange)", text: "LLM이 검색된 콘텐츠만을 기반으로 일관된 답변을 생성합니다. 모든 주장에는 특정 소스 문서를 가리키는 인라인 인용이 포함됩니다. 출력 모드: 추출형 콘텐츠(원시 참조) 또는 소스 귀속 포함 합성 답변." }
+  },
+  zh: {
+    plan: { label: "查询规划", color: "var(--accent-blue)", text: "LLM 分析您的查询和对话历史，将复杂问题分解为聚焦的子查询。每个子查询针对特定知识源，实现多跳推理 — 回答需要跨多个文档连接信息的问题。" },
+    retrieve: { label: "混合搜索执行", color: "var(--accent-cyan)", text: "所有子查询使用混合搜索同时在知识源上运行 — 结合向量相似度和关键字匹配。语义重排序呈现最相关的段落。通过单一端点支持 Blob 存储、SharePoint、OneLake 和网络源。" },
+    assess: { label: "自我评估与迭代", color: "var(--accent-purple)", text: "微调的语义分类器评估检索结果是否充分。存在差距时，引擎自动重写和重新执行查询 — 迭代直到满足质量阈值。可通过检索推理力度（minimal → low → medium → high）配置。" },
+    synthesize: { label: "答案合成", color: "var(--accent-orange)", text: "LLM 完全基于检索内容生成连贯答案。每个论断都附有指向特定源文档的内联引用。输出模式：提取内容（原始引用）或带完整来源归属的合成答案。" }
+  },
+  hi: {
+    plan: { label: "क्वेरी प्लानिंग", color: "var(--accent-blue)", text: "LLM आपकी क्वेरी और कन्वर्सेशन हिस्ट्री का विश्लेषण करता है, जटिल प्रश्नों को फोकस्ड सब-क्वेरीज़ में विभाजित करता है। प्रत्येक सब-क्वेरी विशिष्ट नॉलेज सोर्स को टारगेट करती है, मल्टी-हॉप रीज़निंग सक्षम करती है।" },
+    retrieve: { label: "हाइब्रिड सर्च एक्जीक्यूशन", color: "var(--accent-cyan)", text: "सभी सब-क्वेरीज़ हाइब्रिड सर्च से नॉलेज सोर्स पर एक साथ रन होती हैं — वेक्टर सिमिलैरिटी और कीवर्ड मैचिंग को मिलाकर। सिमैंटिक रीरैंकिंग सबसे प्रासंगिक पैसेज सामने लाती है।" },
+    assess: { label: "सेल्फ-असेसमेंट", color: "var(--accent-purple)", text: "फाइन-ट्यून्ड सिमैंटिक क्लासिफायर मूल्यांकन करता है कि रिज़ल्ट्स पर्याप्त हैं या नहीं। गैप होने पर इंजन ऑटोमैटिकली क्वेरीज़ रीराइट और री-एक्जीक्यूट करता है — क्वालिटी थ्रेशोल्ड तक इटरेट करता है।" },
+    synthesize: { label: "आंसर सिंथेसिस", color: "var(--accent-orange)", text: "LLM पूरी तरह रिट्रीव्ड कंटेंट पर आधारित सुसंगत उत्तर जेनरेट करता है। हर दावे को विशिष्ट सोर्स डॉक्यूमेंट्स के इनलाइन साइटेशन द्वारा समर्थित किया जाता है।" }
+  }
+};
+
+let currentLang = 'en';
+let currentStep = 'plan';
+
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.lang-btn[data-lang="${lang}"]`).classList.add('active');
+  const data = i18n[lang];
+  // Text-only elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (data[key]) el.textContent = data[key];
+  });
+  // HTML elements (buttons with SVG)
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    if (data[key]) el.innerHTML = data[key] + ' ' + ARROW_SVG;
+  });
+  updatePipeDetail();
+}
+
+function activateStep(step) {
+  currentStep = step;
+  document.querySelectorAll('.pipeline-step').forEach(el => el.classList.remove('active'));
+  document.querySelector(`[data-step="${step}"]`).classList.add('active');
+  updatePipeDetail();
+}
+
+function updatePipeDetail() {
+  const d = pipeDetail[currentLang][currentStep];
+  document.getElementById('detailLabel').textContent = d.label;
+  document.getElementById('detailLabel').style.color = d.color;
+  document.getElementById('detailText').textContent = d.text;
+}
+
+// Init
+setLang('en');
+
+// Scroll reveal
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const t = document.querySelector(a.getAttribute('href'));
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+</body>
+</html>

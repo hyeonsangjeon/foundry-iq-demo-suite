@@ -164,6 +164,67 @@
   }
 }
 
+/* ── What is Foundry IQ page — accent vars & animations ── */
+:root {
+  --accent-blue: #4da6ff;
+  --accent-cyan: #38d9d4;
+  --accent-purple: #9b7aff;
+  --accent-orange: #ff8c42;
+  --accent-green: #34d399;
+}
+
+/* Ambient orbs */
+.fiq-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  will-change: transform;
+}
+.fiq-orb-1 {
+  width: 900px;
+  height: 600px;
+  background: radial-gradient(ellipse, rgba(77, 166, 255, 0.10) 0%, transparent 70%);
+  top: -15%;
+  left: 30%;
+  animation: fiq-f1 25s ease-in-out infinite;
+}
+.fiq-orb-2 {
+  width: 700px;
+  height: 500px;
+  background: radial-gradient(ellipse, rgba(155, 122, 255, 0.08) 0%, transparent 70%);
+  top: 40%;
+  right: -10%;
+  animation: fiq-f2 30s ease-in-out infinite;
+}
+.fiq-orb-3 {
+  width: 600px;
+  height: 400px;
+  background: radial-gradient(ellipse, rgba(56, 217, 212, 0.06) 0%, transparent 70%);
+  bottom: -10%;
+  left: -5%;
+  animation: fiq-f3 20s ease-in-out infinite;
+}
+@keyframes fiq-f1 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(40px, 30px); }
+}
+@keyframes fiq-f2 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-30px, -40px); }
+}
+@keyframes fiq-f3 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(20px, -20px); }
+}
+@keyframes fiq-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes fiq-bob {
+  0%, 100% { transform: scaleY(1); opacity: 0.5; }
+  50% { transform: scaleY(0.5); opacity: 1; }
+}
+
 @layer utilities {
   /* Glassmorphism helpers */
   .glass-panel {

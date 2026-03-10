@@ -122,7 +122,7 @@ export function AppShell({ children }: AppShellProps) {
             showSidebar && (collapsed ? 'md:ml-20' : 'md:ml-64')
           )}
         >
-          <div className={cn('flex-1 min-h-0', showSidebar && !pathname.includes('/playground') && !pathname.includes('/test') ? 'px-6 pb-16 pt-6 md:px-10' : '')}>
+          <div className={cn('flex-1 min-h-0', showSidebar && !pathname.includes('/playground') && !pathname.includes('/test') && !pathname.includes('/what-is-foundry-iq') ? 'px-6 pb-16 pt-6 md:px-10' : '')}>
             {children}
           </div>
         </main>

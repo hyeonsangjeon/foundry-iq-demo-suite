@@ -182,6 +182,13 @@ export function LandingPage() {
       <div className="pt-12 pb-8 text-center">
         <h1 className="text-2xl font-semibold text-fg-default">Knowledge Retrieval Studio</h1>
         <p className="text-sm text-fg-muted mt-1">Azure AI Search &middot; Foundry IQ</p>
+        <Link
+          href="/what-is-foundry-iq"
+          className="inline-flex items-center gap-1.5 mt-3 text-xs font-medium text-accent hover:text-accent-hover transition-colors duration-150"
+        >
+          What is Foundry IQ?
+          <ChevronRight20Regular className="w-3.5 h-3.5" />
+        </Link>
       </div>
 
       {/* Demo Cards */}
