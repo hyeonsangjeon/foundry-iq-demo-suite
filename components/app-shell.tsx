@@ -202,7 +202,7 @@ function Header({ onMenuClick, showSidebar }: HeaderProps) {
           <ThemeToggle />
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-glass-border bg-bg-elevated/60 text-xs font-medium text-fg-subtle">
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-            MS AI GBB Korea
+            MS GBB AI Apps 
           </div>
         </div>
       </div>
