@@ -18,7 +18,8 @@ tasks/
 .env.local
 .env.azure-swa
 DEPLOYMENT_COMPLETE.md
-
+AGENT*
+C*
 # Production
 /build
 

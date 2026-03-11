@@ -21,25 +21,32 @@
       "agentIds": ["financial-knowledge-base"],
       "starters": [
         {
-          "id": "vanguard-fees",
-          "label": "Vanguard Fund Redemption Fees",
-          "prompt": "What fees do I pay if I redeem shares of the Vanguard 500 Index Fund within 30 days?",
+          "id": "vanguard-2025-outlook",
+          "label": "2025 Market Outlook",
+          "prompt": "What is Vanguard's 2025 economic outlook for US equities and bonds?",
+          "complexity": "Moderate",
+          "tags": ["vanguard", "market-outlook", "2025"]
+        },
+        {
+          "id": "how-to-read-10k",
+          "label": "How to Read a 10-K",
+          "prompt": "How should a first-time investor read a 10-K filing to evaluate company health?",
+          "complexity": "Moderate",
+          "tags": ["sec", "10-k", "company-analysis"]
+        },
+        {
+          "id": "high-yield-bond-risks",
+          "label": "High-Yield Bond Risks",
+          "prompt": "What are the risks of high-yield corporate bonds compared to investment-grade?",
+          "complexity": "Simple",
+          "tags": ["bonds", "risk-analysis"]
+        },
+        {
+          "id": "mutual-fund-fee-types",
+          "label": "Mutual Fund Fee Types",
+          "prompt": "Explain the difference between front-end loads, back-end loads, and no-load mutual funds",
           "complexity": "Simple",
           "tags": ["fees", "mutual-funds"]
-        },
-        {
-          "id": "etf-risk-compare",
-          "label": "ETF vs Closed-End Fund Risks",
-          "prompt": "Compare the risks of investing in ETFs vs closed-end funds for a conservative investor.",
-          "complexity": "Moderate",
-          "tags": ["risk-analysis", "investment-types"]
-        },
-        {
-          "id": "portfolio-diversification",
-          "label": "Portfolio Diversification Strategy",
-          "prompt": "Based on current market conditions, what diversification strategy would you recommend for a retirement portfolio with a 15-year horizon?",
-          "complexity": "Advanced",
-          "tags": ["multi-source", "portfolio", "strategy"]
         }
       ]
     },

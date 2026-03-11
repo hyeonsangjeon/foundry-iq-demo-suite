@@ -61,7 +61,7 @@ const INDUSTRY_KNOWLEDGE_BASES: IndustryKnowledgeBase[] = [
     iconBg: 'bg-green-500/10',
     iconColor: 'text-green-600 dark:text-green-500',
     agentName: 'financial-knowledge-base',
-    available: false
+    available: true
   },
   {
     id: 'hotels',
