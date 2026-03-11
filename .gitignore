@@ -19,7 +19,7 @@ tasks/
 .env.azure-swa
 DEPLOYMENT_COMPLETE.md
 AGENT*
-C*
+CLAUDE.md*
 # Production
 /build
 
