@@ -38,7 +38,7 @@ and switch between industry-specific Knowledge Bases in real time.
 ## Quick Start
 
 ```bash
-git clone https://github.com/hyeonsangjeon/private-foundry-iq-task.git
+git clone https://github.com/hyeonsangjeon/foundry-iq-demo-suite.git
 cd foundry-iq-demos
 npm install
 cp .env.example .env.local
