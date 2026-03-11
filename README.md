@@ -1,5 +1,7 @@
 # Foundry IQ Demo Suite
 
+[![Deployed on Vercel](https://img.shields.io/badge/Vercel-Deployed-black?style=flat&logo=vercel)](https://private-foundry-iq-task.vercel.app)
+
 Azure AI Search (Foundry IQ) Knowledge Retrieval demo app.
 Visualize the Agentic RAG pipeline (Plan → Retrieve → Assess → Synthesize)
 and switch between industry-specific Knowledge Bases in real time.
