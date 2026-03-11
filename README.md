@@ -79,9 +79,14 @@ types/         → TypeScript definitions
 public/        → Static assets
 ```
 
-Microsoft GBB AI Apps 
+## 👤 Author
+**Hyeonsang Jeon**  
+Sr. Solution Engineer · Global Black Belt — AI Apps | Microsoft Asia, Korea  
+
+## 📄 License
+MIT — See [LICENSE](LICENSE) for details.
 
 ## Reference
-Phase1 Based on [farzad528/foundry-iq-demo](https://github.com/farzad528/foundry-iq-demo) (MIT License).
+Phase1 Based on [farzad528/foundry-iq-demo] (MIT License).
 
 
