@@ -20,6 +20,10 @@ export interface ConversationStarter {
   prompt: string
   complexity: StarterComplexity
   tags?: string[]
+  /** Optional image URL (blob SAS) to deterministically inject when this starter is clicked */
+  imageUrl?: string
+  /** Alt text for the starter image */
+  imageAlt?: string
 }
 
 export interface ConversationStarterSet {

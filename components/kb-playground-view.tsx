@@ -15,7 +15,7 @@ import { MCPToolCallDisplay } from '@/components/mcp-tool-call-display'
 import { RuntimeSettingsPanel } from '@/components/runtime-settings-panel'
 import { fetchKnowledgeBases, fetchKnowledgeSources, retrieveFromKnowledgeBase } from '../lib/api'
 import { KBViewCodeModal } from '@/components/kb-view-code-modal'
-import { useConversationStarters } from '@/lib/conversationStarters'
+import { useConversationStarters, conversationStarterRegistry } from '@/lib/conversationStarters'
 import { cn, formatRelativeTime, cleanTextSnippet } from '@/lib/utils'
 import { TraceExplorer } from '@/components/trace-explorer'
 import { InsightPopup, INSIGHT_STEPS } from '@/components/insight-popup'
@@ -55,7 +55,7 @@ type KnowledgeAgent = {
 
 type MessageContent =
   | { type: 'text'; text: string }
-  | { type: 'image'; image: { url: string } }
+  | { type: 'image'; image: { url: string; alt?: string } }
 
 /** Rewrite Azure Blob URLs through our API proxy to hide SAS tokens from the client */
 function proxyBlobUrl(url: string): string {
@@ -63,6 +63,23 @@ function proxyBlobUrl(url: string): string {
     return `/api/blob-image?url=${encodeURIComponent(url)}`
   }
   return url
+}
+
+/** Look up a ConversationStarter by ID across all registry sets */
+function findStarterById(id: string) {
+  for (const set of conversationStarterRegistry) {
+    const found = set.starters.find(s => s.id === id)
+    if (found) return found
+  }
+  return null
+}
+
+/** Strip markdown image syntax and [IMAGE_URL: ...] blocks from text */
+function stripImagesFromText(text: string): string {
+  return text
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+    .replace(/\[IMAGE_URL:\s*[^\]]+\]/g, '')
+    .trim()
 }
 
 /** Parse markdown image syntax ![alt](url) and [IMAGE_URL: url] from text into mixed content */
@@ -196,6 +213,11 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
     retrievalInstructions: '',
     knowledgeSourceParams: []
   })
+
+  /** Tracks the ID of the conversation starter that was last clicked.
+   *  Used to inject the starter-mapped image deterministically instead of
+   *  relying on the non-deterministic image_url returned by Agentic Retrieval. */
+  const [activeStarterId, setActiveStarterId] = useState<string | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -548,18 +570,47 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         activity: response.activity
       })
 
+      // Capture and clear the active starter ID before async state updates
+      const capturedStarterId = activeStarterId
+      setActiveStarterId(null)
+
       let contentItems: MessageContent[] = []
       if (response.response && response.response.length > 0) {
         const rc = response.response[0].content || []
         for (const c of rc) {
-          if ((c as any).type === 'image' && (c as any).image?.url) {
-            contentItems.push({ type: 'image', image: { url: proxyBlobUrl((c as any).image.url) } })
+          if (capturedStarterId) {
+            // For starter-triggered requests: strip KB-returned images (non-deterministic)
+            // and accumulate text only; the starter image will be prepended below.
+            if ((c as any).type !== 'image') {
+              const text = (c as any).text || ''
+              if (text) {
+                const cleaned = stripImagesFromText(text)
+                if (cleaned) contentItems.push({ type: 'text', text: cleaned })
+              }
+            }
           } else {
-            const text = (c as any).text || ''
-            if (text) contentItems.push(...parseImagesFromText(text))
+            // Free-text requests: keep existing behaviour (images + text as-is)
+            if ((c as any).type === 'image' && (c as any).image?.url) {
+              contentItems.push({ type: 'image', image: { url: proxyBlobUrl((c as any).image.url) } })
+            } else {
+              const text = (c as any).text || ''
+              if (text) contentItems.push(...parseImagesFromText(text))
+            }
           }
         }
       }
+
+      // Prepend the starter-mapped image when a starter was clicked
+      if (capturedStarterId) {
+        const starter = findStarterById(capturedStarterId)
+        if (starter?.imageUrl) {
+          contentItems.unshift({
+            type: 'image',
+            image: { url: proxyBlobUrl(starter.imageUrl), alt: starter.imageAlt }
+          })
+        }
+      }
+
       if (contentItems.length === 0) {
         contentItems = [{ type: 'text', text: 'I apologize, but I was unable to generate a response.' }]
       }
@@ -649,6 +700,9 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || !selectedAgent || isLoading) return
+
+    // Free-text submission always clears any pending starter ID
+    setActiveStarterId(null)
 
     const contentParts: MessageContent[] = [{ type: 'text', text: input }]
 
@@ -949,7 +1003,17 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
                       <Card
                         key={idx}
                         className={cn('relative cursor-pointer hover:elevation-sm hover:scale-105 transition-all duration-150 bg-bg-card border border-stroke-divider active:scale-95')}
-                        onClick={() => { setInput(s.prompt); textareaRef.current?.focus() }}
+                        onClick={() => {
+                          if (s.imageUrl) {
+                            // Starter has a mapped image — use deterministic app-level injection
+                            setActiveStarterId(s.id)
+                            sendPrompt(s.prompt)
+                          } else {
+                            // No mapped image — populate input field as before
+                            setInput(s.prompt)
+                            textareaRef.current?.focus()
+                          }
+                        }}
                       >
                         <CardContent className="p-4 text-left space-y-2">
                           <div className="flex items-center justify-between">
@@ -1202,18 +1266,20 @@ function MessageBubble({ message, agent, showCostEstimates, onOpenSources }: {
           <div className="prose prose-sm max-w-none space-y-3 overflow-x-auto">
             {message.content.map((content, index) => {
               if (content.type === 'image') {
+                const altText = content.image.alt || 'NASA satellite observation'
+                const caption = content.image.alt || 'NASA Earth Observation — click to enlarge'
                 return (
                   <div key={index} className="my-4 group relative">
                     <div className="rounded-xl overflow-hidden border border-glass-border shadow-md hover:shadow-xl transition-shadow duration-300 bg-bg-elevated">
                       <img
                         src={content.image.url}
-                        alt="NASA satellite observation"
+                        alt={altText}
                         className="w-full max-h-[32rem] object-contain cursor-pointer transition-transform duration-300 group-hover:scale-[1.02]"
                         loading="lazy"
                         onClick={() => window.open(content.image.url, '_blank')}
                       />
                     </div>
-                    <p className="mt-1.5 text-[11px] text-fg-subtle text-center">NASA Earth Observation — click to enlarge</p>
+                    <p className="mt-1.5 text-[11px] text-fg-subtle text-center">{caption} — click to enlarge</p>
                   </div>
                 )
               }

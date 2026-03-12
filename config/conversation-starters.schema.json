@@ -25,7 +25,8 @@
         "prompt": { "type": "string" },
         "complexity": { "type": "string", "enum": ["Simple", "Moderate", "Advanced"] },
         "tags": { "type": "array", "items": { "type": "string" } },
-        "imageUrl": { "type": "string" }
+        "imageUrl": { "type": "string", "format": "uri", "description": "Optional image URL to display with the response for this starter" },
+        "imageAlt": { "type": "string", "description": "Alt text for the starter image" }
       },
       "additionalProperties": false
     },
