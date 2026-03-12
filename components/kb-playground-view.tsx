@@ -214,10 +214,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
     knowledgeSourceParams: []
   })
 
-  /** Tracks the ID of the conversation starter that was last clicked.
-   *  Used to inject the starter-mapped image deterministically instead of
-   *  relying on the non-deterministic image_url returned by Agentic Retrieval. */
-  const [activeStarterId, setActiveStarterId] = useState<string | null>(null)
+
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -471,7 +468,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       .filter(Boolean)
   }
 
-  const sendPrompt = async (prompt: string) => {
+  const sendPrompt = async (prompt: string, starterId?: string | null) => {
     if (!selectedAgent || isLoading) return
 
     const contentParts: MessageContent[] = [{ type: 'text', text: prompt }]
@@ -570,9 +567,8 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         activity: response.activity
       })
 
-      // Capture and clear the active starter ID before async state updates
-      const capturedStarterId = activeStarterId
-      setActiveStarterId(null)
+      // Use the starterId passed directly as a parameter — avoids stale state reads
+      const capturedStarterId = starterId ?? null
 
       let contentItems: MessageContent[] = []
       if (response.response && response.response.length > 0) {
@@ -700,9 +696,6 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || !selectedAgent || isLoading) return
-
-    // Free-text submission always clears any pending starter ID
-    setActiveStarterId(null)
 
     const contentParts: MessageContent[] = [{ type: 'text', text: input }]
 
@@ -1005,9 +998,8 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
                         className={cn('relative cursor-pointer hover:elevation-sm hover:scale-105 transition-all duration-150 bg-bg-card border border-stroke-divider active:scale-95')}
                         onClick={() => {
                           if (s.imageUrl) {
-                            // Starter has a mapped image — use deterministic app-level injection
-                            setActiveStarterId(s.id)
-                            sendPrompt(s.prompt)
+                            // Starter has a mapped image — pass starterId directly to avoid stale state
+                            sendPrompt(s.prompt, s.id)
                           } else {
                             // No mapped image — populate input field as before
                             setInput(s.prompt)
