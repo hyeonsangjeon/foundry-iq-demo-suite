@@ -23,7 +23,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden host' }, { status: 403 })
     }
 
-    const res = await fetch(url)
+    // Append SAS token for Blob authentication (Public Access blocked by Azure Policy)
+    // Skip if URL already contains a per-blob SAS signature to avoid parameter conflicts
+    const sasToken = process.env.AZURE_BLOB_SAS_TOKEN || ''
+    const authenticatedUrl = (sasToken && !url.includes('sig='))
+      ? (url.includes('?') ? `${url}&${sasToken.replace(/^\?/, '')}` : `${url}${sasToken}`)
+      : url
+
+    const res = await fetch(authenticatedUrl)
     if (!res.ok) {
       return NextResponse.json({ error: 'Upstream fetch failed' }, { status: res.status })
     }
