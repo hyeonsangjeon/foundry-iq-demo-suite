@@ -951,7 +951,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         </div>
 
         {activeTab === 'explorer' ? (
-          <DataExplorer />
+          <DataExplorer agentId={selectedAgent?.id} />
         ) : (
         <>
         {/* Messages */}
