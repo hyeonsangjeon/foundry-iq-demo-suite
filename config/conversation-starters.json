@@ -353,6 +353,53 @@
           "tags": ["multi-source", "measurement", "impact"]
         }
       ]
+    },
+    {
+      "agentIds": ["idfc-banking-kb"],
+      "starters": [
+        {
+          "id": "idfc-retail-deposit",
+          "label": "Retail Deposit Growth",
+          "prompt": "What drove the increase in IDFC First Bank's retail deposit share in FY25?",
+          "complexity": "Simple",
+          "tags": ["banking", "deposits"]
+        },
+        {
+          "id": "idfc-nim-casa",
+          "label": "NIM & CASA Trends",
+          "prompt": "Summarize key changes in NIM, CASA ratio, and asset quality from Q3 FY26.",
+          "complexity": "Moderate",
+          "tags": ["banking", "metrics"]
+        },
+        {
+          "id": "idfc-branches",
+          "label": "Branch Network",
+          "prompt": "How many branches does IDFC First Bank operate, and what is the expansion strategy?",
+          "complexity": "Simple",
+          "tags": ["banking", "operations"]
+        },
+        {
+          "id": "idfc-rbi-auth",
+          "label": "RBI Auth Deadline",
+          "prompt": "What must banks implement before April 1, 2026 under RBI's digital payment authentication directions?",
+          "complexity": "Advanced",
+          "tags": ["regulation", "compliance"]
+        },
+        {
+          "id": "idfc-fintech",
+          "label": "Fintech Partnerships",
+          "prompt": "What risk-based authentication methods does RBI allow beyond traditional OTP for digital payments?",
+          "complexity": "Moderate",
+          "tags": ["regulation", "fintech"]
+        },
+        {
+          "id": "idfc-cross",
+          "label": "Strategy & Regulation",
+          "prompt": "How should IDFC align its digital strategy with RBI's evolving authentication and lending regulations?",
+          "complexity": "Advanced",
+          "tags": ["multi-source", "strategy"]
+        }
+      ]
     }
   ]
 }
