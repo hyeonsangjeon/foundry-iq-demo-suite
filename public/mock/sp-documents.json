@@ -1,0 +1,27 @@
+{
+  "documents": [
+    { "id": "doc-01", "name": "Q3-Earnings-Report.pdf", "type": "pdf", "size": 2202009, "lastModified": "2025-10-15T09:30:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Q3-Earnings-Report.pdf", "status": "pending", "chunks": null },
+    { "id": "doc-02", "name": "Annual-Review-2025.docx", "type": "docx", "size": 1887436, "lastModified": "2025-12-01T14:00:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Annual-Review-2025.docx", "status": "pending", "chunks": null },
+    { "id": "doc-03", "name": "Investment-Guide.pdf", "type": "pdf", "size": 3355443, "lastModified": "2025-09-20T11:15:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Investment-Guide.pdf", "status": "pending", "chunks": null },
+    { "id": "doc-04", "name": "Tax-Policy-Summary.docx", "type": "docx", "size": 943718, "lastModified": "2025-11-10T08:45:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Tax-Policy-Summary.docx", "status": "pending", "chunks": null },
+    { "id": "doc-05", "name": "Revenue-Analysis.xlsx", "type": "xlsx", "size": 1153433, "lastModified": "2025-10-28T16:20:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Revenue-Analysis.xlsx", "status": "pending", "chunks": null },
+    { "id": "doc-06", "name": "Compliance-Manual.pdf", "type": "pdf", "size": 4718592, "lastModified": "2025-08-05T10:00:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Compliance-Manual.pdf", "status": "pending", "chunks": null },
+    { "id": "doc-07", "name": "Board-Meeting-Minutes.docx", "type": "docx", "size": 524288, "lastModified": "2025-11-25T13:30:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Board-Meeting-Minutes.docx", "status": "pending", "chunks": null },
+    { "id": "doc-08", "name": "Budget-Forecast-2026.xlsx", "type": "xlsx", "size": 2097152, "lastModified": "2025-12-10T15:45:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Budget-Forecast-2026.xlsx", "status": "pending", "chunks": null },
+    { "id": "doc-09", "name": "Risk-Assessment-Report.pdf", "type": "pdf", "size": 1572864, "lastModified": "2025-09-30T09:00:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Risk-Assessment-Report.pdf", "status": "pending", "chunks": null },
+    { "id": "doc-10", "name": "ESG-Sustainability-Report.pdf", "type": "pdf", "size": 3145728, "lastModified": "2025-10-05T11:00:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/ESG-Sustainability-Report.pdf", "status": "pending", "chunks": null },
+    { "id": "doc-11", "name": "Quarterly-Dividend-Policy.docx", "type": "docx", "size": 786432, "lastModified": "2025-11-15T08:30:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Quarterly-Dividend-Policy.docx", "status": "pending", "chunks": null },
+    { "id": "doc-12", "name": "M-and-A-Due-Diligence.pdf", "type": "pdf", "size": 5242880, "lastModified": "2025-07-20T14:15:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/M-and-A-Due-Diligence.pdf", "status": "pending", "chunks": null },
+    { "id": "doc-13", "name": "Internal-Audit-Findings.pdf", "type": "pdf", "size": 1048576, "lastModified": "2025-10-22T10:30:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Internal-Audit-Findings.pdf", "status": "pending", "chunks": null },
+    { "id": "doc-14", "name": "Capital-Allocation-Strategy.pptx", "type": "pptx", "size": 4194304, "lastModified": "2025-11-01T16:00:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Capital-Allocation-Strategy.pptx", "status": "pending", "chunks": null },
+    { "id": "doc-15", "name": "Regulatory-Filing-10K.pdf", "type": "pdf", "size": 6291456, "lastModified": "2025-08-15T09:45:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Regulatory-Filing-10K.pdf", "status": "pending", "chunks": null },
+    { "id": "doc-16", "name": "Employee-Stock-Options.docx", "type": "docx", "size": 629145, "lastModified": "2025-09-10T13:00:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Employee-Stock-Options.docx", "status": "pending", "chunks": null },
+    { "id": "doc-17", "name": "Vendor-Payment-Terms.xlsx", "type": "xlsx", "size": 838860, "lastModified": "2025-10-18T07:30:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Vendor-Payment-Terms.xlsx", "status": "pending", "chunks": null },
+    { "id": "doc-18", "name": "Cash-Flow-Projection.pdf", "type": "pdf", "size": 1835008, "lastModified": "2025-12-05T12:15:00Z", "webUrl": "https://contoso.sharepoint.com/sites/finance-docs/Cash-Flow-Projection.pdf", "status": "pending", "chunks": null }
+  ],
+  "summary": {
+    "totalDocuments": 18,
+    "totalSizeBytes": 42467934,
+    "supportedFormats": ["PDF", "DOCX", "XLSX", "PPTX"]
+  }
+}
