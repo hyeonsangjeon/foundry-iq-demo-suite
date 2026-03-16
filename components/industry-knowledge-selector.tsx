@@ -13,7 +13,8 @@ import {
   Building20Regular,
   Globe20Regular,
   ShieldCheckmark20Regular,
-  EarthLeaf20Regular
+  EarthLeaf20Regular,
+  BuildingBank20Regular
 } from '@fluentui/react-icons'
 import { useRouter } from 'next/navigation'
 
@@ -116,6 +117,17 @@ const INDUSTRY_KNOWLEDGE_BASES: IndustryKnowledgeBase[] = [
     iconBg: 'bg-emerald-500/10',
     iconColor: 'text-emerald-600 dark:text-emerald-400',
     agentName: 'sustainable-ai-kb',
+    available: true
+  },
+  {
+    id: 'idfc-banking',
+    name: 'Banking (IDFC)',
+    industry: 'Banking & Financial Services (India)',
+    description: 'IDFC First Bank + RBI Regulations — India BFSI',
+    icon: BuildingBank20Regular,
+    iconBg: 'bg-amber-500/10',
+    iconColor: 'text-amber-600 dark:text-amber-400',
+    agentName: 'idfc-banking-kb',
     available: true
   }
 ]
