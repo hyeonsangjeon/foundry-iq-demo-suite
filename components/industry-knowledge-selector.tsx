@@ -14,7 +14,8 @@ import {
   Globe20Regular,
   ShieldCheckmark20Regular,
   EarthLeaf20Regular,
-  BuildingBank20Regular
+  BuildingBank20Regular,
+  DocumentMultiple20Regular,
 } from '@fluentui/react-icons'
 import { useRouter } from 'next/navigation'
 
@@ -128,6 +129,17 @@ const INDUSTRY_KNOWLEDGE_BASES: IndustryKnowledgeBase[] = [
     iconBg: 'bg-amber-500/10',
     iconColor: 'text-amber-600 dark:text-amber-400',
     agentName: 'idfc-banking-kb',
+    available: true
+  },
+  {
+    id: 'sharepoint-finance',
+    name: 'SharePoint Finance KB',
+    industry: 'Enterprise Documents',
+    description: 'Finance documents indexed from SharePoint — earnings reports, compliance manuals, regulatory filings',
+    icon: DocumentMultiple20Regular,
+    iconBg: 'bg-violet-500/10',
+    iconColor: 'text-violet-600 dark:text-violet-400',
+    agentName: 'finance-knowledge-base',
     available: true
   }
 ]

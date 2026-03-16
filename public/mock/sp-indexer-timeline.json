@@ -1,0 +1,17 @@
+{
+  "totalDurationMs": 40000,
+  "stages": [
+    { "name": "extract", "label": "Extract Content", "icon": "extract", "startMs": 0, "endMs": 10000, "description": "Extracting text and metadata from documents" },
+    { "name": "chunk", "label": "Chunk Text", "icon": "chunk", "startMs": 10000, "endMs": 20000, "description": "Splitting into 2000-char chunks with 500-char overlap" },
+    { "name": "embed", "label": "Generate Embeddings", "icon": "embed", "startMs": 20000, "endMs": 30000, "description": "Creating 1536-dim vectors with text-embedding-3-large" },
+    { "name": "index", "label": "Index Documents", "icon": "index", "startMs": 30000, "endMs": 40000, "description": "Loading vectors and metadata into search index" }
+  ],
+  "documentChunks": {
+    "doc-01": 6, "doc-02": 4, "doc-03": 8, "doc-04": 3,
+    "doc-05": 2, "doc-06": 12, "doc-07": 2, "doc-08": 3,
+    "doc-09": 5, "doc-10": 9, "doc-11": 3, "doc-12": 14,
+    "doc-13": 4, "doc-14": 7, "doc-15": 16, "doc-16": 2,
+    "doc-17": 2, "doc-18": 5
+  },
+  "totalChunks": 107
+}
