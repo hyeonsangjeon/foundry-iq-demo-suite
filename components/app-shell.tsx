@@ -13,7 +13,8 @@ import {
   ArrowUpRight16Regular,
   Apps20Regular,
   People20Regular,
-  Home20Regular
+  Home20Regular,
+  DocumentMultiple20Regular,
 } from '@fluentui/react-icons'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -31,6 +32,7 @@ const navigation: NavItem[] = [
   { href: '/', label: 'Home', icon: Home20Regular },
   { href: '/test', label: 'Foundry IQ', icon: Search20Regular },
   { href: '/knowledge', label: 'Knowledge', icon: Database20Regular },
+  { href: '/sharepoint', label: 'SharePoint', icon: DocumentMultiple20Regular },
 ]
 
 interface AppShellProps {

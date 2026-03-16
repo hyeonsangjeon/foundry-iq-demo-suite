@@ -6,6 +6,7 @@ import { X } from 'lucide-react'
 import { KnowledgeBaseReference, KnowledgeBaseActivityRecord } from '@/types/knowledge-retrieval'
 import { RetrievalJourney } from '@/components/retrieval-journey'
 import { cn, cleanTextSnippet } from '@/lib/utils'
+import { Open20Regular } from '@fluentui/react-icons'
 
 /**
  * Get favicon/icon styling for source type
@@ -328,6 +329,30 @@ function SourceItem({ reference, index, messageId }: SourceItemProps) {
           {snippet}
         </p>
       )}
+
+      {/* SharePoint URL Button */}
+      {(reference.type === 'indexedSharePoint' || reference.type === 'remoteSharePoint') && (() => {
+        const spUrl = (reference as any).webUrl || (reference as any).docUrl
+        return spUrl ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              window.open(spUrl, '_blank', 'noopener,noreferrer')
+            }}
+            className={cn(
+              'mt-2 inline-flex items-center gap-1.5',
+              'px-2.5 py-1 rounded-md text-[11px] font-medium',
+              'bg-violet-500/10 border border-violet-500/20',
+              'text-violet-600 dark:text-violet-400',
+              'hover:bg-violet-500/20 hover:border-violet-500/30',
+              'transition-colors duration-150'
+            )}
+          >
+            <Open20Regular className="w-3 h-3" />
+            Open in SharePoint
+          </button>
+        ) : null
+      })()}
     </div>
   )
 }

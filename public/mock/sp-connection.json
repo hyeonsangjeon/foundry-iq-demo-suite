@@ -1,0 +1,19 @@
+{
+  "sharepoint": {
+    "connected": true,
+    "siteUrl": "https://contoso.sharepoint.com/sites/finance-docs",
+    "siteName": "Finance Documents"
+  },
+  "entraApp": {
+    "configured": true,
+    "appName": "SharePoint-AI-Indexer"
+  },
+  "aiSearch": {
+    "connected": true,
+    "serviceName": "srch-foundry-iq-demo"
+  },
+  "embedding": {
+    "ready": true,
+    "model": "text-embedding-3-large"
+  }
+}
