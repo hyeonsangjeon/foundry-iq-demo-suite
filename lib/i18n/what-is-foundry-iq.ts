@@ -33,13 +33,17 @@ export interface I18nData {
   p3_stat: string
   iq_label: string
   iq_title: string
-  iq_desc: string
+  iq1_question: string
   iq1_desc: string
   iq1_tag: string
+  iq2_question: string
   iq2_desc: string
   iq2_tag: string
+  iq3_question: string
   iq3_desc: string
-  iq3_tag: string
+  iq_focus: string
+  ff_title: string
+  ff_desc: string
   cta_title: string
   cta_sub: string
   cta_launch: string
@@ -97,18 +101,18 @@ export const i18n: Record<Lang, I18nData> = {
       'Every answer includes inline citations traced to source documents. Agents reason over raw data — no hallucination, full auditability.',
     p3_stat: 'citation-backed responses',
     iq_label: 'MICROSOFT INTELLIGENCE LAYER',
-    iq_title: 'Where Foundry IQ fits.',
-    iq_desc:
-      'Three IQ workloads provide agents with comprehensive organizational context. Foundry IQ is the knowledge layer — connecting enterprise data with the right permissions.',
-    iq1_desc:
-      'Managed knowledge layer. Connects structured & unstructured data across Azure, SharePoint, OneLake, and the web.',
-    iq1_tag: 'THIS DEMO',
-    iq2_desc:
-      'Semantic intelligence for business data. Ontologies, semantic models, and graphs over OneLake and Power BI.',
-    iq2_tag: 'BUSINESS DATA',
-    iq3_desc:
-      'Contextual intelligence for M365. Collaboration signals from documents, meetings, chats, and workflows.',
-    iq3_tag: 'WORK SIGNALS',
+    iq_title: 'Enterprise AI answers three questions.',
+    iq1_question: 'What do the documents say about this?',
+    iq1_desc: 'Searches KB with agentic retrieval — plans, retrieves, assesses, synthesizes with citations.',
+    iq1_tag: '★ THIS DEMO',
+    iq2_question: 'Where is that data?',
+    iq2_desc: 'Locates and maps data across Data Lake, OneLake, and enterprise sources.',
+    iq2_tag: 'Phase 3',
+    iq3_question: 'Who talked to whom about this yesterday?',
+    iq3_desc: 'Tracks employee activity across Teams, Email, and Graph.',
+    iq_focus: 'This demo deep-dives into the third question — how Foundry IQ searches your knowledge base and synthesizes grounded answers.',
+    ff_title: 'Coming in Phase 3',
+    ff_desc: 'Fabric IQ locates enterprise data → Foundry IQ searches it for answers. Two questions, one pipeline.',
     cta_title: 'See it in action.',
     cta_sub:
       'From Knowledge Base query to Trace visualization — experience the full pipeline.',
@@ -152,17 +156,18 @@ export const i18n: Record<Lang, I18nData> = {
       '모든 답변에 소스 문서 추적 인라인 인용이 포함됩니다. 에이전트가 원시 데이터를 기반으로 추론 — 할루시네이션 없음, 완전한 감사 추적.',
     p3_stat: '인용 기반 응답',
     iq_label: '마이크로소프트 인텔리전스 레이어',
-    iq_title: 'Foundry IQ의 위치.',
-    iq_desc:
-      '세 가지 IQ 워크로드가 에이전트에 종합적인 조직 컨텍스트를 제공합니다. Foundry IQ는 지식 계층으로서 올바른 권한으로 기업 데이터를 연결합니다.',
-    iq1_desc:
-      '관리형 지식 계층. Azure, SharePoint, OneLake, 웹의 정형/비정형 데이터를 연결합니다.',
-    iq1_tag: '이 데모',
-    iq2_desc:
-      '비즈니스 데이터를 위한 시맨틱 인텔리전스. OneLake과 Power BI의 온톨로지, 시맨틱 모델, 그래프.',
-    iq2_tag: '비즈니스 데이터',
-    iq3_desc: 'M365를 위한 컨텍스트 인텔리전스. 문서, 미팅, 채팅, 워크플로의 협업 시그널.',
-    iq3_tag: '업무 시그널',
+    iq_title: '기업 AI는 세 가지 질문에 답한다.',
+    iq1_question: '문서에 뭐라고 써있어?',
+    iq1_desc: 'KB를 에이전틱 검색으로 탐색 — 계획, 검색, 평가, 근거 기반 답변 합성.',
+    iq1_tag: '★ 이 데모',
+    iq2_question: '그 데이터 어디에 있더라?',
+    iq2_desc: 'Data Lake, OneLake, 기업 소스에서 데이터를 찾고 매핑.',
+    iq2_tag: 'Phase 3',
+    iq3_question: '어제 누가 이 건으로 누구랑 얘기했지?',
+    iq3_desc: 'Teams, Email, Graph에서 직원 활동을 추적.',
+    iq_focus: '이 데모는 세 번째 질문에 집중한다 — Foundry IQ가 KB를 검색하고 근거 기반 답변을 합성하는 과정.',
+    ff_title: 'Phase 3 예정',
+    ff_desc: 'Fabric IQ가 기업 데이터를 찾으면 → Foundry IQ가 거기서 답을 검색한다. 두 질문, 하나의 파이프라인.',
     cta_title: '직접 체험해보세요.',
     cta_sub: 'Knowledge Base 쿼리부터 Trace 시각화까지 — 전체 파이프라인을 경험하세요.',
     cta_launch: '데모 시작하기',
@@ -205,17 +210,18 @@ export const i18n: Record<Lang, I18nData> = {
       '每个答案都附带追溯到源文档的内联引用。智能体基于原始数据推理 — 无幻觉，完全可审计。',
     p3_stat: '引用支持的响应',
     iq_label: '微软智能层',
-    iq_title: 'Foundry IQ 的定位。',
-    iq_desc:
-      '三个 IQ 工作负载为智能体提供全面的组织上下文。Foundry IQ 是知识层 — 以正确的权限连接企业数据。',
-    iq1_desc:
-      '托管知识层。连接 Azure、SharePoint、OneLake 和网络上的结构化和非结构化数据。',
-    iq1_tag: '本演示',
-    iq2_desc:
-      '面向业务数据的语义智能。OneLake 和 Power BI 上的本体、语义模型和图谱。',
-    iq2_tag: '业务数据',
-    iq3_desc: '面向 M365 的上下文智能。来自文档、会议、聊天和工作流的协作信号。',
-    iq3_tag: '工作信号',
+    iq_title: '企业AI回答三个问题。',
+    iq1_question: '文档里关于这个怎么说？',
+    iq1_desc: '通过代理检索搜索知识库——规划、检索、评估、带引用的答案合成。',
+    iq1_tag: '★ 本演示',
+    iq2_question: '那个数据在哪里？',
+    iq2_desc: '在Data Lake、OneLake和企业数据源中定位和映射数据。',
+    iq2_tag: 'Phase 3',
+    iq3_question: '昨天谁跟谁讨论了这件事？',
+    iq3_desc: '跟踪Teams、邮件和Graph中的员工活动。',
+    iq_focus: '本演示深入探讨第三个问题——Foundry IQ如何搜索知识库并合成有据可依的答案。',
+    ff_title: 'Phase 3 即将推出',
+    ff_desc: 'Fabric IQ定位企业数据 → Foundry IQ从中检索答案。两个问题，一条管线。',
     cta_title: '实际体验。',
     cta_sub: '从知识库查询到 Trace 可视化 — 体验完整管道。',
     cta_launch: '启动演示套件',
@@ -252,14 +258,18 @@ export const i18n: Record<Lang, I18nData> = {
     p3_desc: 'すべての回答にソースドキュメントを追跡するインライン引用が含まれます。エージェントが生データに基づいて推論 — ハルシネーションなし、完全な監査追跡。',
     p3_stat: '引用ベースの応答',
     iq_label: 'マイクロソフト インテリジェンスレイヤー',
-    iq_title: 'Foundry IQの位置づけ。',
-    iq_desc: '3つのIQワークロードがエージェントに包括的な組織コンテキストを提供します。Foundry IQはナレッジレイヤーとして、適切な権限でエンタープライズデータを接続します。',
-    iq1_desc: 'マネージドナレッジレイヤー。Azure、SharePoint、OneLake、ウェブの構造化・非構造化データを接続。',
-    iq1_tag: 'このデモ',
-    iq2_desc: 'ビジネスデータ向けセマンティックインテリジェンス。OneLakeとPower BI上のオントロジー、セマンティックモデル、グラフ。',
-    iq2_tag: 'ビジネスデータ',
-    iq3_desc: 'M365向けコンテキストインテリジェンス。ドキュメント、会議、チャット、ワークフローからの協業シグナル。',
-    iq3_tag: 'ワークシグナル',
+    iq_title: 'エンタープライズAIは3つの質問に答える。',
+    iq1_question: 'ドキュメントにはこれについて何と書いてある？',
+    iq1_desc: 'エージェンティック検索でKBを探索 — 計画、検索、評価、引用付き回答合成。',
+    iq1_tag: '★ このデモ',
+    iq2_question: 'そのデータはどこにある？',
+    iq2_desc: 'Data Lake、OneLake、エンタープライズソースでデータを検索・マッピング。',
+    iq2_tag: 'Phase 3',
+    iq3_question: '昨日誰がこの件で誰と話した？',
+    iq3_desc: 'Teams、Email、Graphで従業員アクティビティを追跡。',
+    iq_focus: 'このデモは3つ目の質問に特化 — Foundry IQがKBを検索し根拠ある回答を合成する過程。',
+    ff_title: 'Phase 3で予定',
+    ff_desc: 'Fabric IQがエンタープライズデータを見つけ → Foundry IQがそこから回答を検索。2つの質問、1つのパイプライン。',
     cta_title: '実際に体験してください。',
     cta_sub: 'ナレッジベースクエリからTrace可視化まで — 完全なパイプラインを体験。',
     cta_launch: 'デモスイートを起動',
@@ -302,17 +312,18 @@ export const i18n: Record<Lang, I18nData> = {
       'हर उत्तर सोर्स डॉक्यूमेंट्स से ट्रेस किए गए इनलाइन साइटेशन के साथ। एजेंट्स रॉ डेटा पर रीज़न करते हैं — कोई हैलुसिनेशन नहीं।',
     p3_stat: 'साइटेशन-बैक्ड रिस्पॉन्सेज़',
     iq_label: 'माइक्रोसॉफ्ट इंटेलिजेंस लेयर',
-    iq_title: 'Foundry IQ कहाँ फिट होता है।',
-    iq_desc:
-      'तीन IQ वर्कलोड एजेंट्स को संगठनात्मक कॉन्टेक्स्ट प्रदान करते हैं। Foundry IQ नॉलेज लेयर है — सही परमिशन से एंटरप्राइज़ डेटा कनेक्ट करता है।',
-    iq1_desc:
-      'मैनेज्ड नॉलेज लेयर। Azure, SharePoint, OneLake, वेब पर डेटा कनेक्ट करता है।',
-    iq1_tag: 'यह डेमो',
-    iq2_desc:
-      'बिज़नेस डेटा के लिए सिमैंटिक इंटेलिजेंस। OneLake और Power BI पर ऑन्टोलॉजीज़ और ग्राफ्स।',
-    iq2_tag: 'बिज़नेस डेटा',
-    iq3_desc: 'M365 के लिए कॉन्टेक्स्चुअल इंटेलिजेंस। डॉक्यूमेंट्स, मीटिंग्स, चैट्स से सिग्नल्स।',
-    iq3_tag: 'वर्क सिग्नल्स',
+    iq_title: 'एंटरप्राइज़ AI तीन सवालों का जवाब देता है।',
+    iq1_question: 'इस बारे में दस्तावेज़ में क्या लिखा है?',
+    iq1_desc: 'एजेंटिक रिट्रीवल से KB खोजता है — योजना, खोज, मूल्यांकन, उद्धरण सहित उत्तर।',
+    iq1_tag: '★ यह डेमो',
+    iq2_question: 'वह डेटा कहाँ है?',
+    iq2_desc: 'Data Lake, OneLake और एंटरप्राइज़ स्रोतों में डेटा ढूंढता है।',
+    iq2_tag: 'Phase 3',
+    iq3_question: 'कल इस बारे में किसने किससे बात की?',
+    iq3_desc: 'Teams, Email और Graph में कर्मचारी गतिविधि को ट्रैक करता है।',
+    iq_focus: 'यह डेमो तीसरे सवाल पर केंद्रित है — Foundry IQ कैसे नॉलेज बेस खोजता है और प्रमाण-आधारित उत्तर बनाता है।',
+    ff_title: 'Phase 3 में आने वाला',
+    ff_desc: 'Fabric IQ एंटरप्राइज़ डेटा ढूंढता है → Foundry IQ उसमें से जवाब खोजता है। दो सवाल, एक पाइपलाइन।',
     cta_title: 'एक्शन में देखें।',
     cta_sub: 'नॉलेज बेस क्वेरी से Trace विज़ुअलाइज़ेशन तक — पूरी पाइपलाइन अनुभव करें।',
     cta_launch: 'डेमो सुइट लॉन्च',
