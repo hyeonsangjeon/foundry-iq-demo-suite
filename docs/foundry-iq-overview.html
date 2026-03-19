@@ -272,6 +272,122 @@ body { min-height: 100vh; position: relative; }
 .iq-item.active-iq .iq-tag { background: rgba(77,166,255,0.12); color: var(--accent-blue); }
 .iq-item:not(.active-iq) .iq-tag { background: rgba(255,255,255,0.04); color: var(--text-tertiary); }
 
+/* ===== 3 IQ RENEWAL ===== */
+.iq-question {
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+.iq-question::before { content: '\201C'; }
+.iq-question::after { content: '\201D'; }
+
+.iq-item:not(.active-iq) {
+  opacity: 0.6;
+  border-style: dashed;
+  border-width: 1.5px;
+}
+.iq-item.fabric-iq {
+  opacity: 0.7;
+}
+
+/* === Flow container === */
+.iq-flow-container {
+  position: relative;
+  width: 100%;
+}
+
+.iq-flow-svg {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  transform: translateY(-50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.iq-strip {
+  position: relative;
+  z-index: 1;
+}
+
+/* === Flow paths === */
+.flow-path {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.flow-dimmed {
+  stroke: var(--glass-border, rgba(255,255,255,0.15));
+  opacity: 0.4;
+}
+
+.flow-active {
+  stroke: var(--accent-blue, #4da6ff);
+  opacity: 0.8;
+  filter: drop-shadow(0 0 6px var(--accent-blue, #4da6ff));
+}
+
+.flow-particles {
+  stroke: var(--accent-blue, #4da6ff);
+  stroke-width: 3;
+  opacity: 0.9;
+  stroke-dasharray: 4 20;
+  animation: flowPulse 2s linear infinite;
+}
+
+@keyframes flowPulse {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -48; }
+}
+
+.flow-arrow {
+  fill: var(--accent-blue, #4da6ff);
+  filter: drop-shadow(0 0 4px var(--accent-blue, #4da6ff));
+}
+.flow-arrow-dim {
+  fill: var(--glass-border, rgba(255,255,255,0.15));
+  opacity: 0.4;
+}
+
+.iq-flow-container:not(.visible) .flow-particles {
+  animation-play-state: paused;
+}
+.iq-flow-container.visible .flow-particles {
+  animation-play-state: running;
+}
+
+/* === Zone B: Focus text === */
+.iq-focus-text {
+  text-align: center;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-top: 24px;
+}
+
+/* === Zone C: Fabric→Foundry banner === */
+.fabric-foundry-banner {
+  margin-top: 32px;
+  padding: 20px 24px;
+  border: 1px dashed var(--glass-border);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.banner-icon { font-size: 1.5rem; }
+.banner-text strong { color: var(--text-primary); }
+.banner-text p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+
 /* ===== CTA ===== */
 .cta-section { padding: 100px 0 60px; text-align: center; }
 .cta-section h2 { font-size: clamp(26px, 3.2vw, 40px); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 20px; }
@@ -307,6 +423,25 @@ body { min-height: 100vh; position: relative; }
   .hero { padding-top: 100px; min-height: auto; padding-bottom: 60px; }
   .hero-cta-row { flex-direction: column; }
   .nav-title { display: none; }
+  .iq-flow-svg {
+    display: none;
+  }
+  .iq-strip {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .iq-item:not(:last-child)::after {
+    content: '';
+    display: block;
+    width: 2px;
+    height: 24px;
+    margin: 8px auto 0;
+    background: var(--glass-border, rgba(255,255,255,0.15));
+  }
+  .iq-item.fabric-iq::after {
+    background: var(--accent-blue, #4da6ff);
+    box-shadow: 0 0 6px var(--accent-blue, #4da6ff);
+  }
 }
 </style>
 </head>
@@ -438,23 +573,62 @@ body { min-height: 100vh; position: relative; }
     <div class="reveal">
       <div class="section-label" data-i18n="iq_label"></div>
       <h2 class="section-title" data-i18n="iq_title"></h2>
-      <p class="section-desc" data-i18n="iq_desc"></p>
     </div>
-    <div class="iq-strip reveal">
-      <div class="iq-item active-iq">
-        <div class="iq-name">Foundry IQ</div>
-        <p class="iq-desc" data-i18n="iq1_desc"></p>
-        <span class="iq-tag" data-i18n="iq1_tag"></span>
+
+    <!-- Zone A: 3IQ Flow Cards -->
+    <div class="iq-flow-container reveal">
+      <svg class="iq-flow-svg" viewBox="0 0 1000 60" preserveAspectRatio="none"
+           xmlns="http://www.w3.org/2000/svg">
+        <!-- Work → Fabric: dashed dimmed -->
+        <path class="flow-path flow-dimmed"
+              d="M 310 30 L 345 30"
+              stroke-dasharray="8 6" />
+        <!-- Fabric → Foundry: solid + glow -->
+        <path class="flow-path flow-active"
+              d="M 655 30 L 690 30" />
+        <!-- Fabric → Foundry: particle animation layer -->
+        <path class="flow-path flow-particles"
+              d="M 655 30 L 690 30"
+              stroke-dasharray="4 20" />
+        <!-- Arrow head: Fabric→Foundry -->
+        <polygon class="flow-arrow" points="690,22 706,30 690,38" />
+        <!-- Arrow head: Work→Fabric (dimmed) -->
+        <polygon class="flow-arrow-dim" points="345,25 355,30 345,35" />
+      </svg>
+
+      <div class="iq-strip">
+        <!-- Work IQ (dimmed) -->
+        <div class="iq-item">
+          <div class="iq-name">Work IQ</div>
+          <p class="iq-question" data-i18n="iq3_question"></p>
+          <p class="iq-desc" data-i18n="iq3_desc"></p>
+        </div>
+        <!-- Fabric IQ (dimmed + Phase 3) -->
+        <div class="iq-item fabric-iq">
+          <div class="iq-name">Fabric IQ</div>
+          <p class="iq-question" data-i18n="iq2_question"></p>
+          <p class="iq-desc" data-i18n="iq2_desc"></p>
+          <span class="iq-tag" data-i18n="iq2_tag"></span>
+        </div>
+        <!-- Foundry IQ (active) -->
+        <div class="iq-item active-iq">
+          <div class="iq-name">Foundry IQ</div>
+          <p class="iq-question" data-i18n="iq1_question"></p>
+          <p class="iq-desc" data-i18n="iq1_desc"></p>
+          <span class="iq-tag" data-i18n="iq1_tag"></span>
+        </div>
       </div>
-      <div class="iq-item">
-        <div class="iq-name">Fabric IQ</div>
-        <p class="iq-desc" data-i18n="iq2_desc"></p>
-        <span class="iq-tag" data-i18n="iq2_tag"></span>
-      </div>
-      <div class="iq-item">
-        <div class="iq-name">Work IQ</div>
-        <p class="iq-desc" data-i18n="iq3_desc"></p>
-        <span class="iq-tag" data-i18n="iq3_tag"></span>
+    </div>
+
+    <!-- Zone B: Focus text -->
+    <p class="iq-focus-text reveal" data-i18n="iq_focus"></p>
+
+    <!-- Zone C: Fabric→Foundry banner -->
+    <div class="fabric-foundry-banner reveal">
+      <div class="banner-icon" aria-hidden="true">🔗</div>
+      <div class="banner-text">
+        <strong data-i18n="ff_title"></strong>
+        <p data-i18n="ff_desc"></p>
       </div>
     </div>
   </div>
@@ -509,12 +683,18 @@ const i18n = {
     p2_stat: "RAG answer quality improvement",
     p3_title: "Grounded Answers", p3_desc: "Every answer includes inline citations traced to source documents. Agents reason over raw data — no hallucination, full auditability.",
     p3_stat: "citation-backed responses",
-    iq_label: "MICROSOFT INTELLIGENCE LAYER", iq_title: "Where Foundry IQ fits.",
-    iq_desc: "Three IQ workloads provide agents with comprehensive organizational context. Foundry IQ is the knowledge layer — connecting enterprise data with the right permissions.",
-    iq1_desc: "Managed knowledge layer. Connects structured & unstructured data across Azure, SharePoint, OneLake, and the web.",
-    iq1_tag: "THIS DEMO", iq2_desc: "Semantic intelligence for business data. Ontologies, semantic models, and graphs over OneLake and Power BI.",
-    iq2_tag: "BUSINESS DATA", iq3_desc: "Contextual intelligence for M365. Collaboration signals from documents, meetings, chats, and workflows.",
-    iq3_tag: "WORK SIGNALS",
+    iq_label: "MICROSOFT INTELLIGENCE LAYER", iq_title: "Enterprise AI answers three questions.",
+    iq3_question: "Who talked to whom about this yesterday?",
+    iq3_desc: "Tracks employee activity across Teams, Email, and Graph.",
+    iq2_question: "Where is that data?",
+    iq2_desc: "Locates and maps data across Data Lake, OneLake, and enterprise sources.",
+    iq2_tag: "Phase 3",
+    iq1_question: "What do the documents say about this?",
+    iq1_desc: "Searches KB with agentic retrieval — plans, retrieves, assesses, synthesizes with citations.",
+    iq1_tag: "★ THIS DEMO",
+    iq_focus: "This demo deep-dives into the third question — how Foundry IQ searches your knowledge base and synthesizes grounded answers.",
+    ff_title: "Coming in Phase 3",
+    ff_desc: "Fabric IQ locates enterprise data → Foundry IQ searches it for answers. Two questions, one pipeline.",
     cta_title: "See it in action.", cta_sub: "From Knowledge Base query to Trace visualization — experience the full pipeline.",
     cta_launch: "Launch Demo Suite"
   },
@@ -537,12 +717,18 @@ const i18n = {
     p2_stat: "RAG 답변 품질 향상",
     p3_title: "근거 기반 답변", p3_desc: "모든 답변에 소스 문서 추적 인라인 인용이 포함됩니다. 에이전트가 원시 데이터를 기반으로 추론 — 할루시네이션 없음, 완전한 감사 추적.",
     p3_stat: "인용 기반 응답",
-    iq_label: "마이크로소프트 인텔리전스 레이어", iq_title: "Foundry IQ의 위치.",
-    iq_desc: "세 가지 IQ 워크로드가 에이전트에 종합적인 조직 컨텍스트를 제공합니다. Foundry IQ는 지식 계층으로서 올바른 권한으로 기업 데이터를 연결합니다.",
-    iq1_desc: "관리형 지식 계층. Azure, SharePoint, OneLake, 웹의 정형/비정형 데이터를 연결합니다.",
-    iq1_tag: "이 데모", iq2_desc: "비즈니스 데이터를 위한 시맨틱 인텔리전스. OneLake과 Power BI의 온톨로지, 시맨틱 모델, 그래프.",
-    iq2_tag: "비즈니스 데이터", iq3_desc: "M365를 위한 컨텍스트 인텔리전스. 문서, 미팅, 채팅, 워크플로의 협업 시그널.",
-    iq3_tag: "업무 시그널",
+    iq_label: "마이크로소프트 인텔리전스 레이어", iq_title: "기업 AI는 세 가지 질문에 답합니다.",
+    iq3_question: "어제 누가 이 건으로 누구랑 얘기했지?",
+    iq3_desc: "Teams, Email, Graph에서 직원 활동을 추적.",
+    iq2_question: "그 데이터 어디에 있더라?",
+    iq2_desc: "Data Lake, OneLake, 기업 소스에서 데이터를 찾고 매핑.",
+    iq2_tag: "Phase 3",
+    iq1_question: "문서에 뭐라고 써있어?",
+    iq1_desc: "KB를 에이전틱 검색으로 탐색 — 계획, 검색, 평가, 근거 기반 답변 합성.",
+    iq1_tag: "★ 이 데모",
+    iq_focus: "이 데모는 세 번째 질문에 집중합니다 — Foundry IQ가 KB를 검색하고 근거 기반 답변을 합성하는 과정.",
+    ff_title: "Phase 3 예정",
+    ff_desc: "Fabric IQ가 기업 데이터를 찾으면 → Foundry IQ가 거기서 답을 검색합니다. 두 질문, 하나의 파이프라인.",
     cta_title: "직접 체험해보세요.", cta_sub: "Knowledge Base 쿼리부터 Trace 시각화까지 — 전체 파이프라인을 경험하세요.",
     cta_launch: "데모 시작하기"
   },
@@ -565,12 +751,18 @@ const i18n = {
     p2_stat: "RAG 答案质量提升",
     p3_title: "接地答案", p3_desc: "每个答案都附带追溯到源文档的内联引用。智能体基于原始数据推理 — 无幻觉，完全可审计。",
     p3_stat: "引用支持的响应",
-    iq_label: "微软智能层", iq_title: "Foundry IQ 的定位。",
-    iq_desc: "三个 IQ 工作负载为智能体提供全面的组织上下文。Foundry IQ 是知识层 — 以正确的权限连接企业数据。",
-    iq1_desc: "托管知识层。连接 Azure、SharePoint、OneLake 和网络上的结构化和非结构化数据。",
-    iq1_tag: "本演示", iq2_desc: "面向业务数据的语义智能。OneLake 和 Power BI 上的本体、语义模型和图谱。",
-    iq2_tag: "业务数据", iq3_desc: "面向 M365 的上下文智能。来自文档、会议、聊天和工作流的协作信号。",
-    iq3_tag: "工作信号",
+    iq_label: "微软智能层", iq_title: "企业AI回答三个问题。",
+    iq3_question: "昨天谁跟谁讨论了这件事？",
+    iq3_desc: "跟踪Teams、邮件和Graph中的员工活动。",
+    iq2_question: "那个数据在哪里？",
+    iq2_desc: "在Data Lake、OneLake和企业数据源中定位和映射数据。",
+    iq2_tag: "Phase 3",
+    iq1_question: "文档里关于这个怎么说？",
+    iq1_desc: "通过代理检索搜索知识库——规划、检索、评估、带引用的答案合成。",
+    iq1_tag: "★ 本演示",
+    iq_focus: "本演示深入探讨第三个问题——Foundry IQ如何搜索知识库并合成有据可依的答案。",
+    ff_title: "Phase 3 即将推出",
+    ff_desc: "Fabric IQ定位企业数据 → Foundry IQ从中检索答案。两个问题，一条管线。",
     cta_title: "实际体验。", cta_sub: "从知识库查询到 Trace 可视化 — 体验完整管道。",
     cta_launch: "启动演示套件"
   },
@@ -593,12 +785,18 @@ const i18n = {
     p2_stat: "RAG उत्तर गुणवत्ता सुधार",
     p3_title: "ग्राउंडेड आंसर्स", p3_desc: "हर उत्तर सोर्स डॉक्यूमेंट्स से ट्रेस किए गए इनलाइन साइटेशन के साथ। एजेंट्स रॉ डेटा पर रीज़न करते हैं — कोई हैलुसिनेशन नहीं।",
     p3_stat: "साइटेशन-बैक्ड रिस्पॉन्सेज़",
-    iq_label: "माइक्रोसॉफ्ट इंटेलिजेंस लेयर", iq_title: "Foundry IQ कहाँ फिट होता है।",
-    iq_desc: "तीन IQ वर्कलोड एजेंट्स को संगठनात्मक कॉन्टेक्स्ट प्रदान करते हैं। Foundry IQ नॉलेज लेयर है — सही परमिशन से एंटरप्राइज़ डेटा कनेक्ट करता है।",
-    iq1_desc: "मैनेज्ड नॉलेज लेयर। Azure, SharePoint, OneLake, वेब पर डेटा कनेक्ट करता है।",
-    iq1_tag: "यह डेमो", iq2_desc: "बिज़नेस डेटा के लिए सिमैंटिक इंटेलिजेंस। OneLake और Power BI पर ऑन्टोलॉजीज़ और ग्राफ्स।",
-    iq2_tag: "बिज़नेस डेटा", iq3_desc: "M365 के लिए कॉन्टेक्स्चुअल इंटेलिजेंस। डॉक्यूमेंट्स, मीटिंग्स, चैट्स से सिग्नल्स।",
-    iq3_tag: "वर्क सिग्नल्स",
+    iq_label: "माइक्रोसॉफ्ट इंटेलिजेंस लेयर", iq_title: "एंटरप्राइज़ AI तीन सवालों का जवाब देता है।",
+    iq3_question: "कल इस बारे में किसने किससे बात की?",
+    iq3_desc: "Teams, Email और Graph में कर्मचारी गतिविधि को ट्रैक करता है।",
+    iq2_question: "वह डेटा कहाँ है?",
+    iq2_desc: "Data Lake, OneLake और एंटरप्राइज़ स्रोतों में डेटा ढूंढता है।",
+    iq2_tag: "Phase 3",
+    iq1_question: "इस बारे में दस्तावेज़ में क्या लिखा है?",
+    iq1_desc: "एजेंटिक रिट्रीवल से KB खोजता है — योजना, खोज, मूल्यांकन, उद्धरण सहित उत्तर।",
+    iq1_tag: "★ यह डेमो",
+    iq_focus: "यह डेमो तीसरे सवाल पर केंद्रित है — Foundry IQ कैसे नॉलेज बेस खोजता है और प्रमाण-आधारित उत्तर बनाता है।",
+    ff_title: "Phase 3 में आने वाला",
+    ff_desc: "Fabric IQ एंटरप्राइज़ डेटा ढूंढता है → Foundry IQ उसमें से जवाब खोजता है। दो सवाल, एक पाइपलाइन।",
     cta_title: "एक्शन में देखें।", cta_sub: "नॉलेज बेस क्वेरी से Trace विज़ुअलाइज़ेशन तक — पूरी पाइपलाइन अनुभव करें।",
     cta_launch: "डेमो सुइट लॉन्च"
   }

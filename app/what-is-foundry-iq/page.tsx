@@ -537,52 +537,141 @@ export default function WhatIsFoundryIQPage() {
               {t.iq_label}
             </div>
             <h2
-              className="font-bold tracking-[-0.03em] leading-[1.15] mb-4"
+              className="font-bold tracking-[-0.03em] leading-[1.15] mb-[52px]"
               style={{ fontSize: 'clamp(30px, 3.8vw, 46px)' }}
             >
               {t.iq_title}
             </h2>
-            <p
-              className="font-light leading-[1.7] mb-[52px] max-w-[640px]"
-              style={{ fontSize: '16px', color: 'rgba(255,255,255,0.55)' }}
-            >
-              {t.iq_desc}
+          </Reveal>
+
+          {/* Zone A: 3IQ Flow Cards */}
+          <Reveal delay={0.1}>
+            <div className="relative w-full">
+              {/* SVG flow connector — behind cards, desktop only */}
+              <svg
+                className="absolute top-1/2 left-0 w-full h-[60px] -translate-y-1/2 z-0 pointer-events-none hidden md:block"
+                viewBox="0 0 1000 60"
+                preserveAspectRatio="none"
+              >
+                {/* Work → Fabric: dashed dimmed */}
+                <path d="M 310 30 L 345 30" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth={2} strokeLinecap="round" strokeDasharray="8 6" opacity={0.4} />
+                {/* Fabric → Foundry: solid + glow */}
+                <path d="M 655 30 L 690 30" fill="none" stroke="var(--accent-blue)" strokeWidth={2} strokeLinecap="round" opacity={0.8} style={{ filter: 'drop-shadow(0 0 6px var(--accent-blue))' }} />
+                {/* Fabric → Foundry: particle animation */}
+                <path d="M 655 30 L 690 30" fill="none" stroke="var(--accent-blue)" strokeWidth={3} strokeLinecap="round" strokeDasharray="4 20" opacity={0.9}>
+                  <animate attributeName="stroke-dashoffset" from="0" to="-48" dur="2s" repeatCount="indefinite" />
+                </path>
+                {/* Arrow heads */}
+                <polygon points="690,22 706,30 690,38" fill="var(--accent-blue)" style={{ filter: 'drop-shadow(0 0 4px var(--accent-blue))' }} />
+                <polygon points="345,25 355,30 345,35" fill="rgba(255,255,255,0.15)" opacity={0.4} />
+              </svg>
+
+              <div className="relative z-[1] grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Work IQ — dimmed */}
+                <div
+                  className="rounded-[14px] text-center transition-all duration-300"
+                  style={{
+                    padding: '22px',
+                    border: '1.5px dashed rgba(255,255,255,0.08)',
+                    background: 'rgba(255,255,255,0.03)',
+                    opacity: 0.6,
+                  }}
+                >
+                  <div className="text-[16px] font-semibold mb-2">Work IQ</div>
+                  <p className="text-[1.25rem] italic leading-[1.4] mb-3" style={{ color: 'var(--text-primary, #e8eaed)' }}>
+                    &ldquo;{t.iq3_question}&rdquo;
+                  </p>
+                  <p className="text-[12.5px] leading-[1.55]" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                    {t.iq3_desc}
+                  </p>
+                </div>
+
+                {/* Fabric IQ — dimmed + Phase 3 */}
+                <div
+                  className="rounded-[14px] text-center transition-all duration-300"
+                  style={{
+                    padding: '22px',
+                    border: '1.5px dashed rgba(255,255,255,0.08)',
+                    background: 'rgba(255,255,255,0.03)',
+                    opacity: 0.7,
+                  }}
+                >
+                  <div className="text-[16px] font-semibold mb-2">Fabric IQ</div>
+                  <p className="text-[1.25rem] italic leading-[1.4] mb-3" style={{ color: 'var(--text-primary, #e8eaed)' }}>
+                    &ldquo;{t.iq2_question}&rdquo;
+                  </p>
+                  <p className="text-[12.5px] leading-[1.55]" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                    {t.iq2_desc}
+                  </p>
+                  <span
+                    className="inline-block mt-3 rounded-full text-[10px] font-semibold tracking-[0.1em] uppercase"
+                    style={{
+                      padding: '4px 12px',
+                      fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
+                      background: 'rgba(255,255,255,0.04)',
+                      color: 'rgba(255,255,255,0.30)',
+                    }}
+                  >
+                    {t.iq2_tag}
+                  </span>
+                </div>
+
+                {/* Foundry IQ — active */}
+                <div
+                  className="rounded-[14px] text-center transition-all duration-300"
+                  style={{
+                    padding: '22px',
+                    border: '1px solid rgba(77,166,255,0.25)',
+                    background: 'rgba(77,166,255,0.04)',
+                  }}
+                >
+                  <div className="text-[16px] font-semibold mb-2">Foundry IQ</div>
+                  <p className="text-[1.25rem] italic leading-[1.4] mb-3" style={{ color: 'var(--text-primary, #e8eaed)' }}>
+                    &ldquo;{t.iq1_question}&rdquo;
+                  </p>
+                  <p className="text-[12.5px] leading-[1.55]" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                    {t.iq1_desc}
+                  </p>
+                  <span
+                    className="inline-block mt-3 rounded-full text-[10px] font-semibold tracking-[0.1em] uppercase"
+                    style={{
+                      padding: '4px 12px',
+                      fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
+                      background: 'rgba(77,166,255,0.12)',
+                      color: 'var(--accent-blue)',
+                    }}
+                  >
+                    {t.iq1_tag}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+
+          {/* Zone B: Focus text */}
+          <Reveal delay={0.2}>
+            <p className="text-center text-[1rem] mt-6" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              {t.iq_focus}
             </p>
           </Reveal>
 
-          <Reveal delay={0.1}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Foundry IQ — active */}
-              <div
-                className="rounded-[14px] text-center transition-all duration-300"
-                style={{
-                  padding: '22px',
-                  border: '1px solid rgba(77,166,255,0.25)',
-                  background: 'rgba(77,166,255,0.04)',
-                }}
-              >
-                <div className="text-[16px] font-semibold mb-2">Foundry IQ</div>
-                <p className="text-[12.5px] leading-[1.55]" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                  {t.iq1_desc}
+          {/* Zone C: Fabric→Foundry banner */}
+          <Reveal delay={0.3}>
+            <div
+              className="mt-8 flex items-center gap-4 rounded-xl"
+              style={{
+                padding: '20px 24px',
+                border: '1px dashed rgba(255,255,255,0.08)',
+                background: 'rgba(255,255,255,0.03)',
+              }}
+            >
+              <div className="text-2xl" aria-hidden="true">🔗</div>
+              <div>
+                <strong style={{ color: 'var(--text-primary, #e8eaed)' }}>{t.ff_title}</strong>
+                <p className="text-[0.9rem] mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  {t.ff_desc}
                 </p>
-                <span
-                  className="inline-block mt-3 rounded-full text-[10px] font-semibold tracking-[0.1em] uppercase"
-                  style={{
-                    padding: '4px 12px',
-                    fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
-                    background: 'rgba(77,166,255,0.12)',
-                    color: 'var(--accent-blue)',
-                  }}
-                >
-                  {t.iq1_tag}
-                </span>
               </div>
-
-              {/* Fabric IQ */}
-              <IQCard name="Fabric IQ" desc={t.iq2_desc} tag={t.iq2_tag} />
-
-              {/* Work IQ */}
-              <IQCard name="Work IQ" desc={t.iq3_desc} tag={t.iq3_tag} />
             </div>
           </Reveal>
         </div>
@@ -789,46 +878,6 @@ function PillarCard({ icon, iconBg, topGlow, title, desc, stat, statLabel, refHr
           {refLabel}
         </a>
       </div>
-    </div>
-  )
-}
-
-// ─── IQ Card ─────────────────────────────────────────────────────────────────
-
-interface IQCardProps {
-  name: string
-  desc: string
-  tag: string
-}
-
-function IQCard({ name, desc, tag }: IQCardProps) {
-  const [hovered, setHovered] = useState(false)
-  return (
-    <div
-      className="rounded-[14px] text-center transition-all duration-300"
-      style={{
-        padding: '22px',
-        border: `1px solid ${hovered ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)'}`,
-        background: 'rgba(255,255,255,0.03)',
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <div className="text-[16px] font-semibold mb-2">{name}</div>
-      <p className="text-[12.5px] leading-[1.55]" style={{ color: 'rgba(255,255,255,0.55)' }}>
-        {desc}
-      </p>
-      <span
-        className="inline-block mt-3 rounded-full text-[10px] font-semibold tracking-[0.1em] uppercase"
-        style={{
-          padding: '4px 12px',
-          fontFamily: 'var(--font-mono), JetBrains Mono, monospace',
-          background: 'rgba(255,255,255,0.04)',
-          color: 'rgba(255,255,255,0.30)',
-        }}
-      >
-        {tag}
-      </span>
     </div>
   )
 }
