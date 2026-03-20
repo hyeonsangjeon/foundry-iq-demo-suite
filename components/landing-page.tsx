@@ -9,6 +9,7 @@ import {
   Document24Regular,
   PlugConnected24Regular,
   ChevronRight20Regular,
+  DataTrending24Regular,
 } from '@fluentui/react-icons'
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -47,6 +48,14 @@ const sharePointDemo = {
 }
 
 const comingSoon = [
+  {
+    id: 'fabric-search-join',
+    title: 'Fabric + SharePoint Foundry Search Join',
+    subtitle: 'Fabric IQ → Foundry IQ',
+    phase: 'Phase 3',
+    icon: DataTrending24Regular,
+    desc: 'Fabric IQ locates enterprise data, Foundry IQ searches it — two questions, one pipeline.',
+  },
   {
     id: 'agent-connector',
     title: 'MCP Agent Grounding',

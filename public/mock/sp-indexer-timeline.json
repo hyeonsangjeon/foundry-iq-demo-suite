@@ -7,11 +7,10 @@
     { "name": "index", "label": "Index Documents", "icon": "index", "startMs": 30000, "endMs": 40000, "description": "Loading vectors and metadata into search index" }
   ],
   "documentChunks": {
-    "doc-01": 6, "doc-02": 4, "doc-03": 8, "doc-04": 3,
-    "doc-05": 2, "doc-06": 12, "doc-07": 2, "doc-08": 3,
-    "doc-09": 5, "doc-10": 9, "doc-11": 3, "doc-12": 14,
-    "doc-13": 4, "doc-14": 7, "doc-15": 16, "doc-16": 2,
-    "doc-17": 2, "doc-18": 5
+    "doc-01": 12,
+    "doc-02": 8,
+    "doc-03": 16,
+    "doc-04": 6
   },
-  "totalChunks": 107
+  "totalChunks": 42
 }

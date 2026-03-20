@@ -132,14 +132,14 @@ const INDUSTRY_KNOWLEDGE_BASES: IndustryKnowledgeBase[] = [
     available: true
   },
   {
-    id: 'sharepoint-finance',
-    name: 'SharePoint Finance KB',
-    industry: 'Enterprise Documents',
-    description: 'Finance documents indexed from SharePoint — earnings reports, compliance manuals, regulatory filings',
+    id: 'sharepoint-airline',
+    name: 'SharePoint Airline KB',
+    industry: 'Airline Policies',
+    description: 'US airline passenger rights, DOT regulations, and oversales policies indexed from SharePoint',
     icon: DocumentMultiple20Regular,
     iconBg: 'bg-violet-500/10',
     iconColor: 'text-violet-600 dark:text-violet-400',
-    agentName: 'finance-knowledge-base',
+    agentName: 'sp-airline-policies-kb',
     available: true
   }
 ]

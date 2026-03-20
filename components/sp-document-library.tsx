@@ -81,7 +81,7 @@ export function SPDocumentLibrary({
         <span className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
           SharePoint Documents
         </span>
-        {data && (
+        {data?.summary?.supportedFormats && (
           <span className="text-xs text-fg-subtle font-mono">
             {data.summary.supportedFormats.join(' · ')}
           </span>
@@ -125,9 +125,9 @@ export function SPDocumentLibrary({
           <div className="border-t border-glass-border mt-3 pt-3">
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs text-fg-muted">
-                Total: <span className="font-semibold text-fg-default">{data.summary.totalDocuments} documents</span>
+                Total: <span className="font-semibold text-fg-default">{data.summary?.totalDocuments ?? data.documents.length} documents</span>
                 {' · '}
-                <span className="font-semibold text-fg-default">{formatTotalSize(data.summary.totalSizeBytes)}</span>
+                <span className="font-semibold text-fg-default">{formatTotalSize(data.summary?.totalSizeBytes ?? 0)}</span>
               </span>
             </div>
             <button

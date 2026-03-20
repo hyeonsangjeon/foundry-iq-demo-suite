@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Send20Regular, Bot20Regular, Person20Regular, Settings20Regular, Dismiss20Regular, Code20Regular, ArrowCounterclockwise20Regular, ChevronRight20Regular, ChevronDown20Regular } from '@fluentui/react-icons'
+import { Send20Regular, Bot20Regular, Person20Regular, Settings20Regular, Dismiss20Regular, Code20Regular, ArrowCounterclockwise20Regular, ArrowReset20Regular, ChevronRight20Regular, ChevronDown20Regular } from '@fluentui/react-icons'
 import { AgentAvatar } from '@/components/agent-avatar'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -951,7 +951,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         </div>
 
         {activeTab === 'explorer' ? (
-          <DataExplorer agentId={selectedAgent?.id} />
+          <DataExplorer agentId={selectedAgent?.id || preselectedAgent} />
         ) : (
         <>
         {/* Messages */}
@@ -1054,6 +1054,22 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
 
         {/* Input */}
         <div className="border-t border-stroke-divider p-6">
+          {messages.length > 0 && (
+            <div className="flex justify-end mb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setMessages([])
+                  setInput('')
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-fg-muted hover:text-fg-default border border-stroke-divider rounded-lg hover:bg-bg-subtle transition-colors"
+                title="New conversation"
+              >
+                <ArrowReset20Regular className="w-4 h-4" />
+                <span className="hidden sm:inline">New Chat</span>
+              </button>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
               <Textarea
