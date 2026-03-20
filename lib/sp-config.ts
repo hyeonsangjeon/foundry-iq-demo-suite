@@ -12,8 +12,8 @@ export const SP_CONFIG = {
   spKbDisplayName: 'SharePoint Airline KB',
 }
 
-// Live mode authentication (client-side — bundled into client JS for demo gating)
-export const SP_LIVE_SECRET = 'gbb2026!'
+// Live mode authentication (client-side — requires NEXT_PUBLIC_ prefix to be available in browser)
+export const SP_LIVE_SECRET = process.env.NEXT_PUBLIC_SP_LIVE_SECRET || ''
 
-// Server-side secret for live API authentication (not exposed to client bundle)
-export const SP_LIVE_API_SECRET = process.env.SP_LIVE_API_SECRET || 'gbb2026!'
+// Server-side secret for live API authentication (server-only, never exposed to client)
+export const SP_LIVE_API_SECRET = process.env.SP_LIVE_API_SECRET || ''
