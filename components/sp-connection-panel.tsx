@@ -10,6 +10,7 @@ import {
   PersonKey20Regular,
   Search20Regular,
   Cube20Regular,
+  Info16Regular,
 } from '@fluentui/react-icons'
 
 interface ConnectionData {
@@ -25,6 +26,7 @@ interface ConnectionItem {
   detail: string
   status: boolean
   icon: React.ComponentType<{ className?: string }>
+  tooltip: string
 }
 
 interface SPConnectionPanelProps {
@@ -42,6 +44,7 @@ export function SPConnectionPanel({ data, isLoading, className }: SPConnectionPa
           detail: data.sharepoint.siteName,
           status: data.sharepoint.connected,
           icon: ShareMultiple20Regular,
+          tooltip: 'Source document library where your enterprise documents are stored',
         },
         {
           key: 'entra',
@@ -49,6 +52,7 @@ export function SPConnectionPanel({ data, isLoading, className }: SPConnectionPa
           detail: data.entraApp.appName,
           status: data.entraApp.configured,
           icon: PersonKey20Regular,
+          tooltip: 'Azure AD app that grants AI Search permission to read SharePoint files',
         },
         {
           key: 'aiSearch',
@@ -56,6 +60,7 @@ export function SPConnectionPanel({ data, isLoading, className }: SPConnectionPa
           detail: data.aiSearch.serviceName,
           status: data.aiSearch.connected,
           icon: Search20Regular,
+          tooltip: 'Search service that indexes, chunks, and vectorizes your documents',
         },
         {
           key: 'embedding',
@@ -63,6 +68,7 @@ export function SPConnectionPanel({ data, isLoading, className }: SPConnectionPa
           detail: data.embedding.model,
           status: data.embedding.ready,
           icon: Cube20Regular,
+          tooltip: 'AI model that converts text chunks into 1536-dimensional vectors for semantic search',
         },
       ]
     : []
@@ -117,6 +123,12 @@ export function SPConnectionPanel({ data, isLoading, className }: SPConnectionPa
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-fg-default truncate">{item.label}</span>
+                    <span className="relative group/tip shrink-0" tabIndex={0}>
+                      <Info16Regular className="w-3.5 h-3.5 text-fg-subtle cursor-help" />
+                      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 text-[11px] text-fg-default bg-bg-elevated border border-stroke-divider rounded-lg shadow-lg opacity-0 group-hover/tip:opacity-100 group-focus/tip:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
+                        {item.tooltip}
+                      </span>
+                    </span>
                     {item.status ? (
                       <CheckmarkCircle20Filled className="w-3.5 h-3.5 text-green-500 shrink-0" />
                     ) : (

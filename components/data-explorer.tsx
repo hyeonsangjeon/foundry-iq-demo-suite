@@ -157,11 +157,13 @@ type DocumentMeta = {
   date: string
   description: string
   tags: string[]
+  sourceUrl?: string
 }
 
 type IndustryDocuments = {
   [industryId: string]: {
     label: string
+    description?: string
     documents: DocumentMeta[]
   }
 }
@@ -173,11 +175,13 @@ const industryAccentColors: Record<string, string> = {
   'health-plan': 'bg-violet-500',
   'sustainable-ai': 'bg-emerald-500',
   'idfc-banking': 'bg-amber-500',
+  'sharepoint-airline': 'bg-blue-500',
 }
 
 const industryDocuments: IndustryDocuments = {
   'financial': {
     label: 'Finance Knowledge Base',
+    description: 'US SEC official investor guides and Vanguard market research reports. Covers mutual funds, ETFs, bond markets, portfolio construction, and 2025 economic outlook. All documents are publicly available from government and institutional sources.',
     documents: [
       {
         id: 'sec-mutual-funds',
@@ -185,7 +189,8 @@ const industryDocuments: IndustryDocuments = {
         source: 'sec.gov',
         date: '2024',
         description: 'Comprehensive guide covering mutual fund and ETF investment basics, fees, and risks.',
-        tags: ['Mutual Funds', 'ETFs', 'SEC']
+        tags: ['Mutual Funds', 'ETFs', 'SEC'],
+        sourceUrl: 'https://www.sec.gov/investor/pubs/sec-guide-to-mutual-funds.pdf'
       },
       {
         id: 'sec-saving-investing',
@@ -193,7 +198,8 @@ const industryDocuments: IndustryDocuments = {
         source: 'sec.gov',
         date: '2024',
         description: 'Step-by-step roadmap for building a savings and investment plan.',
-        tags: ['Savings', 'Investing', 'Beginners']
+        tags: ['Savings', 'Investing', 'Beginners'],
+        sourceUrl: 'https://www.sec.gov/investor/pubs/sec-guide-to-savings-and-investing.pdf'
       },
       {
         id: 'sec-students',
@@ -201,7 +207,8 @@ const industryDocuments: IndustryDocuments = {
         source: 'sec.gov',
         date: '2024',
         description: 'Introduction to saving and investing tailored for students.',
-        tags: ['Students', 'Financial Literacy']
+        tags: ['Students', 'Financial Literacy'],
+        sourceUrl: 'https://www.sec.gov/investor/pubs/savings-investing-for-students.pdf'
       },
       {
         id: 'vanguard-outlook',
@@ -209,7 +216,8 @@ const industryDocuments: IndustryDocuments = {
         source: 'vanguard.com',
         date: '2025',
         description: 'Global economic and market forecast for 2025 including rates, inflation, and growth.',
-        tags: ['Outlook', 'Economy', 'Markets']
+        tags: ['Outlook', 'Economy', 'Markets'],
+        sourceUrl: 'https://corporate.vanguard.com/content/dam/corp/research/pdf/isg_vemo_2025.pdf'
       },
       {
         id: 'vanguard-fixed-income',
@@ -217,7 +225,8 @@ const industryDocuments: IndustryDocuments = {
         source: 'vanguard.com',
         date: 'Q1 2025',
         description: 'Bond market analysis with rate trajectory and credit spread outlook.',
-        tags: ['Fixed Income', 'Bonds', 'Rates']
+        tags: ['Fixed Income', 'Bonds', 'Rates'],
+        sourceUrl: 'https://corporate.vanguard.com/content/dam/corp/articles/pdf/afi_perspectives_q1_2025_a_real_deal.pdf'
       },
       {
         id: 'vanguard-workbook',
@@ -225,12 +234,14 @@ const industryDocuments: IndustryDocuments = {
         source: 'vanguard.com',
         date: '2024',
         description: 'Hands-on workbook covering core investing principles and portfolio construction.',
-        tags: ['Workbook', 'Fundamentals']
+        tags: ['Workbook', 'Fundamentals'],
+        sourceUrl: 'https://digital-assets.vanguard.com/retail/publicsite/en/documents/InvestingFoundationsWorkbook_2024%20v7.pdf'
       }
     ]
   },
   'nasa': {
     label: 'NASA Earth Science Knowledge Base',
+    description: 'NASA\'s Earth at Night e-book — satellite observations of nighttime city lights, urbanization patterns, and climate change indicators. Part of the Azure AI Search official sample dataset, containing 85 text-only pages with scientific imagery references.',
     documents: [
       {
         id: 'nasa-earth-at-night',
@@ -238,7 +249,8 @@ const industryDocuments: IndustryDocuments = {
         source: 'NASA (azure-search-sample-data)',
         date: '2019',
         description: 'Satellite observations of Earth at night — city lights, human activity patterns, and nighttime environmental phenomena.',
-        tags: ['Satellite', 'Night Lights', 'Climate']
+        tags: ['Satellite', 'Night Lights', 'Climate'],
+        sourceUrl: 'https://github.com/Azure-Samples/azure-search-sample-data/tree/main/nasa-e-book'
       },
       {
         id: 'nasa-earth-book',
@@ -246,12 +258,14 @@ const industryDocuments: IndustryDocuments = {
         source: 'NASA (azure-search-sample-data)',
         date: '2019',
         description: 'Comprehensive Earth science reference covering atmosphere, oceans, land, ice, and human impact from NASA observations.',
-        tags: ['Earth Science', 'Atmosphere', 'Oceans', 'Research']
+        tags: ['Earth Science', 'Atmosphere', 'Oceans', 'Research'],
+        sourceUrl: 'https://github.com/Azure-Samples/azure-search-sample-data/tree/main/nasa-e-book'
       }
     ]
   },
   'health-plan': {
     label: 'Health Plan Knowledge Base',
+    description: 'Fictional Northwind and Contoso employee health insurance plans — coverage details, deductibles, wellness benefits, employee handbook, and role library. Azure AI Search official demo dataset used across Microsoft documentation and tutorials.',
     documents: [
       {
         id: 'hp-benefit-options',
@@ -259,7 +273,8 @@ const industryDocuments: IndustryDocuments = {
         source: 'Contoso (azure-search-sample-data)',
         date: 'Sample',
         description: 'Overview of all available health plan options with comparison of coverage levels and costs.',
-        tags: ['Plans', 'Comparison', 'Coverage']
+        tags: ['Plans', 'Comparison', 'Coverage'],
+        sourceUrl: 'https://github.com/Azure-Samples/azure-search-sample-data/blob/main/health-plan/Benefit_Options.pdf'
       },
       {
         id: 'hp-northwind-plus',
@@ -267,7 +282,8 @@ const industryDocuments: IndustryDocuments = {
         source: 'Northwind (azure-search-sample-data)',
         date: 'Sample',
         description: 'Premium plan with comprehensive coverage — medical, dental, vision, prescription, and mental health.',
-        tags: ['Northwind Plus', 'Premium', 'Full Coverage']
+        tags: ['Northwind Plus', 'Premium', 'Full Coverage'],
+        sourceUrl: 'https://github.com/Azure-Samples/azure-search-sample-data/blob/main/health-plan/Northwind_Health_Plus_Benefits_Details.pdf'
       },
       {
         id: 'hp-northwind-standard',
@@ -275,7 +291,8 @@ const industryDocuments: IndustryDocuments = {
         source: 'Northwind (azure-search-sample-data)',
         date: 'Sample',
         description: 'Standard plan with essential coverage and lower premiums for cost-conscious employees.',
-        tags: ['Northwind Standard', 'Essential', 'Budget']
+        tags: ['Northwind Standard', 'Essential', 'Budget'],
+        sourceUrl: 'https://github.com/Azure-Samples/azure-search-sample-data/blob/main/health-plan/Northwind_Standard_Benefits_Details.pdf'
       },
       {
         id: 'hp-perksplus',
@@ -283,7 +300,8 @@ const industryDocuments: IndustryDocuments = {
         source: 'Contoso (azure-search-sample-data)',
         date: 'Sample',
         description: 'Employee wellness and perks program — gym memberships, wellness reimbursements, and lifestyle benefits.',
-        tags: ['Wellness', 'Perks', 'Lifestyle']
+        tags: ['Wellness', 'Perks', 'Lifestyle'],
+        sourceUrl: 'https://github.com/Azure-Samples/azure-search-sample-data/blob/main/health-plan/PerksPlus.pdf'
       },
       {
         id: 'hp-employee-handbook',
@@ -291,7 +309,8 @@ const industryDocuments: IndustryDocuments = {
         source: 'Contoso (azure-search-sample-data)',
         date: 'Sample',
         description: 'Company policies, code of conduct, leave policies, and workplace guidelines.',
-        tags: ['Policies', 'HR', 'Handbook']
+        tags: ['Policies', 'HR', 'Handbook'],
+        sourceUrl: 'https://github.com/Azure-Samples/azure-search-sample-data/blob/main/health-plan/employee_handbook.pdf'
       },
       {
         id: 'hp-role-library',
@@ -299,12 +318,14 @@ const industryDocuments: IndustryDocuments = {
         source: 'Contoso (azure-search-sample-data)',
         date: 'Sample',
         description: 'Job descriptions, role responsibilities, career levels, and competency frameworks.',
-        tags: ['Roles', 'Careers', 'Competencies']
+        tags: ['Roles', 'Careers', 'Competencies'],
+        sourceUrl: 'https://github.com/Azure-Samples/azure-search-sample-data/blob/main/health-plan/role_library.pdf'
       }
     ]
   },
   'sustainable-ai': {
     label: 'Sustainable AI Knowledge Base',
+    description: 'Microsoft\'s 2025 research report on accelerating sustainability with AI. Covers energy efficiency metrics, carbon tracking frameworks, green computing practices, and environmental impact measurement. Includes diagrams and charts processed via OCR.',
     documents: [
       {
         id: 'sai-accelerating',
@@ -312,12 +333,14 @@ const industryDocuments: IndustryDocuments = {
         source: 'Microsoft (azure-search-sample-data)',
         date: '2025',
         description: 'Research report on AI-driven sustainability — energy efficiency, carbon tracking, green computing, and environmental impact measurement.',
-        tags: ['Sustainability', 'Green AI', 'Energy', 'Carbon']
+        tags: ['Sustainability', 'Green AI', 'Energy', 'Carbon'],
+        sourceUrl: 'https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/msc/documents/presentations/CSR/Accelerating-Sustainability-with-AI-2025.pdf'
       }
     ]
   },
   'idfc-banking': {
     label: 'IDFC Banking Knowledge Base',
+    description: 'IDFC First Bank investor presentations (Q3 FY26), integrated annual report (FY25), and Reserve Bank of India (RBI) digital payment authentication regulations. Real-world banking KPIs, ESG strategy, and regulatory compliance documents from India\'s financial sector.',
     documents: [
       {
         id: 'idfc-investor-pres',
@@ -325,7 +348,8 @@ const industryDocuments: IndustryDocuments = {
         source: 'idfcfirst.bank.in',
         date: 'Jan 2026',
         description: 'Latest quarterly results — NIM 5.76%, CASA 51.6%, 1,066 branches, deposit growth 25% YoY.',
-        tags: ['Q3 FY26', 'KPI', 'NIM', 'CASA']
+        tags: ['Q3 FY26', 'KPI', 'NIM', 'CASA'],
+        sourceUrl: 'https://www.idfcfirst.bank.in/content/dam/idfcfirstbank/pdf/financial-results/Investor-Presentation-Q3-FY26-updated-Final.pdf'
       },
       {
         id: 'idfc-annual-report',
@@ -333,7 +357,8 @@ const industryDocuments: IndustryDocuments = {
         source: 'idfcfirst.bank.in',
         date: 'FY25',
         description: 'Full-year strategy, ESG initiatives, digital transformation, and microfinance portfolio review.',
-        tags: ['Strategy', 'ESG', 'Digital']
+        tags: ['Strategy', 'ESG', 'Digital'],
+        sourceUrl: 'https://www.idfcfirst.bank.in/content/dam/idfcfirstbank/pdf/annual-report/INTEGRATED-ANNUAL-REPORT-FY-2024-25.pdf'
       },
       {
         id: 'rbi-auth-directions',
@@ -341,7 +366,50 @@ const industryDocuments: IndustryDocuments = {
         source: 'rbi.org.in',
         date: 'Sep 2025',
         description: 'Mandatory 2FA and risk-based authentication for all digital payments. Effective April 1, 2026.',
-        tags: ['RBI', 'Compliance', 'Authentication', 'Apr 2026']
+        tags: ['RBI', 'Compliance', 'Authentication', 'Apr 2026'],
+        sourceUrl: 'https://rbidocs.rbi.org.in/rdocs/notification/PDFs/NT79258FF36ECA8F4886B3B01F55D166C2B2.PDF'
+      }
+    ]
+  },
+  'sharepoint-airline': {
+    label: 'Airline Policies Knowledge Base',
+    description: 'US Department of Transportation (DOT) official airline passenger rights documents — ANPRM proposed compensation rules, Fly Rights consumer guide, Congressional Research Service regulatory analysis, and involuntary denied boarding (bumping) policies. Indexed from SharePoint via the Phase 2 connector.',
+    documents: [
+      {
+        id: 'anprm-airline-rights',
+        name: 'ANPRM: Airline Passenger Rights (2105-AF20)',
+        source: 'US DOT (transportation.gov)',
+        date: '2024',
+        description: 'Proposed rules for cash compensation, rebooking requirements, meals/lodging for delays, and disability protections.',
+        tags: ['ANPRM', 'Compensation', 'DOT'],
+        sourceUrl: 'https://www.transportation.gov/sites/dot.gov/files/2024-12/ANPRM%20Airline%20Passenger%20Rights%20(2105-AF20).pdf'
+      },
+      {
+        id: 'fly-rights-guide',
+        name: 'Fly Rights: Consumer Guide to Air Travel',
+        source: 'US DOT (transportation.gov)',
+        date: '2024',
+        description: 'Official consumer guide covering overbooking/bumping compensation, baggage rules, tarmac delays, and complaint procedures.',
+        tags: ['Consumer Guide', 'Bumping', 'Tarmac'],
+        sourceUrl: 'https://www.transportation.gov/airconsumer/fly-rights'
+      },
+      {
+        id: 'crs-passenger-rights',
+        name: 'CRS Report: Airline Passenger Rights (R43078)',
+        source: 'Congressional Research Service',
+        date: '2024',
+        description: 'Federal regulatory framework analysis — DOT authority, denied boarding compensation history, and EU regulation comparison.',
+        tags: ['CRS', 'Regulation', 'EU Comparison'],
+        sourceUrl: 'https://crsreports.congress.gov/product/pdf/R/R43078'
+      },
+      {
+        id: 'bumping-oversales',
+        name: 'Bumping & Oversales Policy',
+        source: 'US DOT (transportation.gov)',
+        date: '2024',
+        description: 'DOT rules on involuntary denied boarding, compensation tiers, and airline obligations when flights are oversold.',
+        tags: ['Oversales', 'Denied Boarding', 'DOT'],
+        sourceUrl: 'https://www.transportation.gov/individuals/aviation-consumer-protection/bumping-oversales'
       }
     ]
   }
@@ -355,6 +423,7 @@ const agentToIndustry: Record<string, string> = {
   'health-plan-kb': 'health-plan',
   'sustainable-ai-kb': 'sustainable-ai',
   'idfc-banking-kb': 'idfc-banking',
+  'sp-airline-policies-kb': 'sharepoint-airline',
 }
 
 function DocumentOverviewCard({ doc, industryId }: { doc: DocumentMeta; industryId: string }) {
@@ -418,6 +487,21 @@ function DocumentOverviewCard({ doc, industryId }: { doc: DocumentMeta; industry
             })}
           </div>
         )}
+
+        {/* Source Link */}
+        {doc.sourceUrl && (
+          <a
+            href={doc.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 mt-2 text-[10px] text-accent hover:text-accent-hover transition-colors"
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0">
+              <path d="M8 5.5V8a1 1 0 01-1 1H2a1 1 0 01-1-1V3a1 1 0 011-1h2.5M6 1h3v3M4 6l5-5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            View source
+          </a>
+        )}
       </div>
     </Card>
   )
@@ -473,8 +557,24 @@ export function DataExplorer({ agentId }: DataExplorerProps) {
   if (isHotels) {
     return (
       <div className="flex flex-col h-full">
-        <div className="px-4 py-2 border-b border-stroke-divider text-xs text-fg-muted">
-          {loading ? 'Loading...' : `${hotels.length} hotels in Knowledge Base`}
+        <div className="px-4 py-3 border-b border-stroke-divider space-y-1">
+          <div className="text-xs text-fg-muted font-medium">
+            {loading ? 'Loading...' : `${hotels.length} hotels in Knowledge Base`}
+          </div>
+          <p className="text-[11px] text-fg-subtle leading-relaxed">
+            50 sample hotels from the Azure AI Search hotels-sample index — ratings, rooms, amenities, locations, and pricing across Budget, Boutique, Resort, Luxury, Suite, and Extended-Stay categories.
+          </p>
+          <a
+            href="https://github.com/Azure-Samples/azure-search-sample-data/tree/main/hotels"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[10px] text-accent hover:text-accent-hover transition-colors"
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0">
+              <path d="M8 5.5V8a1 1 0 01-1 1H2a1 1 0 01-1-1V3a1 1 0 011-1h2.5M6 1h3v3M4 6l5-5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            View source dataset
+          </a>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 overflow-y-auto flex-1">
           {loading
@@ -495,8 +595,11 @@ export function DataExplorer({ agentId }: DataExplorerProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-2 border-b border-stroke-divider text-xs text-fg-muted">
-        {countText}
+      <div className="px-4 py-3 border-b border-stroke-divider space-y-1">
+        <div className="text-xs text-fg-muted font-medium">{countText}</div>
+        {industryData?.description && (
+          <p className="text-[11px] text-fg-subtle leading-relaxed">{industryData.description}</p>
+        )}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4 overflow-y-auto flex-1">
         {docs.map((doc) => (

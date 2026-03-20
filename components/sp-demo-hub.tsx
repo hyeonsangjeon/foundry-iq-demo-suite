@@ -10,7 +10,7 @@ import { SPDocumentLibrary } from '@/components/sp-document-library'
 import { SPIndexingPipeline, IndexerStatus } from '@/components/sp-indexing-pipeline'
 import { InsightPopup } from '@/components/insight-popup'
 import { SP_INSIGHT_STEPS } from '@/components/sp-insight-steps'
-import { SP_CONFIG, SP_LIVE_AVAILABLE } from '@/lib/sp-config'
+import { SP_CONFIG, SP_LIVE_AVAILABLE, SP_LIVE_SECRET } from '@/lib/sp-config'
 import { SPModeToggle } from '@/components/sp-mode-toggle'
 import {
   ChevronLeft20Regular,
@@ -20,6 +20,7 @@ import {
   ArrowSync20Regular,
   Search20Regular,
   ShareScreenStart20Regular,
+  Open16Regular,
 } from '@fluentui/react-icons'
 
 type DemoStep = 'intro' | 'connection' | 'indexing' | 'query' | 'complete'
@@ -166,14 +167,19 @@ function IntroStep({ onNext }: { onNext: () => void }) {
         })}
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
-        <div className="flex flex-wrap gap-2 justify-center">
-          {['PDF', 'DOCX', 'XLSX', 'PPTX'].map(fmt => (
-            <span key={fmt} className="text-[11px] px-2.5 py-1 rounded-full bg-bg-subtle border border-stroke-divider text-fg-muted font-mono">
-              {fmt}
-            </span>
-          ))}
-        </div>
+      <div className="text-center space-y-1.5">
+        <p className="text-xs text-fg-muted">
+          Supports PDF, DOCX, XLSX, PPTX, MSG, HTML, TXT, and more
+        </p>
+        <a
+          href="https://learn.microsoft.com/en-us/azure/search/search-how-to-index-sharepoint-online"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-[11px] text-accent hover:text-accent-hover transition-colors"
+        >
+          View all supported formats
+          <Open16Regular className="w-3 h-3" />
+        </a>
       </div>
 
       <div className="flex justify-center">
@@ -196,11 +202,15 @@ function ConnectionStep({
   documentsData,
   isLoading,
   onIndex,
+  isLiveMode,
+  apiError,
 }: {
   connectionData: ConnectionData | null
   documentsData: DocumentsData | null
   isLoading: boolean
   onIndex: () => void
+  isLiveMode?: boolean
+  apiError?: string | null
 }) {
   return (
     <motion.div
@@ -213,8 +223,18 @@ function ConnectionStep({
     >
       <div className="text-center space-y-1">
         <h2 className="text-xl font-bold text-fg-default">SharePoint Connected</h2>
-        <p className="text-sm text-fg-muted">18 finance documents ready to index</p>
+        <p className="text-sm text-fg-muted">
+          {isLiveMode
+            ? `${documentsData?.summary?.totalDocuments || 4} airline policy documents ready to index`
+            : `${documentsData?.summary?.totalDocuments || 4} documents ready to index`}
+        </p>
       </div>
+      {apiError && (
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          <p className="font-medium mb-0.5">Live API Error</p>
+          <p className="text-xs text-red-400/80">{apiError}</p>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <SPConnectionPanel data={connectionData} isLoading={isLoading} />
         <SPDocumentLibrary
@@ -259,9 +279,11 @@ function IndexingStep({
 function CompleteStep({
   onReset,
   totalChunks,
+  documentCount,
 }: {
   onReset: () => void
   totalChunks: number
+  documentCount: number
 }) {
   const router = useRouter()
 
@@ -286,13 +308,13 @@ function CompleteStep({
       <div className="space-y-2">
         <h2 className="text-2xl font-bold text-fg-default">Indexing Complete!</h2>
         <p className="text-fg-muted text-sm">
-          {totalChunks} chunks indexed from 18 documents. Your Knowledge Base is ready.
+          {totalChunks} chunks indexed from {documentCount} documents. Your Knowledge Base is ready.
         </p>
       </div>
 
       <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
         {[
-          { label: 'Documents', value: '18' },
+          { label: 'Documents', value: String(documentCount) },
           { label: 'Chunks', value: String(totalChunks) },
           { label: 'Dimensions', value: '1536' },
         ].map(stat => (
@@ -305,7 +327,7 @@ function CompleteStep({
 
       <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
         <button
-          onClick={() => router.push('/test?agent=finance-knowledge-base')}
+          onClick={() => router.push(`/test?agent=${SP_CONFIG.kbName}`)}
           className="inline-flex items-center gap-2 h-12 px-8 rounded-full bg-accent hover:bg-accent-hover text-fg-on-accent text-sm font-semibold transition-colors duration-150"
         >
           <Search20Regular className="w-4 h-4" />
@@ -337,32 +359,73 @@ export function SPDemoHub() {
   const [connectionData, setConnectionData] = useState<ConnectionData | null>(null)
   const [documentsData, setDocumentsData] = useState<DocumentsData | null>(null)
   const [isLoadingConnection, setIsLoadingConnection] = useState(false)
+  const [apiError, setApiError] = useState<string | null>(null)
   const [indexerStatus, setIndexerStatus] = useState<IndexerStatus | null>(null)
   const [startedAt, setStartedAt] = useState<number | null>(null)
   const [insightStep, setInsightStep] = useState<number>(0) // 0 = hidden
+  const [isLiveMode, setIsLiveMode] = useState(false)
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
+
+  // 페이지 진입 시 항상 Simulated 모드로 시작 (안전한 기본값)
+  // sessionStorage의 인증 상태는 유지 — Live 버튼 클릭 시 암호 재입력 없이 전환 가능
+
+  // API URL helper — appends ?mode=live when in live mode
+  const apiUrl = useCallback((path: string, extraParams?: string) => {
+    const params: string[] = []
+    if (isLiveMode) params.push('mode=live')
+    if (extraParams) params.push(extraParams)
+    return params.length > 0 ? `${path}${path.includes('?') ? '&' : '?'}${params.join('&')}` : path
+  }, [isLiveMode])
+
+  // Live mode auth header
+  const liveHeaders = useCallback((): HeadersInit => {
+    if (!isLiveMode) return {}
+    return { 'x-live-secret': SP_LIVE_SECRET }
+  }, [isLiveMode])
+
+  // Mode toggle handler — resets all data on switch
+  const handleModeToggle = useCallback((live: boolean) => {
+    setIsLiveMode(live)
+    setConnectionData(null)
+    setDocumentsData(null)
+    setIndexerStatus(null)
+    setStartedAt(null)
+    setApiError(null)
+    setStep('intro')
+    if (pollingRef.current) clearInterval(pollingRef.current)
+  }, [])
 
   // Load connection data when entering connection step
   useEffect(() => {
     if (step === 'connection') {
       setIsLoadingConnection(true)
+      setApiError(null)
       Promise.all([
-        fetch('/api/sharepoint/connection').then(r => r.json()),
-        fetch('/api/sharepoint/documents').then(r => r.json()),
+        fetch(apiUrl('/api/sharepoint/connection'), { headers: liveHeaders() }).then(r => {
+          if (!r.ok) throw new Error(`Connection API error: ${r.status}`)
+          return r.json()
+        }),
+        fetch(apiUrl('/api/sharepoint/documents'), { headers: liveHeaders() }).then(r => {
+          if (!r.ok) throw new Error(`Documents API error: ${r.status}`)
+          return r.json()
+        }),
       ])
         .then(([conn, docs]) => {
           setConnectionData(conn)
           setDocumentsData(docs)
         })
-        .catch(console.error)
+        .catch((e) => {
+          console.error(e)
+          setApiError(e.message || 'Failed to connect. Check SP credentials.')
+        })
         .finally(() => setIsLoadingConnection(false))
     }
-  }, [step])
+  }, [step, apiUrl])
 
   // Poll indexer status
   const pollStatus = useCallback(async (at: number) => {
     try {
-      const res = await fetch(`/api/sharepoint/index-pipeline/status?startedAt=${at}`)
+      const res = await fetch(apiUrl('/api/sharepoint/index-pipeline/status', `startedAt=${at}`), { headers: liveHeaders() })
       if (res.ok) {
         const data: IndexerStatus = await res.json()
         setIndexerStatus(data)
@@ -373,13 +436,14 @@ export function SPDemoHub() {
     } catch (e) {
       console.error('Poll error:', e)
     }
-  }, [])
+  }, [apiUrl])
 
   // Start indexing
   const handleStartIndexing = useCallback(async () => {
     setStep('indexing')
     try {
-      const res = await fetch('/api/sharepoint/index-pipeline', { method: 'POST' })
+      const res = await fetch(apiUrl('/api/sharepoint/index-pipeline'), { method: 'POST', headers: { ...liveHeaders() } })
+      if (!res.ok) throw new Error(`Pipeline API error: ${res.status}`)
       const data = await res.json()
       const at = data.startedAt as number
       setStartedAt(at)
@@ -404,6 +468,24 @@ export function SPDemoHub() {
   const handleIndexingComplete = useCallback(() => {
     setStep('complete')
   }, [])
+
+  // Auto-create KS + KB when live indexing completes
+  useEffect(() => {
+    if (indexerStatus?.isComplete && isLiveMode) {
+      fetch(apiUrl('/api/sharepoint/knowledge-source'), { method: 'PUT', headers: { ...liveHeaders() } })
+        .then(r => {
+          if (!r.ok) {
+            return r.json().then(err => {
+              console.error(`KS+KB creation failed (${r.status}):`, err)
+              throw new Error(err.error || `HTTP ${r.status}`)
+            })
+          }
+          return r.json()
+        })
+        .then(data => console.log('KS+KB created:', data))
+        .catch(err => console.error('KS+KB creation error:', err.message || err))
+    }
+  }, [indexerStatus?.isComplete, isLiveMode, apiUrl, liveHeaders])
 
   const handleReset = useCallback(() => {
     setStep('intro')
@@ -441,9 +523,9 @@ export function SPDemoHub() {
             <h1 className="text-sm font-semibold text-fg-default">SharePoint Connector Demo</h1>
           </div>
           <SPModeToggle
-            isLiveMode={false}
+            isLiveMode={isLiveMode}
             isLiveAvailable={SP_LIVE_AVAILABLE}
-            onToggle={() => {}}
+            onToggle={handleModeToggle}
           />
           <StepIndicator current={step} />
         </div>
@@ -463,6 +545,8 @@ export function SPDemoHub() {
                 documentsData={documentsData}
                 isLoading={isLoadingConnection}
                 onIndex={handleStartIndexing}
+                isLiveMode={isLiveMode}
+                apiError={apiError}
               />
             )}
             {step === 'indexing' && (
@@ -476,7 +560,8 @@ export function SPDemoHub() {
               <CompleteStep
                 key="complete"
                 onReset={handleReset}
-                totalChunks={indexerStatus?.totalChunks ?? 107}
+                totalChunks={indexerStatus?.totalChunks ?? 42}
+                documentCount={documentsData?.documents?.length ?? 4}
               />
             )}
           </AnimatePresence>

@@ -400,6 +400,35 @@
           "tags": ["multi-source", "strategy"]
         }
       ]
+    },
+    {
+      "agentIds": ["sp-airline-policies-kb"],
+      "starters": [
+        {
+          "id": "airline-anprm-cash-compensation",
+          "label": "Cash Compensation Rules",
+          "prompt": "Under the ANPRM, what are the proposed cash compensation amounts for passengers denied boarding on domestic vs international flights?",
+          "complexity": "Moderate"
+        },
+        {
+          "id": "airline-tarmac-delay-rules",
+          "label": "Tarmac Delay Rules",
+          "prompt": "What are the specific time limits and airline obligations for tarmac delays under 14 CFR Part 259?",
+          "complexity": "Moderate"
+        },
+        {
+          "id": "airline-denied-boarding-history",
+          "label": "Denied Boarding History",
+          "prompt": "How has the denied boarding compensation framework evolved since its inception, and how does the US approach compare to the EU regulation?",
+          "complexity": "Advanced"
+        },
+        {
+          "id": "airline-bumping-oversales",
+          "label": "Bumping & Oversales",
+          "prompt": "What are the specific compensation tiers for involuntary denied boarding, and when is an airline exempt from paying compensation under DOT oversales rules?",
+          "complexity": "Simple"
+        }
+      ]
     }
   ]
 }
