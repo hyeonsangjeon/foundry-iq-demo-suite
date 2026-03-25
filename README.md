@@ -8,7 +8,7 @@ and switch between industry-specific Knowledge Bases in real time.
 
 ## Knowledge Bases
 
-| KB | Industry | Docs | Data Source |
+| KB | Industry |
 |----|----------|------|-------------|
 | Hotels | Hospitality & Travel | 50 | Azure-Samples/azure-search-sample-data/hotels |
 | NASA Earth Book | Earth Science & Space | 85 | Azure-Samples/azure-search-sample-data/nasa-e-book |

@@ -55,6 +55,7 @@ const comingSoon = [
     phase: 'Phase 3',
     icon: DataTrending24Regular,
     desc: 'Fabric IQ locates enterprise data, Foundry IQ searches it — two questions, one pipeline.',
+    href: '/fabric_iq_flight_data_profile.html',
   },
   {
     id: 'agent-connector',
@@ -233,26 +234,25 @@ function ComingSoonCards() {
 
   return (
     <div ref={ref} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {comingSoon.map((demo, i) => (
-        <motion.div
-          key={demo.id}
-          initial={{ opacity: 0, y: 30 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, delay: i * 0.1, ease: [0, 0, 0.2, 1] as const }}
-        >
+      {comingSoon.map((demo, i) => {
+        const cardContent = (
           <div className={cn(
             'group relative overflow-hidden rounded-xl p-5',
             'border border-stroke-divider bg-bg-elevated/30 backdrop-blur-sm',
             'hover:border-stroke-strong hover:bg-bg-elevated/50',
-            'transition-all duration-200'
+            'transition-all duration-200',
+            demo.href && 'cursor-pointer'
           )}>
             <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-10 w-56 rounded-lg border border-glass-border bg-bg-elevated p-3 text-xs text-fg-muted shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-center">
               {demo.desc}
             </div>
 
             <div className="flex items-start gap-3">
-              <div className="shrink-0 w-9 h-9 rounded-lg bg-bg-subtle border border-stroke-divider flex items-center justify-center opacity-50">
-                <demo.icon className="w-5 h-5 text-fg-subtle" />
+              <div className={cn(
+                'shrink-0 w-9 h-9 rounded-lg bg-bg-subtle border border-stroke-divider flex items-center justify-center',
+                demo.href ? 'opacity-70' : 'opacity-50'
+              )}>
+                <demo.icon className={cn('w-5 h-5', demo.href ? 'text-fg-muted' : 'text-fg-subtle')} />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-mono text-fg-subtle uppercase tracking-wide">{demo.subtitle}</div>
@@ -262,12 +262,35 @@ function ComingSoonCards() {
                     {demo.phase}
                   </span>
                 </div>
-                <p className="text-xs text-fg-subtle">Coming soon</p>
+                <p className="text-xs text-fg-subtle">
+                  {demo.href ? (
+                    <span className="text-accent">Preview data profile →</span>
+                  ) : (
+                    'Coming soon'
+                  )}
+                </p>
               </div>
             </div>
           </div>
-        </motion.div>
-      ))}
+        )
+
+        return (
+          <motion.div
+            key={demo.id}
+            initial={{ opacity: 0, y: 30 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: i * 0.1, ease: [0, 0, 0.2, 1] as const }}
+          >
+            {demo.href ? (
+              <Link href={demo.href} target="_blank">
+                {cardContent}
+              </Link>
+            ) : (
+              cardContent
+            )}
+          </motion.div>
+        )
+      })}
     </div>
   )
 }
