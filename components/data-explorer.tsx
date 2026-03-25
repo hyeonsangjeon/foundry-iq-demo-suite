@@ -241,7 +241,7 @@ const industryDocuments: IndustryDocuments = {
   },
   'nasa': {
     label: 'NASA Earth Science Knowledge Base',
-    description: 'NASA\'s Earth at Night e-book — satellite observations of nighttime city lights, urbanization patterns, and climate change indicators. Part of the Azure AI Search official sample dataset, containing 85 text-only pages with scientific imagery references.',
+    description: 'NASA\'s Earth at Night e-book (200 pages, 40MB PDF) — satellite observations of nighttime city lights, urbanization patterns, and climate change indicators. Page-split indexed to fit AI Search 16MB extraction limit. Part of the Azure AI Search official sample dataset with scientific imagery references.',
     documents: [
       {
         id: 'nasa-earth-at-night',
@@ -257,8 +257,8 @@ const industryDocuments: IndustryDocuments = {
         name: 'NASA Earth Book 2019',
         source: 'NASA (azure-search-sample-data)',
         date: '2019',
-        description: 'Comprehensive Earth science reference covering atmosphere, oceans, land, ice, and human impact from NASA observations.',
-        tags: ['Earth Science', 'Atmosphere', 'Oceans', 'Research'],
+        description: 'Comprehensive Earth science reference (200pp, page-split indexed) covering atmosphere, oceans, land, ice, and human impact from NASA observations.',
+        tags: ['Earth Science', 'Atmosphere', 'Oceans', 'Research', '200 Pages'],
         sourceUrl: 'https://github.com/Azure-Samples/azure-search-sample-data/tree/main/nasa-e-book'
       }
     ]

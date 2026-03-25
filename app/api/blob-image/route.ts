@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
  * Only allows requests to our own storage account.
  */
 
-const ALLOWED_HOST = 'stfoundryiqdemo2.blob.core.windows.net'
+const ALLOWED_HOST = 'stfoundryiqdemoext.blob.core.windows.net'
 
 export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get('url')

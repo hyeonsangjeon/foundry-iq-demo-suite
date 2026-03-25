@@ -17,3 +17,6 @@ export const SP_LIVE_SECRET = process.env.NEXT_PUBLIC_SP_LIVE_SECRET || ''
 
 // Server-side secret for live API authentication (server-only, never exposed to client)
 export const SP_LIVE_API_SECRET = process.env.SP_LIVE_API_SECRET || ''
+
+// Set to false to bypass password prompt for demo/presentation use
+export const REQUIRE_LIVE_SECRET = false
