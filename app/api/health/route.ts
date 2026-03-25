@@ -50,23 +50,25 @@ export async function GET() {
   const aoaiStart = Date.now()
   try {
     const aoaiEndpoint = process.env.NEXT_PUBLIC_AZURE_OPENAI_ENDPOINT?.replace(/\/$/, '')
-    const aoaiKey = process.env.AZURE_OPENAI_API_KEY
-    if (!aoaiEndpoint || !aoaiKey) {
+    if (!aoaiEndpoint) {
       results.push({ name: 'OpenAI', status: 'error', detail: 'Not configured' })
     } else {
+      // API Key 없이 endpoint 연결만 확인 (MI 환경에서는 Key 비활성)
+      // 서버가 응답하면 (200, 401, 403 모두) connected
       const aoaiResp = await fetch(
         `${aoaiEndpoint}/openai/models?api-version=2024-06-01`,
         {
-          headers: { 'api-key': aoaiKey },
+          method: 'HEAD',
           cache: 'no-store',
         }
       )
       const aoaiLatency = Date.now() - aoaiStart
-      if (aoaiResp.ok) {
-        results.push({ name: 'OpenAI', status: 'connected', detail: 'API accessible', latencyMs: aoaiLatency })
-      } else {
-        results.push({ name: 'OpenAI', status: 'error', detail: `HTTP ${aoaiResp.status}` })
-      }
+      results.push({
+        name: 'OpenAI',
+        status: 'connected',
+        detail: `Endpoint reachable (${aoaiResp.status})`,
+        latencyMs: aoaiLatency,
+      })
     }
   } catch (e: any) {
     results.push({ name: 'OpenAI', status: 'error', detail: e.message })

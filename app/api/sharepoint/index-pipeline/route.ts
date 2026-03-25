@@ -97,10 +97,8 @@ export async function POST(request: NextRequest) {
             name: `${PREFIX}-openai-vectorizer`,
             kind: 'azureOpenAI',
             azureOpenAIParameters: {
+              // MI 인증만 사용 (External에서 API Key 비활성)
               resourceUri: aoaiEndpoint,
-              ...(process.env.AZURE_OPENAI_API_KEY
-                ? { apiKey: process.env.AZURE_OPENAI_API_KEY }
-                : {}),
               deploymentId: 'text-embedding-3-large',
               modelName: 'text-embedding-3-large',
             },
@@ -125,10 +123,8 @@ export async function POST(request: NextRequest) {
         {
           '@odata.type': '#Microsoft.Skills.Text.AzureOpenAIEmbeddingSkill',
           context: '/document/pages/*',
+          // MI 인증만 사용 (External에서 API Key 비활성)
           resourceUri: aoaiEndpoint,
-          ...(process.env.AZURE_OPENAI_API_KEY
-            ? { apiKey: process.env.AZURE_OPENAI_API_KEY }
-            : {}),
           deploymentId: 'text-embedding-3-large',
           modelName: 'text-embedding-3-large',
           dimensions: 1536,
