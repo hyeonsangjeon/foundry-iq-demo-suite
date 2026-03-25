@@ -3,6 +3,8 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { getLocale } from '@/lib/i18n'
+import { t } from '@/lib/i18n/translations'
 
 export interface InsightStep {
   id: number
@@ -11,50 +13,14 @@ export interface InsightStep {
   poweredBy: string
 }
 
-export const INSIGHT_STEPS: InsightStep[] = [
-  {
-    id: 1,
-    title: 'Scenario Overview',
-    description: 'Search the Hotels Knowledge Base using natural language. Find precise answers from 50 hotel documents.',
-    poweredBy: 'Foundry IQ — Knowledge Base',
-  },
-  {
-    id: 2,
-    title: '💡 Planning',
-    description: 'Foundry IQ builds a search plan. It automatically decides which sources to search and how to approach them.',
-    poweredBy: 'Azure AI Search — Agentic Retrieval',
-  },
-  {
-    id: 3,
-    title: '💡 Hybrid Search',
-    description: 'Runs vector search + keyword search simultaneously. Retrieves both semantically similar and exact-match documents together.',
-    poweredBy: 'Azure AI Search — Hybrid Retrieval',
-  },
-  {
-    id: 4,
-    title: '💡 Self-Assessment',
-    description: 'Are the search results sufficient? If not, the query is automatically rewritten and re-executed.',
-    poweredBy: 'Azure AI Search — Iterative Query',
-  },
-  {
-    id: 5,
-    title: '💡 Answer with Citations',
-    description: 'Every answer includes source citations. Click a citation to see the exact location in the original document.',
-    poweredBy: 'Foundry IQ — Answer Synthesis',
-  },
-  {
-    id: 6,
-    title: '💡 Reasoning Effort',
-    description: 'Increasing Reasoning Effort explores more sources in greater depth. Choose between speed vs. accuracy to fit the situation.',
-    poweredBy: 'Azure AI Search — Configurable',
-  },
-  {
-    id: 7,
-    title: '🎉 Demo Complete',
-    description: 'Foundry IQ is already Production Ready. Connect your own Knowledge Base and get started right now.',
-    poweredBy: 'Foundry IQ — GA',
-  },
-]
+export function getFoundryInsightSteps(): InsightStep[] {
+  const locale = getLocale()
+  const steps = t.foundryInsight[locale]?.steps ?? t.foundryInsight.en.steps
+  return steps.map((s, i) => ({ id: i + 1, ...s }))
+}
+
+// Legacy export for SSR compatibility — falls back to English
+export const INSIGHT_STEPS: InsightStep[] = t.foundryInsight.en.steps.map((s, i) => ({ id: i + 1, ...s }))
 
 interface InsightPopupProps {
   step: InsightStep | null
@@ -63,13 +29,18 @@ interface InsightPopupProps {
   onNext: () => void
   onPrev: () => void
   className?: string
+  insightType?: 'foundry' | 'sp'
 }
 
-export function InsightPopup({ step, totalSteps, onDismiss, onNext, onPrev, className }: InsightPopupProps) {
+export function InsightPopup({ step, totalSteps, onDismiss, onNext, onPrev, className, insightType = 'foundry' }: InsightPopupProps) {
   if (!step) return null
 
   const isFirst = step.id === 1
   const isLast = step.id === totalSteps
+  const locale = getLocale()
+  const navText = insightType === 'sp'
+    ? (t.spInsight[locale] ?? t.spInsight.en)
+    : (t.foundryInsight[locale] ?? t.foundryInsight.en)
 
   return (
     <AnimatePresence mode="wait">
@@ -119,7 +90,7 @@ export function InsightPopup({ step, totalSteps, onDismiss, onNext, onPrev, clas
               variant="ghost"
               className="rounded-full h-9 text-sm px-4 text-fg-muted hover:text-fg-default"
             >
-              ← Prev
+              {navText.prev}
             </Button>
           )}
           <div className="flex-1" />
@@ -128,14 +99,14 @@ export function InsightPopup({ step, totalSteps, onDismiss, onNext, onPrev, clas
               onClick={onDismiss}
               className="bg-accent hover:bg-accent-hover text-fg-on-accent rounded-full h-9 text-sm px-4"
             >
-              🎉 Complete
+              {navText.complete}
             </Button>
           ) : (
             <Button
               onClick={onNext}
               className="bg-accent hover:bg-accent-hover text-fg-on-accent rounded-full h-9 text-sm px-4"
             >
-              Got it →
+              {navText.next}
             </Button>
           )}
         </div>

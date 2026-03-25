@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { getLocale, type Locale } from '@/lib/i18n'
+import { t } from '@/lib/i18n/translations'
 import { Send20Regular, Bot20Regular, Person20Regular, Settings20Regular, Dismiss20Regular, Code20Regular, ArrowCounterclockwise20Regular, ArrowReset20Regular, ChevronRight20Regular, ChevronDown20Regular } from '@fluentui/react-icons'
 import { AgentAvatar } from '@/components/agent-avatar'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -18,7 +20,7 @@ import { KBViewCodeModal } from '@/components/kb-view-code-modal'
 import { useConversationStarters, conversationStarterRegistry } from '@/lib/conversationStarters'
 import { cn, formatRelativeTime, cleanTextSnippet } from '@/lib/utils'
 import { TraceExplorer } from '@/components/trace-explorer'
-import { InsightPopup, INSIGHT_STEPS } from '@/components/insight-popup'
+import { InsightPopup, INSIGHT_STEPS, getFoundryInsightSteps } from '@/components/insight-popup'
 import { ServiceHealthPanel } from '@/components/service-health-panel'
 import { DataExplorer } from '@/components/data-explorer'
 import {
@@ -163,6 +165,9 @@ interface KBPlaygroundViewProps {
 }
 
 export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
+  const [locale, setLocaleState] = useState<Locale>('en')
+  useEffect(() => { setLocaleState(getLocale()) }, [])
+  const text = t.foundryIQ[locale]
   const [agents, setAgents] = useState<KnowledgeAgent[]>([])
   const [selectedAgent, setSelectedAgent] = useState<KnowledgeAgent | null>(null)
   const [agentsLoading, setAgentsLoading] = useState<boolean>(true)
@@ -219,8 +224,9 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Derived insight step from index
-  const currentInsightStep = insightStepIndex !== null ? INSIGHT_STEPS[insightStepIndex] : null
+  // Derived insight step from index (locale-aware)
+  const foundrySteps = getFoundryInsightSteps()
+  const currentInsightStep = insightStepIndex !== null ? foundrySteps[insightStepIndex] : null
 
   // Get search endpoint from env
   const searchEndpoint = process.env.NEXT_PUBLIC_SEARCH_ENDPOINT || process.env.NEXT_PUBLIC_AZURE_SEARCH_ENDPOINT || ''
@@ -243,7 +249,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       } else if (e.key === 'ArrowRight' || e.key === 'Enter') {
         setInsightStepIndex(prev => {
           if (prev === null) return null
-          return prev < INSIGHT_STEPS.length - 1 ? prev + 1 : null
+          return prev < foundrySteps.length - 1 ? prev + 1 : null
         })
       } else if (e.key === 'ArrowLeft') {
         setInsightStepIndex(prev => {
@@ -864,13 +870,13 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
               <AgentAvatar size={44} iconSize={22} variant="subtle" title={selectedAgent.name} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h1 className="font-semibold text-xl truncate">Knowledge Base Playground</h1>
+                  <h1 className="font-semibold text-xl truncate">{text.title}</h1>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-3">
                     <Select value={selectedAgent.id} onValueChange={handleAgentChange}>
                       <SelectTrigger className="w-[280px]">
-                        <SelectValue placeholder="Select a knowledge base" />
+                        <SelectValue placeholder={text.selectKB} />
                       </SelectTrigger>
                       <SelectContent>
                         {agents.map((agent) => (
@@ -1077,7 +1083,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask a question to test your knowledge base..."
+                placeholder={text.queryPlaceholder}
                 className="min-h-[60px] max-h-[200px] resize-none pr-24"
                 disabled={isLoading}
               />
@@ -1120,9 +1126,9 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         <div className="fixed bottom-6 right-6 z-40 w-80">
           <InsightPopup
             step={currentInsightStep}
-            totalSteps={INSIGHT_STEPS.length}
+            totalSteps={foundrySteps.length}
             onDismiss={() => setInsightStepIndex(null)}
-            onNext={() => setInsightStepIndex(prev => prev !== null && prev < INSIGHT_STEPS.length - 1 ? prev + 1 : null)}
+            onNext={() => setInsightStepIndex(prev => prev !== null && prev < foundrySteps.length - 1 ? prev + 1 : null)}
             onPrev={() => setInsightStepIndex(prev => prev !== null && prev > 0 ? prev - 1 : prev)}
           />
         </div>

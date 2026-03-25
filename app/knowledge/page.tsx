@@ -1,4 +1,4 @@
- 'use client'
+'use client'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +28,8 @@ import { CreateKnowledgeBaseForm } from '@/components/forms/create-knowledge-bas
 import { useEditMode, withEditMode } from '@/lib/edit-mode'
 import Image from 'next/image'
 import { getSourceKindLabel } from '@/lib/sourceKinds'
+import { getLocale, type Locale } from '@/lib/i18n'
+import { t } from '@/lib/i18n/translations'
 
 type KnowledgeSource = {
   name: string
@@ -58,6 +60,9 @@ function KnowledgePageContent() {
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const { isEditMode } = useEditMode()
+  const [locale, setLocaleState] = useState<Locale>('en')
+  useEffect(() => { setLocaleState(getLocale()) }, [])
+  const text = t.knowledge[locale]
   const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([])
   const [foundryAgents, setFoundryAgents] = useState<FoundryAgent[]>([])
   const [loading, setLoading] = useState(true)
@@ -244,8 +249,8 @@ function KnowledgePageContent() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Knowledge"
-          description="Manage knowledge bases for your agents"
+          title={text.title}
+          description={text.subtitle}
         />
         <LoadingSkeleton />
       </div>
@@ -256,8 +261,8 @@ function KnowledgePageContent() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Knowledge"
-          description="Manage knowledge bases for your agents"
+          title={text.title}
+          description={text.subtitle}
         />
         <ErrorState
           title="Error loading knowledge bases"
@@ -274,8 +279,8 @@ function KnowledgePageContent() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Knowledge"
-        description="All Azure AI Search knowledge bases with their sources and models"
+        title={text.title}
+        description={text.subtitle}
         primaryAction={isEditMode ? {
           label: showCreate ? 'Hide create form' : 'Create knowledge base',
           onClick: () => setShowCreate(v => !v)
@@ -356,7 +361,7 @@ function KnowledgePageContent() {
                     <div className="flex-1 min-h-0 flex flex-col">
                       <div className="text-xs font-semibold text-fg-default mb-2 flex items-center gap-1.5 flex-shrink-0">
                         <span className="w-2 h-2 bg-accent rounded-full animate-pulse"></span>
-                        {kb.knowledgeSources.length} Source{kb.knowledgeSources.length !== 1 ? 's' : ''}
+                        {kb.knowledgeSources.length} {text.sources}
                       </div>
 
                       {kb.knowledgeSources.length > 0 && (

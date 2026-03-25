@@ -1,94 +1,152 @@
-# Foundry IQ Demo Suite
+# Knowledge Retrieval Studio
 
-[![Deployed on Vercel](https://img.shields.io/badge/Vercel-Deployed-black?style=flat&logo=vercel)](https://private-foundry-iq-task.vercel.app)
+> Azure AI Search · Foundry IQ Demo Suite
 
-Azure AI Search (Foundry IQ) Knowledge Retrieval demo app.
-Visualize the Agentic RAG pipeline (Plan → Retrieve → Assess → Synthesize)
-and switch between industry-specific Knowledge Bases in real time.
+**Live Demo:** [foundry-iq-demo-suite.vercel.app](https://foundry-iq-demo-suite.vercel.app)
 
-## Knowledge Bases
+A deployable reference app showcasing Foundry IQ's Knowledge Retrieval capabilities
+— from single KB search to multi-source Semantic JOIN with live API.
 
-| KB | Industry |
-|----|----------|------|-------------|
-| Hotels | Hospitality & Travel | 50 | Azure-Samples/azure-search-sample-data/hotels |
-| NASA Earth Book | Earth Science & Space | 85 | Azure-Samples/azure-search-sample-data/nasa-e-book |
-| Health Plan | Insurance & Benefits | 410 | Azure-Samples/azure-search-sample-data/health-plan |
-| Sustainable AI | Technology & Sustainability | 93 | Azure-Samples/azure-search-sample-data/sustainable-ai-pdf |
-| Financial | Financial Services | 304 | SEC.gov + Vanguard public PDFs |
+---
 
-## Features
+## What this demo shows
 
-- **Agentic Retrieval Pipeline** — 4-stage reasoning (Plan → Retrieve → Assess → Synthesize)
-- **Industry Knowledge Selector** — 8 industry cards, 5 active KBs
-- **Inline Citations** — Every answer traced to source documents
-- **Trace Explorer** — Collapsible retrieval trace with Session Overview metrics
-- **NASA Image Rendering** — Earth at Night satellite imagery in chat
-- **Conversation Starters** — Pre-tested per-KB sample queries
-- **Multi-language** — EN / 한국어 / 中文 / 日本語 / हिन्दी
-- **Dark Mode** — Full dark/light theme support
+| Phase | Feature | Data Source | Status |
+|-------|---------|-------------|--------|
+| 1 | Agentic Retrieval | Azure Blob Storage → KB (8 KBs) | ✅ Live |
+| 2 | SharePoint Connector | SharePoint Document Library → KB | ✅ Live |
+| 3 | Semantic JOIN | Fabric OneLake (JSON + PDF) → unified KB | ✅ Live |
 
-## Demos
+### Phase 3 Highlight: Semantic JOIN
 
-| Demo | Route | Status |
-|------|-------|--------|
-| Foundry IQ (KB Playground) | `/test` | ✅ Active |
-| What is Foundry IQ? | `/what-is-foundry-iq` | ✅ Active |
-| Knowledge Management | `/knowledge` | ✅ Active |
-| SharePoint Connector | Phase 2 | 🔧 Coming Soon |
-| MCP Agent Grounding | Phase 3 | 🔧 Coming Soon |
+One question answered by combining structured data (Fabric OneLake aggregated JSON)
+with unstructured documents (DOT regulation PDFs) — AI Search routes to both sources
+simultaneously and synthesizes a cited answer.
+
+---
+
+## Architecture
+
+- **Frontend:** Next.js 14 + Tailwind CSS
+- **Hosting:** Vercel
+- **Search:** Azure AI Search (Agentic Retrieval, KB Retrieve API)
+- **Knowledge Bases:** 8 KBs (Hotels, Finance, Health, NASA, IDFC Banking, Sustainable AI, SharePoint Policies, Unified Airline)
+- **Data Sources:** Fabric OneLake, SharePoint, Azure Blob Storage
+- **Model:** Azure OpenAI (answerSynthesis via Managed Identity — no API key)
+- **i18n:** 5 languages (EN, 한국어, 中文, 日本語, हिन्दी)
+
+---
 
 ## Quick Start
 
+### Prerequisites
+
+- Node.js 18+
+- Azure AI Search resource with Agentic Retrieval enabled
+- Azure OpenAI resource (for answerSynthesis)
+
+### Setup
+
 ```bash
 git clone https://github.com/hyeonsangjeon/foundry-iq-demo-suite.git
-cd foundry-iq-demos
-npm install
+cd foundry-iq-demo-suite
 cp .env.example .env.local
 # Edit .env.local with your Azure credentials
+npm install
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
 
-## Environment Variables
+### Environment Variables
 
-See `.env.example` for all options. Required:
-
-```
-AZURE_SEARCH_ENDPOINT=https://<your-search>.search.windows.net
-AZURE_SEARCH_API_KEY=<admin-or-query-key>
-NEXT_PUBLIC_AZURE_OPENAI_ENDPOINT=https://<your-openai>.openai.azure.com
-AZURE_OPENAI_API_KEY=<openai-key>
+```dotenv
+AZURE_SEARCH_ENDPOINT=https://your-search.search.windows.net
+AZURE_SEARCH_API_KEY=your-key
+AZURE_SEARCH_API_VERSION=2025-11-01-preview
+NEXT_PUBLIC_AZURE_OPENAI_ENDPOINT=https://your-openai.cognitiveservices.azure.com
 ```
 
-## Tech Stack
+See [.env.example](.env.example) for the full list including Service Principal auth and Foundry project settings.
 
-- **Framework:** Next.js 14 + React 18 + TypeScript
-- **Styling:** Tailwind CSS + Custom Design Tokens (tokens.json)
-- **Animation:** Framer Motion
-- **Icons:** Fluent UI React Icons + Lucide React
-- **Azure:** AI Search (2025-11-01-preview) + Azure OpenAI (GPT-4o)
-- **Deployment:** Vercel
+---
+
+## Knowledge Bases
+
+| KB Name | Documents | Source | Use Case |
+|---------|-----------|--------|----------|
+| hotels-sample | ~50 | Azure Blob (JSON) | Hotel reviews search |
+| finance-docs | 296 | Azure Blob (PDF) | SEC/Vanguard financial docs |
+| health-plan | 410 | Azure Blob (PDF) | Health plan documents |
+| nasa-earth-book | ~85 | Azure Blob (PDF/JSON) | NASA Earth at Night |
+| idfc-banking | 413 | Azure Blob (PDF) | IDFC Bank investor docs |
+| sustainable-ai | 93 | Azure Blob (PDF) | Microsoft Responsible AI |
+| sp-airline-policies | — | SharePoint (PDF) | DOT airline regulations |
+| unified-airline | 244 | Fabric OneLake (JSON+PDF) | ★ Phase 3 Semantic JOIN |
+
+---
+
+## Key Concepts
+
+**Knowledge Base (KB)** — The container. Groups multiple data sources into one
+searchable endpoint. One API call, multiple sources, cited answers.
+
+**Knowledge Source (KS)** — The data plug. Each KS connects to one source:
+indexedOneLake, searchIndex, indexedSharePoint, indexedBlobStorage, web, remote SharePoint.
+
+**Semantic JOIN** — One question that requires both structured data (numbers)
+and unstructured documents (policies) to answer. AI Search routes to both,
+LLM synthesizes a unified answer with citations from each source.
+
+---
 
 ## Project Structure
 
 ```
-app/           → Next.js 14 App Router (pages + API routes)
-components/    → React components (UI primitives, playground, trace explorer)
-lib/           → Utilities (API client, i18n, motion variants)
-config/        → Conversation starters JSON + schema
-types/         → TypeScript definitions
-public/        → Static assets
+app/
+├── page.tsx                    # Landing page
+├── test/                       # Phase 1: Foundry IQ Agentic Retrieval
+├── knowledge/                  # KB management
+├── sharepoint/                 # Phase 2: SharePoint Connector
+├── semantic-join/              # Phase 3: Semantic JOIN (Live API)
+├── what-is-foundry-iq/         # Foundry IQ explainer (4 languages)
+├── api/
+│   ├── knowledge-bases/        # KB CRUD API
+│   ├── sharepoint/             # SP connector API
+│   └── semantic-join/          # Phase 3 KB Retrieve API
+components/                     # Shared UI components
+lib/
+├── i18n.ts                     # Internationalization
+└── i18n/translations.ts        # 5-language translations
+scripts/                        # Azure setup scripts
+notebooks/                      # Fabric notebook (EDA + data aggregation)
+public/
+├── fabric_iq_flight_data_profile.html  # Phase 3 backup (mock simulation)
+└── icons/                      # App icons
 ```
 
-## 👤 Author
-**Hyeonsang Jeon**  
-Sr. Solution Engineer · Global Black Belt — AI Apps | Microsoft Asia, Korea  
+---
 
-## 📄 License
-MIT — See [LICENSE](LICENSE) for details.
+## Resources
+
+- [What is Foundry IQ? — Microsoft Learn](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/what-is-foundry-iq)
+- [Foundry IQ FAQ — Microsoft Learn](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/foundry-iq-faq)
+- [Foundry IQ Deep Dive — Tech Community](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/foundry-iq-unlocking-ubiquitous-knowledge-for-agents/4470812)
+- [IQ Series: Foundry IQ — Tech Community](https://techcommunity.microsoft.com/blog/azuredevcommunityblog/announcing-the-iq-series-foundry-iq/4501862)
+- [Kaggle: US DOT Flight Delays 2015](https://www.kaggle.com/datasets/usdot/flight-delays)
+
+---
+
+## Author
+
+**Hyeonsang Jeon** — Sr. Solution Engineer, Microsoft AI Global Black Belt.
+
+---
+
+*Powered by Azure AI Search · Foundry IQ*
 
 ## Reference
-Phase1 Based on [farzad528/foundry-iq-demo] (MIT License).
+
+Phase 1 based on [farzad528/azure-ai-search-knowledge-retrieval-demo](https://github.com/farzad528/azure-ai-search-knowledge-retrieval-demo) (MIT License).
 
 

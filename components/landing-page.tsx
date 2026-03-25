@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { motion, useInView } from 'framer-motion'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -11,6 +11,8 @@ import {
   ChevronRight20Regular,
   DataTrending24Regular,
 } from '@fluentui/react-icons'
+import { getLocale, type Locale } from '@/lib/i18n'
+import { t } from '@/lib/i18n/translations'
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -85,9 +87,10 @@ const comingSoon: Array<{
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function ActiveDemoCard() {
+function ActiveDemoCard({ locale }: { locale: Locale }) {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-10%' })
+  const text = t.landing[locale]
 
   return (
     <motion.div
@@ -127,10 +130,10 @@ function ActiveDemoCard() {
                 {activeDemo.subtitle}
               </div>
               <h3 className="text-3xl md:text-4xl font-bold text-fg-default tracking-tight mb-3">
-                {activeDemo.title}
+                {text.phase1Title}
               </h3>
               <p className="text-base text-fg-muted leading-relaxed mb-6 max-w-lg">
-                {activeDemo.description}
+                {text.phase1Desc}
               </p>
 
               <div className="flex flex-wrap gap-2 mb-8">
@@ -147,7 +150,7 @@ function ActiveDemoCard() {
               </div>
 
               <div className="inline-flex items-center gap-2 h-12 px-8 rounded-full bg-accent hover:bg-accent-hover text-fg-on-accent text-sm font-semibold transition-colors duration-150">
-                Launch Demo
+                {text.phase1Button}
                 <ChevronRight20Regular className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </div>
             </div>
@@ -162,9 +165,10 @@ function ActiveDemoCard() {
   )
 }
 
-function SharePointDemoCard() {
+function SharePointDemoCard({ locale }: { locale: Locale }) {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-10%' })
+  const text = t.landing[locale]
 
   return (
     <motion.div
@@ -209,10 +213,10 @@ function SharePointDemoCard() {
                 {sharePointDemo.subtitle}
               </div>
               <h3 className="text-2xl md:text-3xl font-bold text-fg-default tracking-tight mb-2">
-                {sharePointDemo.title}
+                {text.phase2Title}
               </h3>
               <p className="text-sm text-fg-muted leading-relaxed mb-5 max-w-lg">
-                {sharePointDemo.description}
+                {text.phase2Desc}
               </p>
 
               <div className="flex flex-wrap gap-2 mb-6">
@@ -229,7 +233,7 @@ function SharePointDemoCard() {
               </div>
 
               <div className="inline-flex items-center gap-2 h-10 px-6 rounded-full bg-violet-500 hover:bg-violet-600 text-white text-sm font-semibold transition-colors duration-150">
-                Launch Demo
+                {text.phase2Button}
                 <ChevronRight20Regular className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </div>
             </div>
@@ -244,9 +248,10 @@ function SharePointDemoCard() {
   )
 }
 
-function FabricIqDemoCard() {
+function FabricIqDemoCard({ locale }: { locale: Locale }) {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-10%' })
+  const text = t.landing[locale]
 
   return (
     <motion.div
@@ -291,10 +296,10 @@ function FabricIqDemoCard() {
                 {fabricIqDemo.subtitle}
               </div>
               <h3 className="text-2xl md:text-3xl font-bold text-fg-default tracking-tight mb-2">
-                {fabricIqDemo.title}
+                {text.phase3Title}
               </h3>
               <p className="text-sm text-fg-muted leading-relaxed mb-5 max-w-lg">
-                {fabricIqDemo.description}
+                {text.phase3Desc}
               </p>
 
               <div className="flex flex-wrap gap-2 mb-6">
@@ -311,7 +316,7 @@ function FabricIqDemoCard() {
               </div>
 
               <div className="inline-flex items-center gap-2 h-10 px-6 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors duration-150">
-                Try Semantic JOIN →
+                {text.phase3Button}
                 <ChevronRight20Regular className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </div>
             </div>
@@ -396,35 +401,39 @@ function ComingSoonCards() {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export function LandingPage() {
+  const [locale, setLocaleState] = useState<Locale>('en')
+  useEffect(() => { setLocaleState(getLocale()) }, [])
+  const text = t.landing[locale]
+
   return (
     <div className="relative min-h-screen text-fg-default">
 
       {/* Title */}
       <div className="pt-12 pb-8 text-center">
-        <h1 className="text-2xl font-semibold text-fg-default">Knowledge Retrieval Studio</h1>
-        <p className="text-sm text-fg-muted mt-1">Azure AI Search &middot; Foundry IQ</p>
+        <h1 className="text-2xl font-semibold text-fg-default">{text.title}</h1>
+        <p className="text-sm text-fg-muted mt-1">{text.subtitle}</p>
         <Link
           href="/what-is-foundry-iq"
           className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-full text-xs font-semibold text-accent border border-accent/30 bg-accent/5 hover:bg-accent/10 hover:border-accent/50 transition-all duration-200 shadow-[0_0_12px_hsl(var(--color-accent-default)/0.08)] hover:shadow-[0_0_20px_hsl(var(--color-accent-default)/0.15)]"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-          What is Foundry IQ?
+          {text.whatIsFoundryIQ}
           <ChevronRight20Regular className="w-3.5 h-3.5" />
         </Link>
       </div>
 
       {/* Demo Cards */}
       <section className="relative px-6 py-8 max-w-5xl mx-auto flex flex-col gap-6">
-        <ActiveDemoCard />
-        <SharePointDemoCard />
-        <FabricIqDemoCard />
+        <ActiveDemoCard locale={locale} />
+        <SharePointDemoCard locale={locale} />
+        <FabricIqDemoCard locale={locale} />
         <ComingSoonCards />
       </section>
 
       {/* Zone 3: Footer */}
       <footer className="py-12 text-center border-t border-stroke-divider">
         <p className="text-xs text-fg-subtle font-mono tracking-wide">
-          Powered by Azure AI Search &middot; Microsoft AI GBB Korea
+          {text.footer}
         </p>
       </footer>
     </div>
