@@ -47,16 +47,32 @@ const sharePointDemo = {
   icon: Document24Regular,
 }
 
-const comingSoon = [
-  {
-    id: 'fabric-search-join',
-    title: 'Fabric + SharePoint Foundry Search Join',
-    subtitle: 'Fabric IQ → Foundry IQ',
-    phase: 'Phase 3',
-    icon: DataTrending24Regular,
-    desc: 'Fabric IQ locates enterprise data, Foundry IQ searches it — two questions, one pipeline.',
-    href: '/fabric_iq_flight_data_profile.html',
-  },
+const fabricIqDemo = {
+  id: 'fabric-search-join',
+  title: 'Semantic JOIN Demo',
+  subtitle: 'Fabric IQ + Foundry IQ',
+  phase: 'Phase 3',
+  description:
+    'One question answered by combining structured data from Fabric OneLake and policy documents from Fabric OneLake — AI Search routes to both sources simultaneously.',
+  features: [
+    { label: 'Semantic JOIN', desc: 'One question, two data sources' },
+    { label: 'Fabric OneLake', desc: '5.8M structured flight records' },
+    { label: 'DOT Policies', desc: '4 PDF regulation documents' },
+    { label: 'AI Synthesis', desc: 'Cited answers from both' },
+  ],
+  href: '/semantic-join',
+  icon: DataTrending24Regular,
+}
+
+const comingSoon: Array<{
+  id: string
+  title: string
+  subtitle: string
+  phase: string
+  icon: typeof DataTrending24Regular
+  desc: string
+  href?: string
+}> = [
   {
     id: 'agent-connector',
     title: 'MCP Agent Grounding',
@@ -228,6 +244,88 @@ function SharePointDemoCard() {
   )
 }
 
+function FabricIqDemoCard() {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-10%' })
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, delay: 0.15, ease: [0, 0, 0.2, 1] as const }}
+    >
+      <Link href={fabricIqDemo.href}>
+        <motion.div
+          whileHover={{ y: -4 }}
+          whileTap={{ scale: 0.99 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          className={cn(
+            'group relative overflow-hidden rounded-2xl p-6 md:p-8',
+            'border border-stroke-divider',
+            'bg-bg-elevated/50 backdrop-blur-sm',
+            'hover:border-emerald-500/40',
+            'hover:shadow-[0_0_40px_rgba(52,211,153,0.1)]',
+            'transition-all duration-300',
+            'cursor-pointer'
+          )}
+        >
+          <div
+            className="pointer-events-none absolute -top-1/2 -right-1/4 w-1/2 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+            style={{ background: 'radial-gradient(ellipse at center, rgba(52,211,153,0.07) 0%, transparent 70%)' }}
+          />
+
+          <div className="flex flex-col md:flex-row md:items-start gap-6">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 tracking-wide uppercase">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Demo
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-bg-subtle border border-stroke-divider text-fg-subtle font-mono">
+                  {fabricIqDemo.phase}
+                </span>
+              </div>
+
+              <div className="text-xs font-mono text-emerald-500/70 uppercase tracking-widest mb-1">
+                {fabricIqDemo.subtitle}
+              </div>
+              <h3 className="text-2xl md:text-3xl font-bold text-fg-default tracking-tight mb-2">
+                {fabricIqDemo.title}
+              </h3>
+              <p className="text-sm text-fg-muted leading-relaxed mb-5 max-w-lg">
+                {fabricIqDemo.description}
+              </p>
+
+              <div className="flex flex-wrap gap-2 mb-6">
+                {fabricIqDemo.features.map((f) => (
+                  <span
+                    key={f.label}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-bg-subtle border border-stroke-divider text-xs text-fg-muted"
+                  >
+                    <span className="w-1 h-1 rounded-full bg-emerald-500" />
+                    <span className="font-medium text-fg-default">{f.label}</span>
+                    <span className="hidden sm:inline text-fg-subtle">— {f.desc}</span>
+                  </span>
+                ))}
+              </div>
+
+              <div className="inline-flex items-center gap-2 h-10 px-6 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold transition-colors duration-150">
+                Try Semantic JOIN →
+                <ChevronRight20Regular className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
+
+            <div className="hidden md:flex shrink-0 w-20 h-20 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 items-center justify-center">
+              <fabricIqDemo.icon className="w-9 h-9 text-emerald-500" />
+            </div>
+          </div>
+        </motion.div>
+      </Link>
+    </motion.div>
+  )
+}
+
 function ComingSoonCards() {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-10%' })
@@ -282,7 +380,7 @@ function ComingSoonCards() {
             transition={{ duration: 0.5, delay: i * 0.1, ease: [0, 0, 0.2, 1] as const }}
           >
             {demo.href ? (
-              <Link href={demo.href} target="_blank">
+              <Link href={demo.href}>
                 {cardContent}
               </Link>
             ) : (
@@ -319,6 +417,7 @@ export function LandingPage() {
       <section className="relative px-6 py-8 max-w-5xl mx-auto flex flex-col gap-6">
         <ActiveDemoCard />
         <SharePointDemoCard />
+        <FabricIqDemoCard />
         <ComingSoonCards />
       </section>
 

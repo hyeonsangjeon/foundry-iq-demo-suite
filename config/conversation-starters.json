@@ -210,7 +210,7 @@
           "prompt": "What does Earth look like at night from space?",
           "complexity": "Simple",
           "tags": ["satellite", "earth-at-night", "image"],
-          "imageUrl": "https://stfoundryiqdemo2.blob.core.windows.net/nasa-images/earth_lights_lrg.jpg?se=2030-01-01T00%3A00%3A00Z&sp=r&spr=https&sv=2026-02-06&sr=b&sig=Quw81D382gAovdVL083CZA%2FH5GEnUJlPG2GHnDtBE3Y%3D",
+          "imageUrl": "/images/nasa/earth_lights_lrg.jpg",
           "imageAlt": "Earth city lights at night captured from space by NASA satellites"
         },
         {
@@ -219,7 +219,7 @@
           "prompt": "What satellites does NASA use to observe Earth at night?",
           "complexity": "Moderate",
           "tags": ["satellites", "observation"],
-          "imageUrl": "https://stfoundryiqdemo2.blob.core.windows.net/nasa-images/blue-marble-viirs.jpg?se=2030-01-01T00%3A00%3A00Z&sp=r&spr=https&sv=2026-02-06&sr=b&sig=j%2FgTdpfgf%2Fu1jl4a9YqvYnS07AH7nB35ceBW091sRtc%3D",
+          "imageUrl": "/images/nasa/blue-marble-viirs.jpg",
           "imageAlt": "Blue Marble Earth image captured by Suomi NPP VIIRS instrument"
         },
         {
@@ -228,16 +228,16 @@
           "prompt": "How does NASA monitor deforestation from space?",
           "complexity": "Moderate",
           "tags": ["deforestation", "satellite"],
-          "imageUrl": "https://stfoundryiqdemo2.blob.core.windows.net/nasa-images/deforestation-rondonia.jpg?se=2030-01-01T00%3A00%3A00Z&sp=r&spr=https&sv=2026-02-06&sr=b&sig=0CfRSgfFdf1NVkf6CXjSWAVLQJZjP9wbO4KRmlY9Y18%3D",
+          "imageUrl": "/images/nasa/deforestation-rondonia.jpg",
           "imageAlt": "Deforestation patterns in Rondonia, Brazil photographed from space"
         },
         {
           "id": "nasa-ocean-temp",
-          "label": "Ocean Temperature",
-          "prompt": "What are the major findings about ocean temperature changes?",
+          "label": "Ocean Heat Patterns",
+          "prompt": "How does NASA's Earth at Night data relate to ocean heat patterns?",
           "complexity": "Simple",
           "tags": ["ocean", "temperature"],
-          "imageUrl": "https://stfoundryiqdemo2.blob.core.windows.net/nasa-images/ocean-temperature-sst.jpg?se=2030-01-01T00%3A00%3A00Z&sp=r&spr=https&sv=2026-02-06&sr=b&sig=enJQDzJFlUyZwesQbE5FUIzKP0P4Y6fVn%2BxlyAYbWQw%3D",
+          "imageUrl": "/images/nasa/ocean-temperature-sst.jpg",
           "imageAlt": "Global sea surface temperature map from NASA Jason satellite"
         },
         {
@@ -246,7 +246,7 @@
           "prompt": "Compare Arctic and Antarctic ice loss patterns",
           "complexity": "Advanced",
           "tags": ["multi-source", "ice", "comparison"],
-          "imageUrl": "https://stfoundryiqdemo2.blob.core.windows.net/nasa-images/arctic-sea-ice-greenland.jpg?se=2030-01-01T00%3A00%3A00Z&sp=r&spr=https&sv=2026-02-06&sr=b&sig=R5esduzYOu2tpUX2XZwbkFnQx%2FI3wqIZbWqcw09F%2BKc%3D",
+          "imageUrl": "/images/nasa/arctic-sea-ice-greenland.jpg",
           "imageAlt": "Sea ice melting off the coast of Greenland captured by NASA Aqua MODIS"
         },
         {
@@ -255,7 +255,7 @@
           "prompt": "How do satellite observations help predict weather patterns?",
           "complexity": "Advanced",
           "tags": ["multi-source", "satellite", "weather"],
-          "imageUrl": "https://stfoundryiqdemo2.blob.core.windows.net/nasa-images/hurricane-juliette-terra.jpg?se=2030-01-01T00%3A00%3A00Z&sp=r&spr=https&sv=2026-02-06&sr=b&sig=YX2UDaWErEYiy3VPtLT6fp70V%2FrFX0BKzGTPPYmHURI%3D",
+          "imageUrl": "/images/nasa/hurricane-juliette-terra.jpg",
           "imageAlt": "Hurricane Juliette captured by NASA Terra MISR satellite"
         }
       ]
