@@ -1,7 +1,9 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import './semantic-join.css'
+import { getLocale, type Locale } from '@/lib/i18n'
+import { t } from '@/lib/i18n/translations'
 
 const LIVE_MODE = true
 
@@ -66,6 +68,15 @@ function delay(ms: number): Promise<void> {
 }
 
 export default function SemanticJoinPage() {
+  const [locale, setLocaleState] = useState<Locale>('en')
+  useEffect(() => {
+    const l = getLocale()
+    setLocaleState(l)
+    setFabricStatus(t.semanticJoin[l].fabricWaiting)
+    setFoundryStatus(t.semanticJoin[l].foundryWaiting)
+  }, [])
+  const text = t.semanticJoin[locale]
+
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null)
   const [queryValue, setQueryValue] = useState('')
   const [running, setRunning] = useState(false)
@@ -79,10 +90,10 @@ export default function SemanticJoinPage() {
   const [joinActive, setJoinActive] = useState(false)
   const [answerVisible, setAnswerVisible] = useState(false)
 
-  const [fabricStatus, setFabricStatus] = useState('Waiting for query...')
+  const [fabricStatus, setFabricStatus] = useState(t.semanticJoin.en.fabricWaiting)
   const [fabricQuery, setFabricQuery] = useState('')
   const [fabricNote, setFabricNote] = useState('')
-  const [foundryStatus, setFoundryStatus] = useState('Waiting for query...')
+  const [foundryStatus, setFoundryStatus] = useState(t.semanticJoin.en.foundryWaiting)
   const [foundryQuery, setFoundryQuery] = useState('')
   const [foundryNote, setFoundryNote] = useState('')
   const [fabricDone, setFabricDone] = useState(false)
@@ -105,10 +116,10 @@ export default function SemanticJoinPage() {
     setFoundryActive(false)
     setJoinActive(false)
     setAnswerVisible(false)
-    setFabricStatus('Waiting for query...')
+    setFabricStatus(text.fabricWaiting)
     setFabricQuery('')
     setFabricNote('')
-    setFoundryStatus('Waiting for query...')
+    setFoundryStatus(text.foundryWaiting)
     setFoundryQuery('')
     setFoundryNote('')
     setFabricDone(false)
@@ -269,10 +280,10 @@ export default function SemanticJoinPage() {
           FABRIC + FOUNDRY IQ
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-fg-default mb-2">
-          <span className="text-accent">Flight Data</span> Profile
+          <span className="text-accent">{text.pageTitle}</span>
         </h1>
         <p className="text-fg-muted text-base">
-          US DOT Flight Operations 2015 — Fabric Lakehouse:{' '}
+          {text.pageSubtitle}{' '}
           <a href="https://www.kaggle.com/datasets/usdot/flight-delays" target="_blank" rel="noopener noreferrer" className="font-mono text-sm bg-bg-elevated px-2 py-0.5 rounded text-accent hover:underline">airline_flights</a>
         </p>
       </div>
@@ -280,10 +291,10 @@ export default function SemanticJoinPage() {
       {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         {[
-          { number: '5,819,079', label: 'Total Flights' },
-          { number: '14', label: 'Airlines' },
-          { number: '9.0', label: 'Avg Delay (min)' },
-          { number: '89,884', label: 'Cancelled' },
+          { number: '5,819,079', label: text.totalFlights },
+          { number: '14', label: text.airlines },
+          { number: '9.0', label: text.avgDelay },
+          { number: '89,884', label: text.cancelled },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -309,7 +320,7 @@ export default function SemanticJoinPage() {
                   : 'border-transparent text-fg-muted hover:text-fg-default',
               ].join(' ')}
             >
-              {tab === 'join' ? 'Try Semantic JOIN' : '📊 Data Profile'}
+              {tab === 'join' ? text.tabTry : `📊 ${text.tabDataProfile}`}
             </button>
           ))}
         </div>
@@ -320,15 +331,15 @@ export default function SemanticJoinPage() {
 
       {/* Semantic JOIN demo section */}
       <section className="mb-10">
-        <h2 className="text-xl font-semibold text-fg-default mt-2 mb-1">Try Semantic JOIN</h2>
+        <h2 className="text-xl font-semibold text-fg-default mt-2 mb-1">{text.tryTitle}</h2>
         <p className="text-fg-muted text-sm mb-5">
-          Select a preset question, then click Search to see the demo in action.
+          {text.trySubtitle}
         </p>
 
         <div className="space-y-4">
           {/* Preset buttons */}
           <div className="flex flex-wrap gap-1.5 items-center">
-            <span className="text-xs text-fg-subtle leading-7">Try:</span>
+            <span className="text-xs text-fg-subtle leading-7">{text.tryLabel}</span>
             {['JFK delays + compensation', 'Weather cancellations + rights', 'Delta delays + tarmac rules'].map((label, idx) => (
               <button
                 key={idx}
@@ -350,7 +361,7 @@ export default function SemanticJoinPage() {
               className="ml-auto text-fg-subtle hover:text-fg-muted transition-colors"
               style={{ fontSize: '11px' }}
             >
-              💡 Offline? Try simulation mode →
+              {text.offlineLink}
             </a>
           </div>
 
@@ -362,7 +373,7 @@ export default function SemanticJoinPage() {
                 onChange={(e) => setQueryValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled
-                placeholder="Select a preset question above"
+                placeholder={text.inputPlaceholder}
                 className="flex-1 px-3.5 py-2.5 rounded border border-glass-border bg-bg-canvas text-fg-default text-sm placeholder:text-fg-subtle transition-colors disabled:cursor-not-allowed"
                 style={{ opacity: 0.85 }}
               />
@@ -377,7 +388,7 @@ export default function SemanticJoinPage() {
               ].join(' ')}
               style={!running ? { background: 'rgba(96,165,250,0.12)' } : {}}
             >
-              {running ? 'Cancel' : 'Search'}
+              {running ? text.cancelButton : text.searchButton}
             </button>
           </div>
 
@@ -397,10 +408,10 @@ export default function SemanticJoinPage() {
                 className="text-[10px] font-medium tracking-widest uppercase px-1.5 py-0.5 rounded inline-block mb-2 font-mono"
                 style={{ background: 'rgba(52,211,153,0.15)', color: '#34d399' }}
               >
-                Fabric IQ — structured
+                {text.fabricLabel}
               </div>
-              <div className="font-medium text-sm text-fg-default mb-0.5">flights table</div>
-              <div className="text-xs text-fg-muted mb-2.5">5.8M rows — US airline operations 2015</div>
+              <div className="font-medium text-sm text-fg-default mb-0.5">{text.fabricTitle}</div>
+              <div className="text-xs text-fg-muted mb-2.5">{text.fabricDesc}</div>
               <div
                 className={[
                   'font-mono text-xs p-2 rounded min-h-[44px] bg-bg-subtle text-fg-muted transition-all duration-300 leading-relaxed',
@@ -438,7 +449,7 @@ export default function SemanticJoinPage() {
               >
                 +
               </div>
-              <span className="text-center leading-tight">Semantic<br />JOIN</span>
+              <span className="text-center leading-tight">{text.joinLabel}</span>
             </div>
 
             {/* Foundry panel */}
@@ -455,10 +466,10 @@ export default function SemanticJoinPage() {
                 className="text-[10px] font-medium tracking-widest uppercase px-1.5 py-0.5 rounded inline-block mb-2 font-mono"
                 style={{ background: 'rgba(167,139,250,0.15)', color: '#a78bfa' }}
               >
-                Foundry IQ — unstructured
+                {text.foundryLabel}
               </div>
-              <div className="font-medium text-sm text-fg-default mb-0.5">DOT policy PDFs</div>
-              <div className="text-xs text-fg-muted mb-2.5">4 documents — passenger rights &amp; regulations</div>
+              <div className="font-medium text-sm text-fg-default mb-0.5">{text.foundryTitle}</div>
+              <div className="text-xs text-fg-muted mb-2.5">{text.foundryDesc}</div>
               <div
                 className={[
                   'font-mono text-xs p-2 rounded min-h-[44px] bg-bg-subtle text-fg-muted transition-all duration-300 leading-relaxed',
@@ -498,7 +509,7 @@ export default function SemanticJoinPage() {
               className="text-[10px] font-medium tracking-widest uppercase mb-1.5 font-mono"
               style={{ color: '#fb923c' }}
             >
-              Semantic JOIN — unified answer
+              {text.answerTitle}
             </div>
             <div
               className="text-sm leading-relaxed text-fg-default"
@@ -508,7 +519,7 @@ export default function SemanticJoinPage() {
             {/* Sources list */}
             {Object.keys(sourcesData).length > 0 && (
               <div className="mt-3 pt-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                <div className="text-[10px] font-mono font-medium text-fg-subtle uppercase tracking-widest mb-1.5">Sources</div>
+                <div className="text-[10px] font-mono font-medium text-fg-subtle uppercase tracking-widest mb-1.5">{text.sourcesTitle}</div>
                 <div className="space-y-1">
                   {Object.values(sourcesData)
                     .sort((a, b) => a.seq - b.seq)
@@ -541,7 +552,7 @@ export default function SemanticJoinPage() {
                 <circle cx="8" cy="8" r="6.5" />
                 <path d="M8 7v4M8 5.5v0" />
               </svg>
-              <span>{routerOpen ? 'Hide explanation' : 'How does this work? — AI Search as router'}</span>
+              <span>{routerOpen ? text.hideExplanation : text.howItWorks}</span>
             </button>
 
             {/* Router panel */}
@@ -657,26 +668,10 @@ export default function SemanticJoinPage() {
                 {/* Step rows */}
                 <div className="space-y-2.5 mt-3">
                   {[
-                    {
-                      n: 1,
-                      label: 'Single API call',
-                      desc: 'Your app sends one question to one KB. That\'s the only call.',
-                    },
-                    {
-                      n: 2,
-                      label: 'AI Search plans the route',
-                      desc: 'Agentic Retrieval analyzes the query and decides it needs both KS-1 (flights data) and KS-2 (policy docs). Automatic — no code needed.',
-                    },
-                    {
-                      n: 3,
-                      label: 'Fan-out parallel search',
-                      desc: 'AI Search queries both sources simultaneously. Hybrid search (vector+keyword) for OneLake indexed JSON, vector+keyword hybrid for documents.',
-                    },
-                    {
-                      n: 4,
-                      label: 'LLM (AI) synthesizes the answer',
-                      desc: 'LLM merges numbers from Fabric with policies from Foundry into one answer with citations from each source.',
-                    },
+                    { n: 1, label: text.step1Title, desc: text.step1Desc },
+                    { n: 2, label: text.step2Title, desc: text.step2Desc },
+                    { n: 3, label: text.step3Title, desc: text.step3Desc },
+                    { n: 4, label: text.step4Title, desc: text.step4Desc },
                   ].map((step) => (
                     <div key={step.n} className="flex gap-2.5 items-start pl-1">
                       <div
@@ -735,9 +730,9 @@ export default function SemanticJoinPage() {
                     style={{ background: 'rgba(0,0,0,0.15)' }}
                   >
                     <span className="text-[11px] font-semibold text-fg-default flex items-center gap-1.5">
-                      <span>📚</span> Key Concepts: KB &amp; KS
+                      {text.kc_title}
                     </span>
-                    <span className="text-[10px] font-mono text-fg-subtle">{conceptsOpen ? '▲ hide' : '▶ expand'}</span>
+                    <span className="text-[10px] font-mono text-fg-subtle">{conceptsOpen ? text.kc_hide : text.kc_expand}</span>
                   </button>
                   {conceptsOpen && (
                     <div className="px-3 pb-3 pt-1 space-y-3" style={{ background: 'rgba(0,0,0,0.1)' }}>
@@ -747,8 +742,7 @@ export default function SemanticJoinPage() {
                           Knowledge Base (KB)
                         </div>
                         <p className="text-[11px] text-fg-muted leading-relaxed">
-                          The container. Groups multiple data sources into one searchable endpoint.
-                          Your app sends <strong className="text-fg-default">one question to one KB</strong> — the KB handles routing, searching, and answer synthesis.
+                          {text.kc_kbDesc}
                         </p>
                       </div>
                       {/* KS */}
@@ -757,16 +751,16 @@ export default function SemanticJoinPage() {
                           Knowledge Source (KS)
                         </div>
                         <p className="text-[11px] text-fg-muted leading-relaxed mb-2">
-                          The data plug. Each KS connects to one source type:
+                          {text.kc_ksDesc}
                         </p>
                         <div className="space-y-1">
                           {[
-                            { type: 'indexedOneLake', desc: 'Fabric Lakehouse files', color: '#34d399' },
-                            { type: 'searchIndex', desc: 'Existing AI Search index', color: '#a78bfa' },
-                            { type: 'indexedSharePoint', desc: 'SharePoint document library', color: '#60a5fa' },
-                            { type: 'indexedBlobStorage', desc: 'Azure Blob containers', color: '#fbbf24' },
-                            { type: 'web', desc: 'Grounding with Bing', color: '#94a3b8' },
-                            { type: 'remote SharePoint', desc: 'via Copilot Retrieval API', color: '#94a3b8' },
+                            { type: 'indexedOneLake', desc: text.kc_ks_onelake, color: '#34d399' },
+                            { type: 'searchIndex', desc: text.kc_ks_searchIndex, color: '#a78bfa' },
+                            { type: 'indexedSharePoint', desc: text.kc_ks_sharepoint, color: '#60a5fa' },
+                            { type: 'indexedBlobStorage', desc: text.kc_ks_blob, color: '#fbbf24' },
+                            { type: 'web', desc: text.kc_ks_web, color: '#94a3b8' },
+                            { type: 'remote SharePoint', desc: text.kc_ks_remotesp, color: '#94a3b8' },
                           ].map(({ type, desc, color }) => (
                             <div key={type} className="flex items-center gap-2">
                               <span className="font-mono text-[10px] px-1.5 py-0.5 rounded" style={{ background: `${color}1a`, color }}>{type}</span>
@@ -775,8 +769,8 @@ export default function SemanticJoinPage() {
                           ))}
                         </div>
                         <p className="text-[10px] text-fg-muted mt-2 leading-relaxed">
-                          One KB can have multiple KS → multi-source search.<br />
-                          Multiple agents can share the same KB → consistent answers.
+                          {text.kc_multiKs}<br />
+                          {text.kc_multiAgent}
                         </p>
                       </div>
                       <div className="flex flex-col gap-1">
@@ -802,29 +796,29 @@ export default function SemanticJoinPage() {
                 {/* ── In this demo ── */}
                 <div className="mt-3 rounded-xl border px-3 py-3" style={{ background: 'rgba(0,0,0,0.2)', borderColor: 'rgba(255,255,255,0.06)' }}>
                   <div className="text-[11px] font-semibold text-fg-default mb-2 flex items-center gap-1.5">
-                    <span style={{ color: '#60a5fa' }}>●</span> In this demo
+                    <span style={{ color: '#60a5fa' }}>{text.kc_inThisDemo}</span>
                   </div>
                   <div className="font-mono text-[11px] leading-relaxed text-fg-muted">
                     <span style={{ color: '#fb923c', fontWeight: 500 }}>unified-airline-kb</span>
-                    <span className="text-fg-subtle"> (Knowledge Base)</span><br />
+                    <span className="text-fg-subtle"> {text.kc_kbLabel}</span><br />
                     &nbsp;&nbsp;│<br />
                     &nbsp;&nbsp;├── <span style={{ color: '#34d399' }}>KS-1: unified-airline-source</span><br />
                     &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── Type: <span style={{ color: '#34d399' }}>indexedOneLake</span><br />
-                    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── Source: Fabric Lakehouse → Files/stats/*.json + policies/*.pdf<br />
-                    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── Indexer: OneLake Indexer (auto chunk + vectorize)<br />
-                    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── 244 indexed documents<br />
+                    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── Source: {text.kc_ksSource}<br />
+                    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── Indexer: {text.kc_ksIndexer}<br />
+                    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── {text.kc_ksDocs}<br />
                     &nbsp;&nbsp;│<br />
                     &nbsp;&nbsp;└── Model: <span style={{ color: '#fbbf24' }}>AI Model</span>
-                    <span className="text-fg-subtle"> (answerSynthesis)</span><br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── One question → searches all sources → cited answer
+                    <span className="text-fg-subtle"> {text.kc_modelLabel}</span><br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── {text.kc_oneQuestion}
                   </div>
                   <div className="mt-2.5 space-y-1">
-                    <div className="text-[10px] text-fg-muted">When you click <strong className="text-fg-default">Search</strong> above, this is exactly what happens:</div>
+                    <div className="text-[10px] text-fg-muted">{text.kc_whenSearch}</div>
                     {[
-                      'Your question goes to unified-airline-kb',
-                      'AI Search router plans which chunks to retrieve',
-                      'Hybrid search across 244 indexed documents',
-                      'LLM synthesizes answer with citations from each source',
+                      text.kc_step1,
+                      text.kc_step2,
+                      text.kc_step3,
+                      text.kc_step4,
                     ].map((step, i) => (
                       <div key={i} className="flex items-start gap-2 text-[10px] text-fg-muted">
                         <span className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-semibold" style={{ background: 'rgba(251,146,60,0.15)', color: '#fb923c', border: '0.5px solid rgba(251,146,60,0.3)' }}>{i + 1}</span>
@@ -842,14 +836,11 @@ export default function SemanticJoinPage() {
       {/* Data lives everywhere section */}
       <section className="mb-10">
         <h2 className="text-xl font-semibold text-fg-default mb-3">
-          Data lives everywhere — Foundry IQ searches it as one.
+          {text.dataLivesTitle}
         </h2>
         <div className="bg-bg-card border border-glass-border rounded-xl p-6">
           <p className="text-fg-muted text-sm mb-2.5 leading-relaxed">
-            SharePoint, Fabric OneLake, Azure Blob Storage, the web —
-            wherever your enterprise data lives,{' '}
-            <strong className="text-fg-default">one Knowledge Base</strong> unifies it all.
-            One API call. Multiple sources. Cited answers.
+            {text.dataLivesDesc}
           </p>
           <div className="mt-3 flex flex-wrap gap-3">
             <a
@@ -874,7 +865,7 @@ export default function SemanticJoinPage() {
 
       {/* One Question, Two Brains section */}
       <section className="mb-10">
-        <h2 className="text-xl font-semibold text-fg-default mb-3">One Question, Two Brains</h2>
+        <h2 className="text-xl font-semibold text-fg-default mb-3">{text.oneQuestionTitle}</h2>
         <div className="bg-bg-card border border-glass-border rounded-xl p-6">
           <div
             className="border-l-[3px] px-4 py-3 rounded-r-lg mb-4 text-sm font-medium text-fg-default"
@@ -883,16 +874,13 @@ export default function SemanticJoinPage() {
               borderLeftColor: 'var(--color-accent, #60a5fa)',
             }}
           >
-            "Numbers come from Fabric, reasons come from Foundry IQ."
+            {text.oneQuestionQuote}
           </div>
           <p className="text-fg-muted text-sm leading-relaxed mb-2">
-            Phase 3 demonstrates <strong className="text-fg-default">Semantic JOIN</strong> — a single question answered
-            by combining structured data (this flight dataset from Fabric) with unstructured documents (DOT regulation
-            PDFs indexed from SharePoint via Foundry IQ).
+            {text.oneQuestionDesc1}
           </p>
           <p className="text-fg-muted text-sm leading-relaxed">
-            This is not a SQL JOIN. The LLM reasons across both sources and synthesizes a unified answer with citations
-            from each.
+            {text.oneQuestionDesc2}
           </p>
         </div>
 
@@ -950,26 +938,25 @@ export default function SemanticJoinPage() {
 
           {/* Pipeline */}
           <section>
-            <h2 className="text-lg font-semibold text-fg-default mb-3">How this data gets to AI Search</h2>
+            <h2 className="text-lg font-semibold text-fg-default mb-3">{text.profile_pipelineTitle}</h2>
             <div className="bg-bg-card border border-glass-border rounded-xl p-5">
               <p className="text-fg-muted text-sm mb-4">
-                AI Search cannot directly index 5.8M raw flight records from Fabric Lakehouse (CSV/Delta Parquet is not supported by OneLake Indexer).
-                Instead, we use a <strong className="text-fg-default">two-step pipeline</strong>:
+                {text.profile_pipelineDesc}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
                   {
                     step: '①',
-                    title: 'Spark SQL Aggregation',
-                    sub: 'Fabric Notebook',
-                    desc: '5.8M rows → SQL GROUP BY → 5 summary JSON documents',
+                    title: text.profile_pipe1Title,
+                    sub: text.profile_pipe1Sub,
+                    desc: text.profile_pipe1Desc,
                     color: '#34d399',
                   },
                   {
                     step: '②',
-                    title: 'OneLake Indexer',
-                    sub: 'AI Search',
-                    desc: 'JSON files → chunk + vectorize → searchable index',
+                    title: text.profile_pipe2Title,
+                    sub: text.profile_pipe2Sub,
+                    desc: text.profile_pipe2Desc,
                     color: '#60a5fa',
                   },
                 ].map(({ step, title, sub, desc, color }) => (
@@ -986,7 +973,7 @@ export default function SemanticJoinPage() {
                 ))}
               </div>
               <p className="text-xs text-fg-subtle mt-3">
-                This is the same pattern for any large-scale Fabric data: <strong className="text-fg-default">aggregate first</strong>, then index the summaries for AI Search retrieval.
+                {text.profile_pipeNote}
               </p>
               <div className="mt-3">
                 <a
@@ -996,7 +983,7 @@ export default function SemanticJoinPage() {
                   className="text-accent hover:underline"
                   style={{ fontSize: '12px' }}
                 >
-                  📓 View Fabric Notebook — Data Aggregation &amp; EDA →
+                  {text.profile_notebookLink}
                 </a>
               </div>
             </div>
@@ -1005,24 +992,24 @@ export default function SemanticJoinPage() {
           {/* JSON Files */}
           <section>
             <h2 className="text-lg font-semibold text-fg-default mb-3">
-              Indexed JSON Files <span className="text-sm font-normal text-fg-subtle ml-1">(Fabric OneLake → AI Search)</span>
+              {text.profile_jsonTitle} <span className="text-sm font-normal text-fg-subtle ml-1">({text.profile_jsonSubtag})</span>
             </h2>
             <div className="bg-bg-card border border-glass-border rounded-xl overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-glass-border">
-                    {['File', 'Records', 'Description'].map((h) => (
+                    {[text.profile_thFile, text.profile_thRecords, text.profile_thDesc].map((h) => (
                       <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-fg-subtle uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {[
-                    { file: 'airline_delay_stats.json', records: '14', desc: 'Per-airline delay/cancellation statistics' },
-                    { file: 'top_airport_stats.json', records: '30', desc: 'Top 30 airports delay/cancellation stats' },
-                    { file: 'monthly_trend.json', records: '12', desc: 'Monthly operations trend' },
-                    { file: 'cancellation_reasons.json', records: '4', desc: 'Cancellation reason distribution' },
-                    { file: 'jfk_detailed_analysis.json', records: '9', desc: 'JFK airport detailed analysis (demo questions)' },
+                    { file: 'airline_delay_stats.json', records: '14', desc: text.profile_json1Desc },
+                    { file: 'top_airport_stats.json', records: '30', desc: text.profile_json2Desc },
+                    { file: 'monthly_trend.json', records: '12', desc: text.profile_json3Desc },
+                    { file: 'cancellation_reasons.json', records: '4', desc: text.profile_json4Desc },
+                    { file: 'jfk_detailed_analysis.json', records: '9', desc: text.profile_json5Desc },
                   ].map((row, i) => (
                     <tr key={row.file} className={i % 2 === 1 ? 'bg-bg-elevated/40' : ''}>
                       <td className="px-4 py-3 font-mono text-xs text-accent">{row.file}</td>
@@ -1037,9 +1024,9 @@ export default function SemanticJoinPage() {
 
           {/* PDF Files */}
           <section>
-            <h2 className="text-lg font-semibold text-fg-default mb-3">Indexed Policy Documents</h2>
+            <h2 className="text-lg font-semibold text-fg-default mb-3">{text.profile_pdfTitle}</h2>
             <p className="text-sm text-fg-muted mb-3">
-              These 4 DOT regulation PDFs demonstrate Foundry IQ&apos;s source flexibility:
+              {text.profile_pdfDesc}
             </p>
 
             {/* Source flexibility cards */}
@@ -1052,7 +1039,7 @@ export default function SemanticJoinPage() {
                   borderLeftColor: '#34d399',
                 }}
               >
-                <div className="text-sm font-semibold text-fg-default mb-1">✅ In this demo</div>
+                <div className="text-sm font-semibold text-fg-default mb-1">{text.profile_inThisDemo}</div>
                 <div className="text-xs text-fg-muted font-mono">Fabric OneLake → AI Search</div>
                 <div className="text-xs text-fg-subtle font-mono mt-0.5">(Files/policies/*.pdf)</div>
               </div>
@@ -1065,26 +1052,25 @@ export default function SemanticJoinPage() {
                   opacity: 0.75,
                 }}
               >
-                <div className="text-sm font-semibold text-fg-default mb-1">💡 Also possible</div>
+                <div className="text-sm font-semibold text-fg-default mb-1">{text.profile_alsoPossible}</div>
                 <div className="text-xs text-fg-muted font-mono">SharePoint → AI Search</div>
                 <div className="text-xs text-fg-subtle font-mono mt-0.5">(Phase 2 SP Connector demo)</div>
               </div>
             </div>
 
             <p className="text-sm text-fg-muted mb-3" style={{ fontStyle: 'italic' }}>
-              Same PDFs. Same KB. Different source — same search result.
-              Foundry IQ doesn&apos;t care where the data lives.
+              {text.profile_samePdfs}
             </p>
 
             <p className="text-[11px] font-mono text-fg-subtle mb-3">
-              Processing: SplitSkill (2000 chars, 500 overlap) + EmbeddingSkill (text-embedding-3-large, 3072 dim)
+              {text.profile_processing}
             </p>
 
             <div className="bg-bg-card border border-glass-border rounded-xl overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-glass-border">
-                    {['#', 'Document', 'Desc', 'Size', 'Source'].map((h) => (
+                    {[text.profile_thNum, text.profile_thDocument, text.profile_thDesc, text.profile_thSize, text.profile_thSource].map((h) => (
                       <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-fg-subtle uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
@@ -1092,29 +1078,29 @@ export default function SemanticJoinPage() {
                 <tbody>
                   {[
                     {
-                      doc: 'ANPRM: Airline Passenger Rights',
-                      desc: 'Proposed federal rules on compensation, refunds, and transparency for delayed/cancelled flights',
+                      doc: text.profile_pdf1Title,
+                      desc: text.profile_pdf1Desc,
                       size: '419 KB',
                       linkLabel: 'US DOT →',
                       href: 'https://www.transportation.gov/sites/dot.gov/files/2024-12/ANPRM%20Airline%20Passenger%20Rights%20(2105-AF20).pdf',
                     },
                     {
-                      doc: 'Fly Rights: Consumer Guide to Air Travel',
-                      desc: 'Official DOT consumer guide covering ticketing, baggage, delays, bumping, and complaint procedures',
+                      doc: text.profile_pdf2Title,
+                      desc: text.profile_pdf2Desc,
                       size: '352 KB',
                       linkLabel: 'US DOT →',
                       href: 'https://www.transportation.gov/airconsumer/fly-rights',
                     },
                     {
-                      doc: 'CRS Report: Airline Passenger Rights',
-                      desc: 'Congressional Research Service analysis of existing and proposed airline passenger protection legislation',
+                      doc: text.profile_pdf3Title,
+                      desc: text.profile_pdf3Desc,
                       size: '751 KB',
                       linkLabel: 'Congress.gov →',
                       href: 'https://www.congress.gov/crs-product/R43078',
                     },
                     {
-                      doc: 'Bumping & Oversales',
-                      desc: 'DOT rules on involuntary denied boarding — compensation calculation and passenger options',
+                      doc: text.profile_pdf4Title,
+                      desc: text.profile_pdf4Desc,
                       size: '178 KB',
                       linkLabel: 'US DOT →',
                       href: 'https://www.transportation.gov/individuals/aviation-consumer-protection/bumping-oversales',
@@ -1145,45 +1131,39 @@ export default function SemanticJoinPage() {
 
           {/* What is this data */}
           <section>
-            <h2 className="text-lg font-semibold text-fg-default mb-3">What is this data?</h2>
+            <h2 className="text-lg font-semibold text-fg-default mb-3">{text.profile_whatIsTitle}</h2>
             <div className="bg-bg-card border border-glass-border rounded-xl p-5 space-y-3 text-sm text-fg-muted leading-relaxed">
+              <p>{text.profile_whatIs1}</p>
               <p>
-                This dataset contains <strong className="text-fg-default">every US domestic flight in 2015</strong> — 5.8 million records from 14 airlines across 322 airports.
-                Each row represents a single flight with departure/arrival delays, cancellation status, and routing information.
+                {text.profile_whatIs2}{' '}
+                <a href="https://www.kaggle.com/datasets/usdot/flight-delays" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">{text.profile_whatIs2Link}</a>.
               </p>
-              <p>
-                The data is sourced from the <strong className="text-fg-default">US Department of Transportation Bureau of Transportation Statistics</strong> and
-                hosted on{' '}
-                <a href="https://www.kaggle.com/datasets/usdot/flight-delays" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Kaggle under CC0 Public Domain license</a>.
-              </p>
-              <p>
-                It is loaded into a <strong className="text-fg-default">Microsoft Fabric Lakehouse</strong> as Delta Tables, enabling Spark SQL queries and OneLake indexing for AI Search integration.
-              </p>
+              <p>{text.profile_whatIs3}</p>
             </div>
           </section>
 
           {/* Key Schema */}
           <section>
-            <h2 className="text-lg font-semibold text-fg-default mb-3">Key Schema</h2>
+            <h2 className="text-lg font-semibold text-fg-default mb-3">{text.profile_schemaTitle}</h2>
             <div className="bg-bg-card border border-glass-border rounded-xl overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-glass-border">
-                    {['Column', 'Type', 'Example', 'Description'].map((h) => (
+                    {[text.profile_thColumn, text.profile_thType, text.profile_thExample, text.profile_thDesc].map((h) => (
                       <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-fg-subtle uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {[
-                    { col: 'AIRLINE', type: 'str', ex: 'AA', desc: 'IATA airline code' },
-                    { col: 'ORIGIN_AIRPORT', type: 'str', ex: 'JFK', desc: 'Departure airport' },
-                    { col: 'DESTINATION_AIRPORT', type: 'str', ex: 'LAX', desc: 'Arrival airport' },
-                    { col: 'DEPARTURE_DELAY', type: 'int', ex: '45', desc: 'Minutes delayed (negative = early)' },
-                    { col: 'ARRIVAL_DELAY', type: 'int', ex: '42', desc: 'Minutes delayed at arrival' },
-                    { col: 'CANCELLED', type: 'int', ex: '0 / 1', desc: '0 = operated, 1 = cancelled' },
-                    { col: 'CANCELLATION_REASON', type: 'str', ex: 'B', desc: 'A=Airline, B=Weather, C=NAS, D=Security' },
-                    { col: 'DISTANCE', type: 'int', ex: '2475', desc: 'Flight distance in miles' },
+                    { col: 'AIRLINE', type: 'str', ex: 'AA', desc: text.profile_col1Desc },
+                    { col: 'ORIGIN_AIRPORT', type: 'str', ex: 'JFK', desc: text.profile_col2Desc },
+                    { col: 'DESTINATION_AIRPORT', type: 'str', ex: 'LAX', desc: text.profile_col3Desc },
+                    { col: 'DEPARTURE_DELAY', type: 'int', ex: '45', desc: text.profile_col4Desc },
+                    { col: 'ARRIVAL_DELAY', type: 'int', ex: '42', desc: text.profile_col5Desc },
+                    { col: 'CANCELLED', type: 'int', ex: '0 / 1', desc: text.profile_col6Desc },
+                    { col: 'CANCELLATION_REASON', type: 'str', ex: 'B', desc: text.profile_col7Desc },
+                    { col: 'DISTANCE', type: 'int', ex: '2475', desc: text.profile_col8Desc },
                   ].map((row, i) => (
                     <tr key={row.col} className={i % 2 === 1 ? 'bg-bg-elevated/40' : ''}>
                       <td className="px-4 py-3 font-mono text-xs text-accent font-semibold">{row.col}</td>
@@ -1199,15 +1179,13 @@ export default function SemanticJoinPage() {
 
           {/* EDA Visualizations */}
           <section>
-            <h2 className="text-lg font-semibold text-fg-default mb-3">EDA Visualizations — Aggregated Data Used in Demo</h2>
+            <h2 className="text-lg font-semibold text-fg-default mb-3">{text.profile_edaTitle}</h2>
             <div className="mb-4 space-y-2">
+              <p className="text-sm text-fg-muted">{text.profile_edaDesc1}</p>
               <p className="text-sm text-fg-muted">
-                These charts are generated from the same aggregated JSON files that power the Semantic JOIN demo.
-              </p>
-              <p className="text-sm text-fg-muted">
-                Fabric Notebook runs SQL aggregation on 5.8M flight records →{' '}
-                summary JSON stored in OneLake → indexed by AI Search →{' '}
-                searchable via <span className="font-mono text-fg-default">unified-airline-kb</span>.
+                {text.profile_edaDesc2.split('unified-airline-kb')[0]}
+                <span className="font-mono text-fg-default">unified-airline-kb</span>
+                {text.profile_edaDesc2.split('unified-airline-kb')[1]}
               </p>
               <a
                 href="https://github.com/hyeonsangjeon/foundry-iq-demo-suite/blob/main/notebooks/fabric_iq_flight_data_profile.ipynb"
@@ -1216,28 +1194,28 @@ export default function SemanticJoinPage() {
                 className="text-accent hover:underline inline-block"
                 style={{ fontSize: '12px' }}
               >
-                📓 View source notebook →
+                {text.profile_edaNotebook}
               </a>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
                 {
-                  title: 'Average Delay by Airline',
+                  title: text.profile_chart1,
                   src: '/images/eda/chart_avg_delay_by_airline.jpeg',
                   source: 'airline_delay_stats.json (14 airlines)',
                 },
                 {
-                  title: 'Delay Pattern by Hour',
+                  title: text.profile_chart2,
                   src: '/images/eda/chart_delay_by_hour.jpeg',
                   source: 'hourly aggregation from flights table',
                 },
                 {
-                  title: 'Cancellation Reasons',
+                  title: text.profile_chart3,
                   src: '/images/eda/chart_cancellation_reasons.jpeg',
                   source: 'cancellation_reasons.json (4 reasons)',
                 },
                 {
-                  title: 'Cancellation Rate',
+                  title: text.profile_chart4,
                   src: '/images/eda/chart_cancellation_rate.jpeg',
                   source: 'airline_delay_stats.json (14 airlines)',
                 },

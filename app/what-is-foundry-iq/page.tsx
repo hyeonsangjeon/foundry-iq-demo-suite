@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import {
@@ -8,10 +8,10 @@ import {
   pipeDetail,
   STEP_KEYS,
   STEP_META,
-  LANGS,
   type Lang,
   type StepKey,
 } from '@/lib/i18n/what-is-foundry-iq'
+import { getLocale } from '@/lib/i18n'
 
 // ─── Shared SVG Icons ─────────────────────────────────────────────────────────
 
@@ -72,6 +72,11 @@ function Reveal({ children, delay = 0, className = '' }: { children: React.React
 export default function WhatIsFoundryIQPage() {
   const [currentLang, setCurrentLang] = useState<Lang>('en')
   const [activeStep, setActiveStep] = useState<StepKey>('plan')
+
+  useEffect(() => {
+    const locale = getLocale()
+    if (locale in i18n) setCurrentLang(locale as Lang)
+  }, [])
 
   const t = i18n[currentLang]
   const detail = pipeDetail[currentLang][activeStep]
@@ -139,37 +144,6 @@ export default function WhatIsFoundryIQPage() {
             </div>
           </div>
 
-          {/* Right: Language switcher */}
-          <div
-            className="flex gap-1 p-[3px] rounded-[10px]"
-            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-          >
-            {LANGS.map(({ code, label }) => (
-              <button
-                key={code}
-                onClick={() => setCurrentLang(code)}
-                className="rounded-lg border-none text-[12px] font-semibold tracking-wide cursor-pointer transition-all duration-200"
-                style={{
-                  padding: '6px 14px',
-                  fontFamily: 'inherit',
-                  background:
-                    currentLang === code
-                      ? 'linear-gradient(135deg, var(--accent-blue), var(--accent-cyan))'
-                      : 'transparent',
-                  color:
-                    currentLang === code
-                      ? '#06080d'
-                      : 'rgba(255,255,255,0.55)',
-                  boxShadow:
-                    currentLang === code
-                      ? '0 2px 12px rgba(77,166,255,0.25)'
-                      : 'none',
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
 

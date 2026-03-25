@@ -4,6 +4,7 @@ import * as React from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { LanguageToggle } from '@/components/LanguageToggle'
 import {
   Search20Regular,
   Database20Regular,
@@ -22,19 +23,21 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Tooltip } from '@/components/ui/tooltip'
 import Image from 'next/image'
+import { getLocale, type Locale } from '@/lib/i18n'
+import { t } from '@/lib/i18n/translations'
 
 interface NavItem {
   href: string
-  label: string
+  labelKey: keyof typeof t.nav.en
   icon: React.ComponentType<{ className?: string }>
 }
 
 const navigation: NavItem[] = [
-  { href: '/', label: 'Home', icon: Home20Regular },
-  { href: '/test', label: 'Foundry IQ', icon: Search20Regular },
-  { href: '/knowledge', label: 'Knowledge', icon: Database20Regular },
-  { href: '/sharepoint', label: 'SharePoint', icon: DocumentMultiple20Regular },
-  { href: '/semantic-join', label: 'Semantic JOIN', icon: ArrowJoin20Regular },
+  { href: '/', labelKey: 'home', icon: Home20Regular },
+  { href: '/test', labelKey: 'foundryIQ', icon: Search20Regular },
+  { href: '/knowledge', labelKey: 'knowledge', icon: Database20Regular },
+  { href: '/sharepoint', labelKey: 'sharepoint', icon: DocumentMultiple20Regular },
+  { href: '/semantic-join', labelKey: 'semanticJoin', icon: ArrowJoin20Regular },
 ]
 
 interface AppShellProps {
@@ -44,7 +47,12 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
   const [collapsed, setCollapsed] = React.useState(false)
+  const [locale, setLocaleState] = React.useState<Locale>('en')
   const pathname = usePathname()
+
+  React.useEffect(() => {
+    setLocaleState(getLocale())
+  }, [])
 
   // Load persisted collapse state
   React.useEffect(() => {
@@ -88,7 +96,7 @@ export function AppShell({ children }: AppShellProps) {
       </a>
 
       {/* Header */}
-      <Header onMenuClick={() => setSidebarOpen(true)} showSidebar={showSidebar} />
+      <Header onMenuClick={() => setSidebarOpen(true)} showSidebar={showSidebar} locale={locale} />
 
   <div className="flex h-full">
         {showSidebar && (
@@ -115,6 +123,7 @@ export function AppShell({ children }: AppShellProps) {
               onClose={() => setSidebarOpen(false)}
               collapsed={collapsed}
               onToggleCollapse={toggleCollapse}
+              locale={locale}
             />
           </>
         )}
@@ -138,9 +147,11 @@ export function AppShell({ children }: AppShellProps) {
 interface HeaderProps {
   onMenuClick: () => void
   showSidebar: boolean
+  locale: Locale
 }
 
-function Header({ onMenuClick, showSidebar }: HeaderProps) {
+function Header({ onMenuClick, showSidebar, locale }: HeaderProps) {
+  const navText = t.nav[locale]
   return (
   <header className="fixed top-0 left-0 right-0 z-30 border-b border-glass-border bg-glass-surface backdrop-blur-elevated shadow-sm">
       <div className="flex h-16 items-center justify-between px-6">
@@ -168,13 +179,13 @@ function Header({ onMenuClick, showSidebar }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          <a 
-            href="https://learn.microsoft.com/rest/api/searchservice/knowledge-bases?view=rest-searchservice-2025-11-01-preview" 
-            target="_blank" 
+          <a
+            href="https://learn.microsoft.com/rest/api/searchservice/knowledge-bases?view=rest-searchservice-2025-11-01-preview"
+            target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium text-fg-muted transition-colors duration-fast hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-stroke-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas"
           >
-            <span>API docs</span>
+            <span>{navText.apiDocs}</span>
             <ArrowUpRight16Regular className="h-3.5 w-3.5" />
           </a>
 
@@ -182,17 +193,17 @@ function Header({ onMenuClick, showSidebar }: HeaderProps) {
             href="/what-is-foundry-iq"
             className="hidden md:flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium text-fg-subtle border border-glass-border hover:text-accent hover:border-accent/30 transition-colors duration-fast"
           >
-            Foundry IQ?
+            {navText.whatIsFoundryIQ}
           </Link>
-          
+
           <Tooltip content="View on GitHub">
-            <a 
-              href="https://github.com/hyeonsangjeon/private-foundry-iq-task" 
-              target="_blank" 
+            <a
+              href="https://github.com/hyeonsangjeon/private-foundry-iq-task"
+              target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-fg-muted transition-colors duration-fast hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-stroke-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas"
             >
-              <span>Source</span>
+              <span>{navText.source}</span>
               <Image 
                 src="/icons/github-mark.svg" 
                 alt="GitHub" 
@@ -210,6 +221,7 @@ function Header({ onMenuClick, showSidebar }: HeaderProps) {
             </a>
           </Tooltip>
           
+          <LanguageToggle />
           <ThemeToggle />
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-glass-border bg-bg-elevated/60 text-xs font-medium text-fg-subtle">
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
@@ -228,9 +240,11 @@ interface SidebarProps {
   onClose: () => void
   collapsed: boolean
   onToggleCollapse: () => void
+  locale: Locale
 }
 
-function Sidebar({ navigation, currentPath, isOpen, onClose, collapsed, onToggleCollapse }: SidebarProps) {
+function Sidebar({ navigation, currentPath, isOpen, onClose, collapsed, onToggleCollapse, locale }: SidebarProps) {
+  const navText = t.nav[locale]
   return (
     <>
       {/* Desktop sidebar */}
@@ -264,6 +278,7 @@ function Sidebar({ navigation, currentPath, isOpen, onClose, collapsed, onToggle
                 <SidebarLink
                   key={item.href}
                   item={item}
+                  label={navText[item.labelKey]}
                   isActive={currentPath === item.href}
                   collapsed={collapsed}
                 />
@@ -271,7 +286,8 @@ function Sidebar({ navigation, currentPath, isOpen, onClose, collapsed, onToggle
               {/* Divider + What is Foundry IQ link */}
               <div className="pt-3 mt-3 border-t border-stroke-divider">
                 <SidebarLink
-                  item={{ href: '/what-is-foundry-iq', label: 'What is Foundry IQ?', icon: Search20Regular }}
+                  item={{ href: '/what-is-foundry-iq', icon: Search20Regular }}
+                  label={navText.whatIsFoundryIQ}
                   isActive={currentPath === '/what-is-foundry-iq'}
                   collapsed={collapsed}
                 />
@@ -313,6 +329,7 @@ function Sidebar({ navigation, currentPath, isOpen, onClose, collapsed, onToggle
                     <SidebarLink
                       key={item.href}
                       item={item}
+                      label={navText[item.labelKey]}
                       isActive={currentPath === item.href}
                       onClick={onClose}
                     />
@@ -320,7 +337,8 @@ function Sidebar({ navigation, currentPath, isOpen, onClose, collapsed, onToggle
                   {/* Divider + What is Foundry IQ link */}
                   <div className="pt-3 mt-3 border-t border-stroke-divider">
                     <SidebarLink
-                      item={{ href: '/what-is-foundry-iq', label: 'What is Foundry IQ?', icon: Search20Regular }}
+                      item={{ href: '/what-is-foundry-iq', icon: Search20Regular }}
+                      label={navText.whatIsFoundryIQ}
                       isActive={currentPath === '/what-is-foundry-iq'}
                       onClick={onClose}
                     />
@@ -336,13 +354,14 @@ function Sidebar({ navigation, currentPath, isOpen, onClose, collapsed, onToggle
 }
 
 interface SidebarLinkProps {
-  item: NavItem
+  item: { href: string; icon: React.ComponentType<{ className?: string }> }
+  label: string
   isActive: boolean
   onClick?: () => void
   collapsed?: boolean
 }
 
-function SidebarLink({ item, isActive, onClick, collapsed }: SidebarLinkProps) {
+function SidebarLink({ item, label, isActive, onClick, collapsed }: SidebarLinkProps) {
   const Icon = item.icon
 
   const linkEl = (
@@ -358,11 +377,11 @@ function SidebarLink({ item, isActive, onClick, collapsed }: SidebarLinkProps) {
       )}
     >
       {isActive && (
-  <div className="absolute left-2 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-accent" />
+        <div className="absolute left-2 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-accent" />
       )}
       <Icon className={cn('h-5 w-5 flex-shrink-0', collapsed ? 'mx-auto' : 'text-fg-muted group-hover:text-fg-default')} />
-      {!collapsed && <span className="truncate tracking-tight">{item.label}</span>}
+      {!collapsed && <span className="truncate tracking-tight">{label}</span>}
     </Link>
   )
-  return collapsed ? <Tooltip content={item.label}>{linkEl}</Tooltip> : linkEl
+  return collapsed ? <Tooltip content={label}>{linkEl}</Tooltip> : linkEl
 }

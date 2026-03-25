@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { getLocale, type Locale } from '@/lib/i18n'
+import { t } from '@/lib/i18n/translations'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -9,7 +11,7 @@ import { SPConnectionPanel } from '@/components/sp-connection-panel'
 import { SPDocumentLibrary } from '@/components/sp-document-library'
 import { SPIndexingPipeline, IndexerStatus } from '@/components/sp-indexing-pipeline'
 import { InsightPopup } from '@/components/insight-popup'
-import { SP_INSIGHT_STEPS } from '@/components/sp-insight-steps'
+import { getSpInsightSteps, SP_INSIGHT_STEPS } from '@/components/sp-insight-steps'
 import { SP_CONFIG, SP_LIVE_AVAILABLE, SP_LIVE_SECRET } from '@/lib/sp-config'
 import { SPModeToggle } from '@/components/sp-mode-toggle'
 import {
@@ -355,6 +357,9 @@ function CompleteStep({
 // ─── Main Hub ─────────────────────────────────────────────────────────────────
 
 export function SPDemoHub() {
+  const [locale, setLocaleState] = useState<Locale>('en')
+  useEffect(() => { setLocaleState(getLocale()) }, [])
+  const text = t.sharepoint[locale]
   const [step, setStep] = useState<DemoStep>('intro')
   const [connectionData, setConnectionData] = useState<ConnectionData | null>(null)
   const [documentsData, setDocumentsData] = useState<DocumentsData | null>(null)
@@ -505,12 +510,13 @@ export function SPDemoHub() {
     else setInsightStep(0)
   }, [step])
 
-  const currentInsight = insightStep > 0 ? SP_INSIGHT_STEPS[insightStep - 1] ?? null : null
+  const spSteps = getSpInsightSteps()
+  const currentInsight = insightStep > 0 ? spSteps[insightStep - 1] ?? null : null
 
   return (
     <div className="min-h-screen bg-bg-canvas text-fg-default">
       {/* Header */}
-      <div className="border-b border-stroke-divider bg-bg-subtle/50 backdrop-blur-sm sticky top-0 z-30">
+      <div className="border-b border-stroke-divider bg-bg-subtle/50 backdrop-blur-sm sticky top-0 z-20">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-4">
           <Link
             href="/"
@@ -520,7 +526,7 @@ export function SPDemoHub() {
             Home
           </Link>
           <div className="flex-1">
-            <h1 className="text-sm font-semibold text-fg-default">SharePoint Connector Demo</h1>
+            <h1 className="text-sm font-semibold text-fg-default">{text.title}</h1>
           </div>
           <SPModeToggle
             isLiveMode={isLiveMode}
@@ -571,10 +577,11 @@ export function SPDemoHub() {
             <div className="mt-6">
               <InsightPopup
                 step={currentInsight}
-                totalSteps={SP_INSIGHT_STEPS.length}
+                totalSteps={spSteps.length}
                 onDismiss={() => setInsightStep(0)}
-                onNext={() => setInsightStep(prev => Math.min(prev + 1, SP_INSIGHT_STEPS.length))}
+                onNext={() => setInsightStep(prev => Math.min(prev + 1, spSteps.length))}
                 onPrev={() => setInsightStep(prev => Math.max(prev - 1, 1))}
+                insightType="sp"
               />
             </div>
           )}

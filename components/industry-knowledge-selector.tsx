@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,8 @@ import {
   DocumentMultiple20Regular,
 } from '@fluentui/react-icons'
 import { useRouter } from 'next/navigation'
+import { getLocale, type Locale } from '@/lib/i18n'
+import { t } from '@/lib/i18n/translations'
 
 interface IndustryKnowledgeBase {
   id: string
@@ -147,6 +149,13 @@ const INDUSTRY_KNOWLEDGE_BASES: IndustryKnowledgeBase[] = [
 export function IndustryKnowledgeSelector() {
   const router = useRouter()
   const [selectedKB, setSelectedKB] = useState<string | null>(null)
+  const [locale, setLocale] = useState<Locale>('en')
+
+  useEffect(() => {
+    setLocale(getLocale())
+  }, [])
+
+  const text = t.industrySelector[locale]
 
   const handleSelectKB = (kb: IndustryKnowledgeBase) => {
     setSelectedKB(kb.id)
@@ -165,10 +174,10 @@ export function IndustryKnowledgeSelector() {
           className="text-center space-y-3"
         >
           <h1 className="text-4xl font-bold text-fg-default">
-            Choose Your Industry
+            {text.heading}
           </h1>
           <p className="text-lg text-fg-muted max-w-2xl mx-auto">
-            Select a pre-configured knowledge base to explore industry-specific AI-powered search and answer synthesis
+            {text.subtitle}
           </p>
         </motion.div>
 
@@ -210,9 +219,9 @@ export function IndustryKnowledgeSelector() {
 
                     {/* Title & Industry */}
                     <div className="space-y-1">
-                      <CardTitle className="text-xl">{kb.name}</CardTitle>
+                      <CardTitle className="text-xl">{text.kbs[kb.id as keyof typeof text.kbs]?.name ?? kb.name}</CardTitle>
                       <div className="text-sm font-medium text-accent">
-                        {kb.industry}
+                        {text.kbs[kb.id as keyof typeof text.kbs]?.industry ?? kb.industry}
                       </div>
                     </div>
                   </CardHeader>
@@ -220,7 +229,7 @@ export function IndustryKnowledgeSelector() {
                   <CardContent className="space-y-4">
                     {/* Description */}
                     <CardDescription className="text-sm leading-relaxed">
-                      {kb.description}
+                      {text.kbs[kb.id as keyof typeof text.kbs]?.description ?? kb.description}
                     </CardDescription>
 
                     {/* CTA Button or unavailable indicator */}
@@ -233,11 +242,11 @@ export function IndustryKnowledgeSelector() {
                           handleSelectKB(kb)
                         }}
                       >
-                        {isSelected ? "Opening..." : "Try Now"}
+                        {isSelected ? text.opening : text.tryNow}
                         <ArrowRight20Regular className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </Button>
                     ) : (
-                      <p className="text-sm text-fg-subtle text-center">No data connected</p>
+                      <p className="text-sm text-fg-subtle text-center">{text.noData}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -254,7 +263,7 @@ export function IndustryKnowledgeSelector() {
           className="text-center"
         >
           <p className="text-sm text-fg-muted">
-            Each knowledge base is pre-configured with industry-specific data sources and retrieval settings
+            {text.helperText}
           </p>
         </motion.div>
       </div>
