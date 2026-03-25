@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { SP_LIVE_SECRET } from '@/lib/sp-config'
+import { SP_LIVE_SECRET, REQUIRE_LIVE_SECRET } from '@/lib/sp-config'
 
 interface SPModeToggleProps {
   isLiveMode: boolean
@@ -31,6 +31,12 @@ export function SPModeToggle({ isLiveMode, isLiveAvailable, onToggle }: SPModeTo
       return
     }
 
+    // 암호 요구 비활성화 시 바로 전환
+    if (!REQUIRE_LIVE_SECRET) {
+      onToggle(true)
+      return
+    }
+
     // sessionStorage에 인증이 있으면 모달 없이 바로 전환
     if (typeof window !== 'undefined' && sessionStorage.getItem('sp-live-auth') === 'true') {
       onToggle(true)
@@ -41,7 +47,7 @@ export function SPModeToggle({ isLiveMode, isLiveAvailable, onToggle }: SPModeTo
   }
 
   const handlePasswordSubmit = () => {
-    if (passwordInput === SP_LIVE_SECRET) {
+    if (!REQUIRE_LIVE_SECRET || passwordInput === SP_LIVE_SECRET) {
       sessionStorage.setItem('sp-live-auth', 'true')
       setShowPasswordModal(false)
       setPasswordInput('')

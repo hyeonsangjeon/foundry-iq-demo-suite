@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { SP_DEMO_MODE, SP_LIVE_API_SECRET } from '@/lib/sp-config'
+import { SP_DEMO_MODE, SP_LIVE_API_SECRET, REQUIRE_LIVE_SECRET } from '@/lib/sp-config'
 import { searchApiCall } from '@/lib/sp-search-auth'
 
 export const dynamic = 'force-dynamic'
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
 
   if (isLive) {
     const secret = request.headers.get('x-live-secret')
-    if (secret !== SP_LIVE_API_SECRET) {
+    if (REQUIRE_LIVE_SECRET && secret !== SP_LIVE_API_SECRET) {
       console.error(`[SP:index-pipeline] ❌ 401 Unauthorized`)
       return NextResponse.json({ error: 'Unauthorized: invalid live mode secret' }, { status: 401 })
     }
@@ -97,10 +97,8 @@ export async function POST(request: NextRequest) {
             name: `${PREFIX}-openai-vectorizer`,
             kind: 'azureOpenAI',
             azureOpenAIParameters: {
+              // MI 인증만 사용 (External에서 API Key 비활성)
               resourceUri: aoaiEndpoint,
-              ...(process.env.AZURE_OPENAI_API_KEY
-                ? { apiKey: process.env.AZURE_OPENAI_API_KEY }
-                : {}),
               deploymentId: 'text-embedding-3-large',
               modelName: 'text-embedding-3-large',
             },
@@ -125,10 +123,8 @@ export async function POST(request: NextRequest) {
         {
           '@odata.type': '#Microsoft.Skills.Text.AzureOpenAIEmbeddingSkill',
           context: '/document/pages/*',
+          // MI 인증만 사용 (External에서 API Key 비활성)
           resourceUri: aoaiEndpoint,
-          ...(process.env.AZURE_OPENAI_API_KEY
-            ? { apiKey: process.env.AZURE_OPENAI_API_KEY }
-            : {}),
           deploymentId: 'text-embedding-3-large',
           modelName: 'text-embedding-3-large',
           dimensions: 1536,

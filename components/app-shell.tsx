@@ -15,6 +15,7 @@ import {
   People20Regular,
   Home20Regular,
   DocumentMultiple20Regular,
+  ArrowJoin20Regular,
 } from '@fluentui/react-icons'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -33,6 +34,7 @@ const navigation: NavItem[] = [
   { href: '/test', label: 'Foundry IQ', icon: Search20Regular },
   { href: '/knowledge', label: 'Knowledge', icon: Database20Regular },
   { href: '/sharepoint', label: 'SharePoint', icon: DocumentMultiple20Regular },
+  { href: '/semantic-join', label: 'Semantic JOIN', icon: ArrowJoin20Regular },
 ]
 
 interface AppShellProps {

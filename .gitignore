@@ -22,6 +22,7 @@ AGENT*
 CLAUDE.md*
 # Production
 /build
+scripts/
 
 # Miscellaneous
 .DS_Store
