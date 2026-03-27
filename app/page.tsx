@@ -1,5 +1,10 @@
+import { Suspense } from 'react'
 import { LandingPage } from '../components/landing-page'
 
 export default function HomePage() {
-  return <LandingPage />
+  return (
+    <Suspense>
+      <LandingPage />
+    </Suspense>
+  )
 }

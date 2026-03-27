@@ -62,14 +62,23 @@ export const t = {
       phase1Desc:
         'Query planning, hybrid search, iterative retrieval, and answer synthesis — with full trace visibility and inline citations.',
       phase1Button: 'Launch Demo',
+      phase1ExecTitle: 'Search answers from documents',
+      phase1ExecDesc:
+        '"What\'s the airline delay compensation policy?" — AI analyzes PDFs and returns a cited answer. But these documents were manually uploaded...',
       phase2Title: 'SharePoint Indexing',
       phase2Desc:
         'Connect a SharePoint document library to AI Search. Extract, chunk, embed, and index PDF, DOCX, XLSX, PPTX — zero code required.',
       phase2Button: 'Launch Demo',
+      phase2ExecTitle: 'Enterprise docs flow automatically',
+      phase2ExecDesc:
+        'Same question, now answered from official DOT policy documents in SharePoint — indexed automatically in 5 minutes. But what about the actual flight data?',
       phase3Title: 'Semantic JOIN Demo',
       phase3Desc:
         'One question answered by combining structured data from Fabric OneLake and policy documents — AI Search routes to both sources simultaneously.',
       phase3Button: 'Try Semantic JOIN →',
+      phase3ExecTitle: 'Data meets documents',
+      phase3ExecDesc:
+        '"How many JFK delays over 2 hours and what\'s the policy?" — Fabric flight data (127 delays) + DOT policy PDF (full refund if 3hrs+), answered together with citations.',
       footer: 'Powered by Azure AI Search · Microsoft AI GBB Korea',
       whatIsFoundryIQ: 'What is Foundry IQ?',
     },
@@ -80,14 +89,23 @@ export const t = {
       phase1Desc:
         '쿼리 계획, 하이브리드 검색, 반복 검색, 답변 합성 — 전체 추적 가시성과 인라인 인용 포함.',
       phase1Button: '데모 시작',
+      phase1ExecTitle: '문서에서 답을 찾다',
+      phase1ExecDesc:
+        '"항공 지연 보상 정책이 뭐야?" — AI가 PDF를 분석해서 인용과 함께 답변합니다. 하지만 이 문서는 수동으로 업로드한 것뿐입니다...',
       phase2Title: 'SharePoint 인덱싱',
       phase2Desc:
         'SharePoint 문서 라이브러리를 AI Search에 연결. PDF, DOCX, XLSX, PPTX를 추출, 청킹, 임베딩, 인덱싱 — 코드 불필요.',
       phase2Button: '데모 시작',
+      phase2ExecTitle: '기업 문서가 자동으로 흐르다',
+      phase2ExecDesc:
+        '같은 질문, 이번엔 SharePoint의 실제 DOT 정책 문서에서 답합니다 — 5분 만에 자동 인덱싱. 하지만 실제 비행 데이터는 어떨까요?',
       phase3Title: '시맨틱 조인 데모',
       phase3Desc:
         'Fabric OneLake의 구조화 데이터와 정책 문서를 결합하여 하나의 질문에 답변 — AI Search가 두 소스를 동시에 검색.',
       phase3Button: '시맨틱 조인 체험 →',
+      phase3ExecTitle: '데이터와 문서가 만나다',
+      phase3ExecDesc:
+        '"JFK 2시간 이상 지연이 몇 건이고 보상 정책은?" — Fabric 비행 데이터(127건 지연) + DOT 정책 PDF(3시간 이상 시 전액 환불), 인용과 함께 통합 답변.',
       footer: 'Powered by Azure AI Search · Microsoft AI GBB Korea',
       whatIsFoundryIQ: 'Foundry IQ란?',
     },
@@ -98,14 +116,23 @@ export const t = {
       phase1Desc:
         '查询规划、混合搜索、迭代检索和答案合成 — 具备完整的追踪可见性和内联引用。',
       phase1Button: '启动演示',
+      phase1ExecTitle: '从文档中搜索答案',
+      phase1ExecDesc:
+        '"航班延误赔偿政策是什么？" — AI分析PDF并返回带引用的答案。但这些文档是手动上传的...',
       phase2Title: 'SharePoint 索引',
       phase2Desc:
         '将 SharePoint 文档库连接到 AI Search。提取、分块、嵌入和索引 PDF、DOCX、XLSX、PPTX — 无需编写代码。',
       phase2Button: '启动演示',
+      phase2ExecTitle: '企业文档自动流转',
+      phase2ExecDesc:
+        '同样的问题，现在从SharePoint中的DOT官方政策文档中回答 — 5分钟自动索引。但实际的航班数据呢？',
       phase3Title: 'Semantic JOIN 演示',
       phase3Desc:
         '通过结合 Fabric OneLake 的结构化数据和政策文档来回答一个问题 — AI Search 同时路由到两个数据源。',
       phase3Button: '体验 Semantic JOIN →',
+      phase3ExecTitle: '数据与文档相遇',
+      phase3ExecDesc:
+        '"JFK超过2小时延误有多少次？赔偿政策是什么？" — Fabric航班数据(127次延误) + DOT政策PDF(3小时以上全额退款)，带引用的综合答案。',
       footer: 'Powered by Azure AI Search · Microsoft AI GBB Korea',
       whatIsFoundryIQ: 'Foundry IQ 是什么？',
     },
@@ -116,14 +143,23 @@ export const t = {
       phase1Desc:
         'クエリプランニング、ハイブリッド検索、反復検索、回答合成 — 完全なトレース可視性とインライン引用付き。',
       phase1Button: 'デモを起動',
+      phase1ExecTitle: 'ドキュメントから回答を検索',
+      phase1ExecDesc:
+        '「航空遅延補償ポリシーは？」— AIがPDFを分析し、引用付きの回答を返します。ただし、これらのドキュメントは手動アップロードされたものです...',
       phase2Title: 'SharePoint インデックス',
       phase2Desc:
         'SharePoint ドキュメントライブラリを AI Search に接続。PDF、DOCX、XLSX、PPTX を抽出、チャンク化、埋め込み、インデックス化 — コード不要。',
       phase2Button: 'デモを起動',
+      phase2ExecTitle: '企業ドキュメントが自動で流れる',
+      phase2ExecDesc:
+        '同じ質問、今度はSharePointの公式DOTポリシードキュメントから回答 — 5分で自動インデックス化。しかし、実際のフライトデータは？',
       phase3Title: 'Semantic JOIN デモ',
       phase3Desc:
         'Fabric OneLake の構造化データとポリシードキュメントを組み合わせて一つの質問に回答 — AI Search が両ソースに同時にルーティング。',
       phase3Button: 'Semantic JOIN を試す →',
+      phase3ExecTitle: 'データとドキュメントが出会う',
+      phase3ExecDesc:
+        '「JFKで2時間以上の遅延は何件？補償ポリシーは？」— Fabricフライトデータ(127件遅延) + DOTポリシーPDF(3時間以上で全額返金)、引用付きの統合回答。',
       footer: 'Powered by Azure AI Search · Microsoft AI GBB Korea',
       whatIsFoundryIQ: 'Foundry IQ とは？',
     },
@@ -134,14 +170,23 @@ export const t = {
       phase1Desc:
         'क्वेरी प्लानिंग, हाइब्रिड सर्च, पुनरावृत्त खोज, और उत्तर संश्लेषण — पूर्ण ट्रेस दृश्यता और इनलाइन उद्धरण के साथ।',
       phase1Button: 'डेमो शुरू करें',
+      phase1ExecTitle: 'दस्तावेज़ों से उत्तर खोजें',
+      phase1ExecDesc:
+        '"एयरलाइन विलंब मुआवज़ा नीति क्या है?" — AI PDFs का विश्लेषण करता है और उद्धरण के साथ उत्तर देता है। लेकिन ये दस्तावेज़ मैन्युअल रूप से अपलोड किए गए थे...',
       phase2Title: 'SharePoint इंडेक्सिंग',
       phase2Desc:
         'SharePoint दस्तावेज़ लाइब्रेरी को AI Search से कनेक्ट करें। PDF, DOCX, XLSX, PPTX को निकालें, चंक करें, एम्बेड करें और इंडेक्स करें — बिना कोड के।',
       phase2Button: 'डेमो शुरू करें',
+      phase2ExecTitle: 'एंटरप्राइज़ दस्तावेज़ स्वचालित रूप से प्रवाहित',
+      phase2ExecDesc:
+        'वही प्रश्न, अब SharePoint में DOT की आधिकारिक नीति दस्तावेज़ों से उत्तर — 5 मिनट में स्वचालित इंडेक्सिंग। लेकिन वास्तविक फ्लाइट डेटा का क्या?',
       phase3Title: 'Semantic JOIN डेमो',
       phase3Desc:
         'Fabric OneLake के संरचित डेटा और नीति दस्तावेज़ों को मिलाकर एक प्रश्न का उत्तर — AI Search दोनों स्रोतों को एक साथ खोजता है।',
       phase3Button: 'Semantic JOIN आज़माएं →',
+      phase3ExecTitle: 'डेटा और दस्तावेज़ मिलते हैं',
+      phase3ExecDesc:
+        '"JFK पर 2 घंटे से अधिक देरी कितनी बार हुई और नीति क्या है?" — Fabric फ्लाइट डेटा (127 देरी) + DOT नीति PDF (3 घंटे से अधिक पर पूर्ण रिफंड), उद्धरण के साथ संयुक्त उत्तर।',
       footer: 'Powered by Azure AI Search · Microsoft AI GBB Korea',
       whatIsFoundryIQ: 'Foundry IQ क्या है?',
     },
