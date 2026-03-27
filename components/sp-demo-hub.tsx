@@ -528,6 +528,14 @@ export function SPDemoHub() {
           <div className="flex-1">
             <h1 className="text-sm font-semibold text-fg-default">{text.title}</h1>
           </div>
+          <Link
+            href="/architecture"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-[11px] text-fg-subtle hover:text-fg-muted transition-all"
+            title="View architecture diagram"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
+            Architecture
+          </Link>
           <SPModeToggle
             isLiveMode={isLiveMode}
             isLiveAvailable={SP_LIVE_AVAILABLE}
