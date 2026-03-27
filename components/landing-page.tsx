@@ -428,6 +428,17 @@ export function LandingPage() {
         <SharePointDemoCard locale={locale} />
         <FabricIqDemoCard locale={locale} />
         <ComingSoonCards />
+
+        {/* Architecture link */}
+        <div className="text-center pt-2">
+          <Link
+            href="/architecture"
+            className="inline-flex items-center gap-1.5 text-sm text-fg-subtle hover:text-fg-muted transition-colors"
+          >
+            View full architecture
+            <ChevronRight20Regular className="w-3.5 h-3.5" />
+          </Link>
+        </div>
       </section>
 
       {/* Zone 3: Footer */}
