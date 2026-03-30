@@ -51,7 +51,7 @@ function Transition1({ locale, advance }: { locale: Locale; advance: () => void 
   const t = scenarioT.transition1[locale]
   const common = scenarioT.common[locale]
   return (
-    <div onClick={advance} className="flex flex-col items-center justify-center min-h-[60vh] px-6 cursor-pointer text-center">
+    <div onClick={advance} className="flex flex-col items-center justify-center min-h-[60dvh] px-6 pb-20 cursor-pointer text-center">
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }}>
         <span className="text-4xl mb-4 block">⚠️</span>
         <h2 className="text-2xl md:text-3xl font-bold text-amber-400 mb-3">{t.warning}</h2>
@@ -73,7 +73,7 @@ function Transition2({ locale, advance }: { locale: Locale; advance: () => void 
   const t = scenarioT.transition2[locale]
   const common = scenarioT.common[locale]
   return (
-    <div onClick={advance} className="flex flex-col items-center justify-center min-h-[60vh] px-6 cursor-pointer text-center">
+    <div onClick={advance} className="flex flex-col items-center justify-center min-h-[60dvh] px-6 pb-20 cursor-pointer text-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -102,7 +102,7 @@ function Transition3({ locale, advance }: { locale: Locale; advance: () => void 
   const t = scenarioT.transition3[locale]
   const common = scenarioT.common[locale]
   return (
-    <div onClick={advance} className="flex flex-col items-center justify-center min-h-[60vh] px-6 cursor-pointer text-center">
+    <div onClick={advance} className="flex flex-col items-center justify-center min-h-[60dvh] px-6 pb-20 cursor-pointer text-center">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
         <div className="flex items-center justify-center gap-3 mb-6">
           <span className="w-3 h-3 rounded-full bg-accent" />
