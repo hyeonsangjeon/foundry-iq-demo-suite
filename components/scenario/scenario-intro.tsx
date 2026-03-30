@@ -15,7 +15,7 @@ export function ScenarioIntro({ locale, onNext }: ScenarioIntroProps) {
   const t = scenarioT.intro[locale]
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 py-8 text-center overflow-y-auto">
+    <div className="flex flex-col items-center justify-center min-h-[70dvh] px-4 py-8 pb-24 text-center overflow-y-auto">
       {/* Hero background image */}
       <div className="relative w-full max-w-2xl aspect-video rounded-2xl overflow-hidden mb-8">
         <Image

@@ -53,7 +53,7 @@ export default function ScenarioPage() {
   }, [goNext, goPrev, step])
 
   return (
-    <div className="min-h-screen bg-bg-canvas text-fg-default">
+    <div className="min-h-[100dvh] bg-bg-canvas text-fg-default">
       {/* Header */}
       <div className="border-b border-stroke-divider bg-bg-subtle/50 backdrop-blur-sm sticky top-0 z-20">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -75,7 +75,7 @@ export default function ScenarioPage() {
       </div>
 
       {/* Content */}
-      <div className="py-8">
+      <div className="py-8 pb-24">
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
