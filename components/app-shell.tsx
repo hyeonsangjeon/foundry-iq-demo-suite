@@ -178,14 +178,16 @@ function Header({ onMenuClick, showSidebar, locale }: HeaderProps) {
 
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <LanguageToggle />
           <a
             href="https://learn.microsoft.com/rest/api/searchservice/knowledge-bases?view=rest-searchservice-2025-11-01-preview"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium text-fg-muted transition-colors duration-fast hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-stroke-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas"
           >
-            <span>{navText.apiDocs}</span>
+            <span className="hidden sm:inline">{navText.apiDocs}</span>
+            <span className="sm:hidden">API</span>
             <ArrowUpRight16Regular className="h-3.5 w-3.5" />
           </a>
 
@@ -201,9 +203,9 @@ function Header({ onMenuClick, showSidebar, locale }: HeaderProps) {
               href="https://github.com/hyeonsangjeon/private-foundry-iq-task"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-fg-muted transition-colors duration-fast hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-stroke-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas"
+              className="flex items-center gap-1.5 rounded-full px-2 sm:px-3 py-1.5 text-sm font-medium text-fg-muted transition-colors duration-fast hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-stroke-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas"
             >
-              <span>{navText.source}</span>
+              <span className="hidden sm:inline">{navText.source}</span>
               <Image 
                 src="/icons/github-mark.svg" 
                 alt="GitHub" 
@@ -221,7 +223,6 @@ function Header({ onMenuClick, showSidebar, locale }: HeaderProps) {
             </a>
           </Tooltip>
           
-          <LanguageToggle />
           <ThemeToggle />
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-glass-border bg-bg-elevated/60 text-xs font-medium text-fg-subtle">
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />

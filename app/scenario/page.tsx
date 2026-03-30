@@ -64,12 +64,13 @@ export default function ScenarioPage() {
           {step < TOTAL_STEPS - 1 && (
             <button
               onClick={goToSummary}
-              className="text-[11px] text-fg-subtle hover:text-fg-muted transition-colors"
+              className="whitespace-nowrap text-[11px] text-fg-subtle hover:text-fg-muted transition-colors"
             >
-              {common.skipToSummary} →
+              <span className="hidden sm:inline">{common.skipToSummary} →</span>
+              <span className="sm:hidden">→ Summary</span>
             </button>
           )}
-          {step === TOTAL_STEPS - 1 && <div className="w-24" />}
+          {step === TOTAL_STEPS - 1 && <div className="w-16 sm:w-24" />}
         </div>
       </div>
 
