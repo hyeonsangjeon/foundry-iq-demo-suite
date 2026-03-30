@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { motion, useInView } from 'framer-motion'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -403,23 +403,22 @@ function ComingSoonCards() {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export function LandingPage() {
-  const searchParams = useSearchParams()
+  const router = useRouter()
   const [locale, setLocaleState] = useState<Locale>('en')
-  const [mode, setMode] = useState<ViewMode>(
-    searchParams.get('mode') === 'executive' ? 'executive' : 'technical'
-  )
+  const [mode, setMode] = useState<ViewMode>('technical')
   useEffect(() => { setLocaleState(getLocale()) }, [])
+
   const text = t.landing[locale]
   const isExec = mode === 'executive'
 
   const toggleMode = (newMode: ViewMode) => {
+    if (newMode === 'executive') {
+      router.push('/scenario')
+      return
+    }
     setMode(newMode)
     const url = new URL(window.location.href)
-    if (newMode === 'technical') {
-      url.searchParams.delete('mode')
-    } else {
-      url.searchParams.set('mode', newMode)
-    }
+    url.searchParams.delete('mode')
     window.history.replaceState({}, '', url.toString())
   }
 
@@ -430,7 +429,7 @@ export function LandingPage() {
       <div className="pt-12 pb-8 text-center relative">
         {/* Mode toggle — top right */}
         <div className="absolute top-4 right-6">
-          <ModeToggle mode={mode} onToggle={toggleMode} />
+          <ModeToggle mode={mode} onToggle={toggleMode} locale={locale} />
         </div>
         <h1 className="text-2xl font-semibold text-fg-default">{text.title}</h1>
         <p className="text-sm text-fg-muted mt-1">{text.subtitle}</p>

@@ -1,14 +1,12 @@
 'use client'
 
 /**
- * Architecture diagram — converted from knowledge_retrieval_studio.html SVG
- * Colour convention:
- *   Purple (#EEEDFE / #534AB7) → Foundry IQ
- *   Red    (#FCEBEB / #A32D2D) → Fabric IQ
- *   Blue   (#E6F1FB / #185FA5) → Azure / M365
- *   Gray   (#F1EFE8 / #5F5E5A) → Our app
- *
- * In dark mode every fill is toned down for glass-morphism readability.
+ * Architecture diagram — dark-first glass morphism
+ * Color coding via borders + subtle tinted fills:
+ *   Purple → Foundry IQ
+ *   Rose   → Fabric IQ
+ *   Blue   → Azure / M365
+ *   Amber  → Application
  */
 export function ArchitectureDiagram() {
   return (
@@ -41,42 +39,45 @@ export function ArchitectureDiagram() {
       </defs>
 
       {/* ── Legend ─────────────────────────────────────────────────── */}
-      <rect x={40} y={12} width={14} height={14} rx={3} fill="#EEEDFE" stroke="#534AB7" strokeWidth={0.5} />
-      <text x={60} y={22} dominantBaseline="central" className="fill-[#534AB7] dark:fill-[#a9a0f0] text-xs">
-        Foundry IQ
-      </text>
-      <rect x={170} y={12} width={14} height={14} rx={3} fill="#FCEBEB" stroke="#A32D2D" strokeWidth={0.5} />
-      <text x={190} y={22} dominantBaseline="central" className="fill-[#A32D2D] dark:fill-[#ef8888] text-xs">
-        Fabric IQ
-      </text>
-      <rect x={290} y={12} width={14} height={14} rx={3} fill="#E6F1FB" stroke="#185FA5" strokeWidth={0.5} />
-      <text x={310} y={22} dominantBaseline="central" className="fill-[#185FA5] dark:fill-[#7db8e8] text-xs">
-        Azure / M365
-      </text>
-      <rect x={420} y={12} width={14} height={14} rx={3} fill="#F1EFE8" stroke="#5F5E5A" strokeWidth={0.5} />
-      <text x={440} y={22} dominantBaseline="central" className="fill-[#5F5E5A] dark:fill-[#b4b2a9] text-xs">
-        Our app
-      </text>
+      {/* Pill badges — centered row */}
+      <g>
+        <rect x={50} y={6} width={110} height={26} rx={13} fill="rgba(124,110,237,0.2)" stroke="rgba(155,138,251,0.8)" strokeWidth={1.2} />
+        <text x={105} y={19} textAnchor="middle" dominantBaseline="central" fill="#c5bffa" style={{ fontSize: 13, fontWeight: 600 }}>
+          Foundry IQ
+        </text>
+        <rect x={175} y={6} width={100} height={26} rx={13} fill="rgba(224,82,82,0.15)" stroke="rgba(240,112,112,0.8)" strokeWidth={1.2} />
+        <text x={225} y={19} textAnchor="middle" dominantBaseline="central" fill="#f7a8a8" style={{ fontSize: 13, fontWeight: 600 }}>
+          Fabric IQ
+        </text>
+        <rect x={290} y={6} width={120} height={26} rx={13} fill="rgba(59,130,246,0.15)" stroke="rgba(96,165,250,0.8)" strokeWidth={1.2} />
+        <text x={350} y={19} textAnchor="middle" dominantBaseline="central" fill="#93c5fd" style={{ fontSize: 13, fontWeight: 600 }}>
+          Azure / M365
+        </text>
+        <rect x={425} y={6} width={115} height={26} rx={13} fill="rgba(251,191,36,0.1)" stroke="rgba(251,191,36,0.5)" strokeWidth={1.2} />
+        <text x={482} y={19} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.8)" style={{ fontSize: 13, fontWeight: 600 }}>
+          Application
+        </text>
+      </g>
 
       {/* ── App title ──────────────────────────────────────────────── */}
       <g>
-        <rect x={40} y={44} width={600} height={40} rx={8} fill="#F1EFE8" stroke="#5F5E5A" strokeWidth={0.5} className="dark:fill-white/5 dark:stroke-white/10" />
-        <text x={340} y={64} textAnchor="middle" dominantBaseline="central" className="fill-[#2C2C2A] dark:fill-white/90 text-sm font-medium">
+        <rect x={40} y={44} width={600} height={40} rx={8} fill="rgba(255,255,255,0.04)" stroke="rgba(251,191,36,0.35)" strokeWidth={1} />
+        <text x={340} y={64} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.9)" style={{ fontSize: 14, fontWeight: 500 }}>
           Knowledge Retrieval Studio
         </text>
       </g>
 
-      {/* ── Landing page ───────────────────────────────────────────── */}
+      {/* ── Landing page ─── */}
       <g>
-        <rect x={40} y={100} width={600} height={44} rx={8} fill="#F1EFE8" stroke="#5F5E5A" strokeWidth={0.5} className="dark:fill-white/5 dark:stroke-white/10" />
-        <text x={340} y={122} textAnchor="middle" dominantBaseline="central" className="fill-[#2C2C2A] dark:fill-white/80 text-sm font-medium">
+        <rect x={40} y={100} width={600} height={44} rx={8} fill="rgba(255,255,255,0.04)" stroke="rgba(251,191,36,0.35)" strokeWidth={1} />
+        <text x={340} y={122} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.85)" style={{ fontSize: 14, fontWeight: 500 }}>
           Landing page — 3 demo cards
         </text>
       </g>
 
       {/* ── Arrows → Phase cards ───────────────────────────────────── */}
       {[150, 340, 530].map((x) => (
-        <line key={x} x1={x} y1={144} x2={x} y2={180} stroke="#888780" strokeWidth={1.5} markerEnd="url(#arr-marker)" className="dark:stroke-white/30" />
+        <line key={x} x1={x} y1={144} x2={x} y2={180} stroke="rgba(255,255,255,0.35)" strokeWidth={1.5} markerEnd="url(#arr-marker)" />
       ))}
 
       {/* ── Phase cards ────────────────────────────────────────────── */}
@@ -86,16 +87,15 @@ export function ArchitectureDiagram() {
         { x: 440, label: 'Phase 3', sub: 'Fabric + Foundry JOIN' },
       ].map(({ x, label, sub }) => (
         <g key={label}>
-          <rect x={x} y={180} width={180} height={56} rx={8} fill="#F1EFE8" stroke="#5F5E5A" strokeWidth={0.5} className="dark:fill-white/5 dark:stroke-white/10" />
-          <text x={x + 90} y={200} textAnchor="middle" dominantBaseline="central" className="fill-[#2C2C2A] dark:fill-white/90 text-sm font-medium">
+          <rect x={x} y={180} width={180} height={56} rx={8} fill="rgba(255,255,255,0.04)" stroke="rgba(251,191,36,0.35)" strokeWidth={1} />
+          <text x={x + 90} y={200} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.92)" style={{ fontSize: 14, fontWeight: 500 }}>
             {label}
           </text>
-          <text x={x + 90} y={220} textAnchor="middle" dominantBaseline="central" className="fill-[#5F5E5A] dark:fill-white/50 text-xs">
+          <text x={x + 90} y={220} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.5)" style={{ fontSize: 12 }}>
             {sub}
           </text>
-          {/* LIVE badge */}
-          <rect x={x + 8} y={173} width={40} height={16} rx={8} fill="#EAF3DE" stroke="#3B6D11" strokeWidth={0.5} />
-          <text x={x + 28} y={183} textAnchor="middle" dominantBaseline="central" style={{ fill: '#27500A', fontSize: 10, fontWeight: 500 }}>
+          <rect x={x + 8} y={173} width={40} height={16} rx={8} fill="rgba(74,222,128,0.15)" stroke="rgba(74,222,128,0.6)" strokeWidth={0.8} />
+          <text x={x + 28} y={183} textAnchor="middle" dominantBaseline="central" fill="#4ade80" style={{ fontSize: 10, fontWeight: 600 }}>
             LIVE
           </text>
         </g>
@@ -103,7 +103,7 @@ export function ArchitectureDiagram() {
 
       {/* ── Arrows → detail rows ───────────────────────────────────── */}
       {[150, 340, 530].map((x) => (
-        <line key={`d-${x}`} x1={x} y1={236} x2={x} y2={274} stroke="#888780" strokeWidth={1.5} markerEnd="url(#arr-marker)" className="dark:stroke-white/30" />
+        <line key={`d-${x}`} x1={x} y1={236} x2={x} y2={274} stroke="rgba(255,255,255,0.35)" strokeWidth={1.5} markerEnd="url(#arr-marker)" />
       ))}
 
       {/* ── PHASE 1 detail ─────────────────────────────────────────── */}
@@ -126,15 +126,13 @@ export function ArchitectureDiagram() {
       <FoundryBox x={445} y={350} w={80} h={44} title="KS: PDF" sub="Policies" />
       <FoundryBox x={535} y={350} w={80} h={44} title="KS: JSON" sub="Stats" />
       {/* fan-in arrows */}
-      <path d="M485 394 L485 416 L510 416 L510 426" fill="none" stroke="#888780" strokeWidth={1.5} markerEnd="url(#arr-marker)" className="dark:stroke-white/30" />
-      <path d="M575 394 L575 416 L550 416 L550 426" fill="none" stroke="#888780" strokeWidth={1.5} markerEnd="url(#arr-marker)" className="dark:stroke-white/30" />
+      <path d="M485 394 L485 416 L510 416 L510 426" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth={1.5} markerEnd="url(#arr-marker)" />
+      <path d="M575 394 L575 416 L550 416 L550 426" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth={1.5} markerEnd="url(#arr-marker)" />
       <FoundryBox x={440} y={426} w={180} h={56} title="LLM synthesis" sub="Data + docs merged" />
 
       {/* ── Divider: Data origins ──────────────────────────────────── */}
-      <line x1={40} y1={516} x2={640} y2={516} stroke="#B4B2A9" strokeWidth={0.5} strokeDasharray="4 4" className="dark:stroke-white/15" />
-      <text x={340} y={536} textAnchor="middle" className="fill-[#888780] dark:fill-white/40 text-xs">
-        Data origins
-      </text>
+      <line x1={40} y1={516} x2={640} y2={516} stroke="rgba(255,255,255,0.12)" strokeWidth={0.5} strokeDasharray="4 4" />
+      <text x={340} y={536} textAnchor="middle" fill="rgba(255,255,255,0.4)" style={{ fontSize: 12 }}>Data origins</text>
 
       {/* ── Data origin boxes ──────────────────────────────────────── */}
       <AzureBox x={60} y={552} w={180} h={56} title="Azure Blob Storage" sub="Hotels, Finance, NASA PDFs" />
@@ -156,20 +154,18 @@ export function ArchitectureDiagram() {
         'M440 658 L434 658 L434 372 L443 372',
         'M620 658 L634 658 L634 372 L617 372',
       ].map((d, i) => (
-        <path key={i} d={d} fill="none" stroke="#534AB7" strokeWidth={1.5} strokeDasharray="6 3" markerEnd="url(#arr-marker)" opacity={0.7} className="dark:stroke-[#a9a0f0]" />
+        <path key={i} d={d} fill="none" stroke="rgba(155,138,251,0.6)" strokeWidth={1.5} strokeDasharray="6 3" markerEnd="url(#arr-marker)" />
       ))}
 
       {/* ── Divider: Infrastructure ────────────────────────────────── */}
-      <line x1={40} y1={710} x2={640} y2={710} stroke="#B4B2A9" strokeWidth={0.5} strokeDasharray="4 4" className="dark:stroke-white/15" />
-      <text x={340} y={730} textAnchor="middle" className="fill-[#888780] dark:fill-white/40 text-xs">
-        Infrastructure
-      </text>
+      <line x1={40} y1={710} x2={640} y2={710} stroke="rgba(255,255,255,0.12)" strokeWidth={0.5} strokeDasharray="4 4" />
+      <text x={340} y={730} textAnchor="middle" fill="rgba(255,255,255,0.4)" style={{ fontSize: 12 }}>Infrastructure</text>
 
       {/* ── Infrastructure boxes ───────────────────────────────────── */}
-      <AppBox x={40} y={745} w={290} h={36} title="Next.js 14 + Vercel" />
-      <FoundryBox x={340} y={745} w={300} h={36} title="AI Search + Azure OpenAI + Embedding" />
-      <FabricBox x={40} y={795} w={290} h={36} title="Fabric Trial + Spark + OneLake" />
-      <AzureBox x={340} y={795} w={300} h={36} title="Azure Blob + SharePoint + Entra" />
+      <FoundryBox x={40} y={745} w={290} h={36} title="AI Search + Azure OpenAI + Embedding" />
+      <AzureBox x={340} y={745} w={300} h={36} title="SharePoint + Entra + Azure Blob" />
+      <FabricBox x={40} y={795} w={290} h={36} title="Fabric + Spark + OneLake" />
+      <AppBox x={340} y={795} w={300} h={36} title="Application" />
     </svg>
   )
 }
@@ -177,30 +173,17 @@ export function ArchitectureDiagram() {
 /* ─── Primitive helpers ─────────────────────────────────────────────────────── */
 
 function Arr({ x, y1, y2 }: { x: number; y1: number; y2: number }) {
-  return <line x1={x} y1={y1} x2={x} y2={y2} stroke="#888780" strokeWidth={1.5} markerEnd="url(#arr-marker)" className="dark:stroke-white/30" />
+  return <line x1={x} y1={y1} x2={x} y2={y2} stroke="rgba(255,255,255,0.35)" strokeWidth={1.5} markerEnd="url(#arr-marker)" />
 }
 
-interface BoxProps {
-  x: number
-  y: number
-  w: number
-  h: number
-  title: string
-  sub?: string
-}
+interface BoxProps { x: number; y: number; w: number; h: number; title: string; sub?: string }
 
 function FoundryBox({ x, y, w, h, title, sub }: BoxProps) {
   return (
     <g>
-      <rect x={x} y={y} width={w} height={h} rx={8} fill="#EEEDFE" stroke="#534AB7" strokeWidth={0.5} className="dark:fill-[#534AB7]/15 dark:stroke-[#534AB7]/40" />
-      <text x={x + w / 2} y={sub ? y + h / 2 - 8 : y + h / 2} textAnchor="middle" dominantBaseline="central" className="fill-[#3C3489] dark:fill-[#c5bffa] text-sm font-medium">
-        {title}
-      </text>
-      {sub && (
-        <text x={x + w / 2} y={y + h / 2 + 10} textAnchor="middle" dominantBaseline="central" className="fill-[#534AB7] dark:fill-[#a9a0f0] text-xs">
-          {sub}
-        </text>
-      )}
+      <rect x={x} y={y} width={w} height={h} rx={8} fill="rgba(124,110,237,0.12)" stroke="rgba(155,138,251,0.6)" strokeWidth={1} />
+      <text x={x + w / 2} y={sub ? y + h / 2 - 8 : y + h / 2} textAnchor="middle" dominantBaseline="central" fill="#c5bffa" style={{ fontSize: 14, fontWeight: 500 }}>{title}</text>
+      {sub && <text x={x + w / 2} y={y + h / 2 + 10} textAnchor="middle" dominantBaseline="central" fill="rgba(155,138,251,0.75)" style={{ fontSize: 12 }}>{sub}</text>}
     </g>
   )
 }
@@ -208,15 +191,9 @@ function FoundryBox({ x, y, w, h, title, sub }: BoxProps) {
 function FabricBox({ x, y, w, h, title, sub }: BoxProps) {
   return (
     <g>
-      <rect x={x} y={y} width={w} height={h} rx={8} fill="#FCEBEB" stroke="#A32D2D" strokeWidth={0.5} className="dark:fill-[#A32D2D]/15 dark:stroke-[#A32D2D]/40" />
-      <text x={x + w / 2} y={sub ? y + h / 2 - 8 : y + h / 2} textAnchor="middle" dominantBaseline="central" className="fill-[#791F1F] dark:fill-[#f0a0a0] text-sm font-medium">
-        {title}
-      </text>
-      {sub && (
-        <text x={x + w / 2} y={y + h / 2 + 10} textAnchor="middle" dominantBaseline="central" className="fill-[#A32D2D] dark:fill-[#ef8888] text-xs">
-          {sub}
-        </text>
-      )}
+      <rect x={x} y={y} width={w} height={h} rx={8} fill="rgba(224,82,82,0.1)" stroke="rgba(240,112,112,0.6)" strokeWidth={1} />
+      <text x={x + w / 2} y={sub ? y + h / 2 - 8 : y + h / 2} textAnchor="middle" dominantBaseline="central" fill="#f7a8a8" style={{ fontSize: 14, fontWeight: 500 }}>{title}</text>
+      {sub && <text x={x + w / 2} y={y + h / 2 + 10} textAnchor="middle" dominantBaseline="central" fill="rgba(240,112,112,0.7)" style={{ fontSize: 12 }}>{sub}</text>}
     </g>
   )
 }
@@ -224,15 +201,9 @@ function FabricBox({ x, y, w, h, title, sub }: BoxProps) {
 function AzureBox({ x, y, w, h, title, sub }: BoxProps) {
   return (
     <g>
-      <rect x={x} y={y} width={w} height={h} rx={8} fill="#E6F1FB" stroke="#185FA5" strokeWidth={0.5} className="dark:fill-[#185FA5]/15 dark:stroke-[#185FA5]/40" />
-      <text x={x + w / 2} y={sub ? y + h / 2 - 8 : y + h / 2} textAnchor="middle" dominantBaseline="central" className="fill-[#0C447C] dark:fill-[#a0cef0] text-sm font-medium">
-        {title}
-      </text>
-      {sub && (
-        <text x={x + w / 2} y={y + h / 2 + 10} textAnchor="middle" dominantBaseline="central" className="fill-[#185FA5] dark:fill-[#7db8e8] text-xs">
-          {sub}
-        </text>
-      )}
+      <rect x={x} y={y} width={w} height={h} rx={8} fill="rgba(59,130,246,0.1)" stroke="rgba(96,165,250,0.6)" strokeWidth={1} />
+      <text x={x + w / 2} y={sub ? y + h / 2 - 8 : y + h / 2} textAnchor="middle" dominantBaseline="central" fill="#93c5fd" style={{ fontSize: 14, fontWeight: 500 }}>{title}</text>
+      {sub && <text x={x + w / 2} y={y + h / 2 + 10} textAnchor="middle" dominantBaseline="central" fill="rgba(96,165,250,0.7)" style={{ fontSize: 12 }}>{sub}</text>}
     </g>
   )
 }
@@ -240,15 +211,9 @@ function AzureBox({ x, y, w, h, title, sub }: BoxProps) {
 function AppBox({ x, y, w, h, title, sub }: BoxProps) {
   return (
     <g>
-      <rect x={x} y={y} width={w} height={h} rx={8} fill="#F1EFE8" stroke="#5F5E5A" strokeWidth={0.5} className="dark:fill-white/5 dark:stroke-white/10" />
-      <text x={x + w / 2} y={sub ? y + h / 2 - 8 : y + h / 2} textAnchor="middle" dominantBaseline="central" className="fill-[#2C2C2A] dark:fill-white/90 text-sm font-medium">
-        {title}
-      </text>
-      {sub && (
-        <text x={x + w / 2} y={y + h / 2 + 10} textAnchor="middle" dominantBaseline="central" className="fill-[#5F5E5A] dark:fill-white/50 text-xs">
-          {sub}
-        </text>
-      )}
+      <rect x={x} y={y} width={w} height={h} rx={8} fill="rgba(255,255,255,0.04)" stroke="rgba(251,191,36,0.35)" strokeWidth={1} />
+      <text x={x + w / 2} y={sub ? y + h / 2 - 8 : y + h / 2} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.9)" style={{ fontSize: 14, fontWeight: 500 }}>{title}</text>
+      {sub && <text x={x + w / 2} y={y + h / 2 + 10} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.5)" style={{ fontSize: 12 }}>{sub}</text>}
     </g>
   )
 }

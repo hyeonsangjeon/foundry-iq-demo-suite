@@ -1,15 +1,19 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import type { Locale } from '@/lib/i18n'
+import { scenarioT } from '@/data/scenario-translations'
 
 export type ViewMode = 'technical' | 'executive'
 
 interface ModeToggleProps {
   mode: ViewMode
   onToggle: (mode: ViewMode) => void
+  locale?: Locale
 }
 
-export function ModeToggle({ mode, onToggle }: ModeToggleProps) {
+export function ModeToggle({ mode, onToggle, locale = 'en' }: ModeToggleProps) {
+  const common = scenarioT.common[locale]
   return (
     <div className="flex items-center gap-1 rounded-full p-1 bg-white/5 border border-white/10">
       <button
@@ -21,7 +25,7 @@ export function ModeToggle({ mode, onToggle }: ModeToggleProps) {
             : 'text-white/50 hover:text-white/70'
         )}
       >
-        Technical
+        {common.technical}
       </button>
       <button
         onClick={() => onToggle('executive')}
@@ -32,7 +36,7 @@ export function ModeToggle({ mode, onToggle }: ModeToggleProps) {
             : 'text-white/50 hover:text-white/70'
         )}
       >
-        Executive
+        {common.executive}
       </button>
     </div>
   )
