@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, useInView } from 'framer-motion'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -13,6 +14,7 @@ import {
 } from '@fluentui/react-icons'
 import { getLocale, type Locale } from '@/lib/i18n'
 import { t } from '@/lib/i18n/translations'
+import { ModeToggle, type ViewMode } from '@/components/mode-toggle'
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -87,7 +89,7 @@ const comingSoon: Array<{
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function ActiveDemoCard({ locale }: { locale: Locale }) {
+function ActiveDemoCard({ locale, isExec }: { locale: Locale; isExec: boolean }) {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-10%' })
   const text = t.landing[locale]
@@ -130,10 +132,10 @@ function ActiveDemoCard({ locale }: { locale: Locale }) {
                 {activeDemo.subtitle}
               </div>
               <h3 className="text-3xl md:text-4xl font-bold text-fg-default tracking-tight mb-3">
-                {text.phase1Title}
+                {isExec ? (text as any).phase1ExecTitle || text.phase1Title : text.phase1Title}
               </h3>
               <p className="text-base text-fg-muted leading-relaxed mb-6 max-w-lg">
-                {text.phase1Desc}
+                {isExec ? (text as any).phase1ExecDesc || text.phase1Desc : text.phase1Desc}
               </p>
 
               <div className="flex flex-wrap gap-2 mb-8">
@@ -165,7 +167,7 @@ function ActiveDemoCard({ locale }: { locale: Locale }) {
   )
 }
 
-function SharePointDemoCard({ locale }: { locale: Locale }) {
+function SharePointDemoCard({ locale, isExec }: { locale: Locale; isExec: boolean }) {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-10%' })
   const text = t.landing[locale]
@@ -213,10 +215,10 @@ function SharePointDemoCard({ locale }: { locale: Locale }) {
                 {sharePointDemo.subtitle}
               </div>
               <h3 className="text-2xl md:text-3xl font-bold text-fg-default tracking-tight mb-2">
-                {text.phase2Title}
+                {isExec ? (text as any).phase2ExecTitle || text.phase2Title : text.phase2Title}
               </h3>
               <p className="text-sm text-fg-muted leading-relaxed mb-5 max-w-lg">
-                {text.phase2Desc}
+                {isExec ? (text as any).phase2ExecDesc || text.phase2Desc : text.phase2Desc}
               </p>
 
               <div className="flex flex-wrap gap-2 mb-6">
@@ -248,7 +250,7 @@ function SharePointDemoCard({ locale }: { locale: Locale }) {
   )
 }
 
-function FabricIqDemoCard({ locale }: { locale: Locale }) {
+function FabricIqDemoCard({ locale, isExec }: { locale: Locale; isExec: boolean }) {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-10%' })
   const text = t.landing[locale]
@@ -296,10 +298,10 @@ function FabricIqDemoCard({ locale }: { locale: Locale }) {
                 {fabricIqDemo.subtitle}
               </div>
               <h3 className="text-2xl md:text-3xl font-bold text-fg-default tracking-tight mb-2">
-                {text.phase3Title}
+                {isExec ? (text as any).phase3ExecTitle || text.phase3Title : text.phase3Title}
               </h3>
               <p className="text-sm text-fg-muted leading-relaxed mb-5 max-w-lg">
-                {text.phase3Desc}
+                {isExec ? (text as any).phase3ExecDesc || text.phase3Desc : text.phase3Desc}
               </p>
 
               <div className="flex flex-wrap gap-2 mb-6">
@@ -401,15 +403,34 @@ function ComingSoonCards() {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export function LandingPage() {
+  const router = useRouter()
   const [locale, setLocaleState] = useState<Locale>('en')
+  const [mode, setMode] = useState<ViewMode>('technical')
   useEffect(() => { setLocaleState(getLocale()) }, [])
+
   const text = t.landing[locale]
+  const isExec = mode === 'executive'
+
+  const toggleMode = (newMode: ViewMode) => {
+    if (newMode === 'executive') {
+      router.push('/scenario')
+      return
+    }
+    setMode(newMode)
+    const url = new URL(window.location.href)
+    url.searchParams.delete('mode')
+    window.history.replaceState({}, '', url.toString())
+  }
 
   return (
     <div className="relative min-h-screen text-fg-default">
 
       {/* Title */}
-      <div className="pt-12 pb-8 text-center">
+      <div className="pt-12 pb-8 text-center relative">
+        {/* Mode toggle — top right */}
+        <div className="absolute top-4 right-6">
+          <ModeToggle mode={mode} onToggle={toggleMode} locale={locale} />
+        </div>
         <h1 className="text-2xl font-semibold text-fg-default">{text.title}</h1>
         <p className="text-sm text-fg-muted mt-1">{text.subtitle}</p>
         <Link
@@ -424,10 +445,21 @@ export function LandingPage() {
 
       {/* Demo Cards */}
       <section className="relative px-6 py-8 max-w-5xl mx-auto flex flex-col gap-6">
-        <ActiveDemoCard locale={locale} />
-        <SharePointDemoCard locale={locale} />
-        <FabricIqDemoCard locale={locale} />
+        <ActiveDemoCard locale={locale} isExec={isExec} />
+        <SharePointDemoCard locale={locale} isExec={isExec} />
+        <FabricIqDemoCard locale={locale} isExec={isExec} />
         <ComingSoonCards />
+
+        {/* Architecture link */}
+        <div className="text-center pt-2">
+          <Link
+            href="/architecture"
+            className="inline-flex items-center gap-1.5 text-sm text-fg-subtle hover:text-fg-muted transition-colors"
+          >
+            View full architecture
+            <ChevronRight20Regular className="w-3.5 h-3.5" />
+          </Link>
+        </div>
       </section>
 
       {/* Zone 3: Footer */}

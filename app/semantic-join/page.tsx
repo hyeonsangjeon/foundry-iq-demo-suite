@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
+import Link from 'next/link'
 import './semantic-join.css'
 import { getLocale, type Locale } from '@/lib/i18n'
 import { t } from '@/lib/i18n/translations'
@@ -8,46 +9,22 @@ import { t } from '@/lib/i18n/translations'
 const LIVE_MODE = true
 
 interface PresetItem {
+  label: string
   q: string
-  fQ: string
-  fR: string
-  fN: string
-  dQ: string
-  dR: string
-  dN: string
-  a: string
 }
 
 const PRESETS: PresetItem[] = [
   {
-    q: 'How many JFK flights were delayed over 2 hours, and what is the compensation policy?',
-    fQ: '🔍 Hybrid search: "JFK delayed flights 2+ hours"',
-    fR: '2,566 flights departed JFK with delays over 2 hours in 2015.',
-    fN: '📄 jfk_detailed_analysis.json — Fabric OneLake → AI Search indexed',
-    dQ: '🔍 Hybrid search: "compensation policy delay"',
-    dR: 'DOT: Domestic delays 3+ hrs → full refund. Denied boarding 1-2 hrs → 200% fare.',
-    dN: '📄 ANPRM_Airline_Passenger_Rights.pdf — Fabric OneLake → AI Search indexed',
-    a: 'JFK departures delayed over 2 hours totaled <strong>2,566 flights</strong> in 2015 <span class="cite cite-f">1</span>. Under DOT regulations, passengers on domestic flights delayed 3 or more hours are entitled to a <strong>full refund</strong> if they choose not to travel <span class="cite cite-d">2</span>. For involuntary denied boarding with delays of 1-2 hours, compensation is 200% of the one-way fare <span class="cite cite-d">2</span>.'
+    label: "JFK 3hr delay + rights",
+    q: "I am currently at JFK airport and my JetBlue domestic flight has been delayed for over 3 hours. How often do delays like this happen at JFK? Under US DOT regulations, what compensation or refund am I entitled to?"
   },
   {
-    q: 'Which airlines had the most cancellations due to weather, and what are passengers entitled to?',
-    fQ: '🔍 Hybrid search: "weather cancellation airline count"',
-    fR: 'Top weather cancellations: WN (8,412), MQ (6,251), OO (4,893), AA (4,520).',
-    fN: '📄 cancellation_reasons.json + airline_delay_stats.json — Fabric OneLake',
-    dQ: '🔍 Hybrid search: "weather cancellation passenger rights"',
-    dR: 'DOT: Weather cancellations — no compensation required, but must offer rebooking or refund.',
-    dN: '📄 Fly_Rights_US_Department_of_Transportation.pdf — Fabric OneLake',
-    a: 'Southwest (WN) led weather cancellations with <strong>8,412 flights</strong>, followed by American Eagle (MQ) at 6,251 <span class="cite cite-f">1</span>. Per DOT guidelines, airlines are <strong>not required to compensate</strong> for weather cancellations, but must offer rebooking or a full refund <span class="cite cite-d">2</span>.'
+    label: "Cancellation ranking + weather",
+    q: "Which US airlines had the highest cancellation rates in 2015, and what does the DOT say about passenger rights when a flight is cancelled due to weather?"
   },
   {
-    q: 'What is the average delay for Delta flights, and what does DOT say about tarmac delays?',
-    fQ: '🔍 Hybrid search: "Delta average delay statistics"',
-    fR: 'Delta (DL) average departure delay: 7.4 minutes across 875,881 flights.',
-    fN: '📄 airline_delay_stats.json — Fabric OneLake → AI Search indexed',
-    dQ: '🔍 Hybrid search: "tarmac delay rule regulation"',
-    dR: 'DOT 3-hour tarmac rule: must return to gate after 3 hrs domestic. Food/water after 2 hrs.',
-    dN: '📄 Fly_Rights_US_Department_of_Transportation.pdf — Fabric OneLake',
-    a: "Delta averaged a <strong>7.4 minute departure delay</strong> across 875,881 flights in 2015 <span class=\"cite cite-f\">1</span>. Under DOT's tarmac delay rule, airlines must return to the gate after <strong>3 hours on domestic flights</strong>, and must provide food, water, and restroom access after 2 hours <span class=\"cite cite-d\">2</span>."
+    label: "Delta vs AA + tarmac rules",
+    q: "Between Delta and American Airlines, which one has fewer delays? If I end up stuck on the tarmac for a long time, what rules apply?"
   }
 ]
 
@@ -131,6 +108,8 @@ export default function SemanticJoinPage() {
   }
 
   async function runMock(idx: number) {
+    // Mock fallback - not used when LIVE_MODE=true
+    // Minimal implementation to prevent TypeScript errors
     const s = PRESETS[idx]
     resetPanels()
     setRunning(true)
@@ -146,28 +125,28 @@ export default function SemanticJoinPage() {
     await delay(600)
     if (cancelRef.current) { setRunning(false); return }
 
-    setFabricQuery(s.fQ)
-    setFoundryQuery(s.dQ)
+    setFabricQuery('🔍 Mock search query')
+    setFoundryQuery('🔍 Mock search query')
 
     await delay(800)
     if (cancelRef.current) { setRunning(false); return }
 
-    setFabricStatus(s.fR)
-    setFabricNote(s.fN)
+    setFabricStatus('Mock data response')
+    setFabricNote('📄 Mock data source')
     setFabricDone(true)
 
     await delay(400)
     if (cancelRef.current) { setRunning(false); return }
 
-    setFoundryStatus(s.dR)
-    setFoundryNote(s.dN)
+    setFoundryStatus('Mock policy response')
+    setFoundryNote('📄 Mock policy source')
     setFoundryDone(true)
     setJoinActive(true)
 
     await delay(600)
     if (cancelRef.current) { setRunning(false); return }
 
-    setAnswerHtml(s.a)
+    setAnswerHtml('Mock answer for: ' + s.q)
     setAnswerVisible(true)
     setRunning(false)
   }
@@ -269,15 +248,25 @@ export default function SemanticJoinPage() {
     <div className="mx-auto max-w-[1100px] px-2 py-8 md:px-0">
       {/* Header */}
       <div className="mb-6">
-        <div className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium font-mono mb-4"
-          style={{
-            background: 'rgba(96,165,250,0.12)',
-            borderColor: 'rgba(96,165,250,0.2)',
-            color: 'var(--color-accent, #60a5fa)',
-          }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: 'var(--color-accent, #60a5fa)' }} />
-          FABRIC + FOUNDRY IQ
+        <div className="flex items-start justify-between">
+          <div className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium font-mono mb-4"
+            style={{
+              background: 'rgba(96,165,250,0.12)',
+              borderColor: 'rgba(96,165,250,0.2)',
+              color: 'var(--color-accent, #60a5fa)',
+            }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: 'var(--color-accent, #60a5fa)' }} />
+            FABRIC + FOUNDRY IQ
+          </div>
+          <Link
+            href="/architecture"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-[11px] text-fg-subtle hover:text-fg-muted transition-all"
+            title="View architecture diagram"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
+            Architecture
+          </Link>
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-fg-default mb-2">
           <span className="text-accent">{text.pageTitle}</span>
@@ -340,7 +329,7 @@ export default function SemanticJoinPage() {
           {/* Preset buttons */}
           <div className="flex flex-wrap gap-1.5 items-center">
             <span className="text-xs text-fg-subtle leading-7">{text.tryLabel}</span>
-            {['JFK delays + compensation', 'Weather cancellations + rights', 'Delta delays + tarmac rules'].map((label, idx) => (
+            {PRESETS.map((preset, idx) => (
               <button
                 key={idx}
                 onClick={() => fillQuery(idx)}
@@ -351,7 +340,7 @@ export default function SemanticJoinPage() {
                     : 'bg-bg-card border-glass-border text-fg-muted hover:bg-bg-elevated hover:text-fg-default',
                 ].join(' ')}
               >
-                {label}
+                {preset.label}
               </button>
             ))}
             <a
