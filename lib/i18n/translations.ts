@@ -79,7 +79,7 @@ export const t = {
       phase3ExecTitle: 'Data meets documents',
       phase3ExecDesc:
         '"How many JFK delays over 2 hours and what\'s the policy?" — Fabric flight data (127 delays) + DOT policy PDF (full refund if 3hrs+), answered together with citations.',
-      footer: 'Powered by Azure AI Search · Microsoft AI GBB Korea',
+      footer: 'Powered by Azure AI Search · Microsoft AI Apps Global Black Belt',
       whatIsFoundryIQ: 'What is Foundry IQ?',
     },
     ko: {
@@ -106,7 +106,7 @@ export const t = {
       phase3ExecTitle: '데이터와 문서가 만나다',
       phase3ExecDesc:
         '"JFK 2시간 이상 지연이 몇 건이고 보상 정책은?" — Fabric 비행 데이터(127건 지연) + DOT 정책 PDF(3시간 이상 시 전액 환불), 인용과 함께 통합 답변.',
-      footer: 'Powered by Azure AI Search · Microsoft AI GBB Korea',
+      footer: 'Powered by Azure AI Search · Microsoft AI Apps Global Black Belt',
       whatIsFoundryIQ: 'Foundry IQ란?',
     },
     zh: {
@@ -133,7 +133,7 @@ export const t = {
       phase3ExecTitle: '数据与文档相遇',
       phase3ExecDesc:
         '"JFK超过2小时延误有多少次？赔偿政策是什么？" — Fabric航班数据(127次延误) + DOT政策PDF(3小时以上全额退款)，带引用的综合答案。',
-      footer: 'Powered by Azure AI Search · Microsoft AI GBB Korea',
+      footer: 'Powered by Azure AI Search · Microsoft AI Apps Global Black Belt',
       whatIsFoundryIQ: 'Foundry IQ 是什么？',
     },
     ja: {
@@ -160,7 +160,7 @@ export const t = {
       phase3ExecTitle: 'データとドキュメントが出会う',
       phase3ExecDesc:
         '「JFKで2時間以上の遅延は何件？補償ポリシーは？」— Fabricフライトデータ(127件遅延) + DOTポリシーPDF(3時間以上で全額返金)、引用付きの統合回答。',
-      footer: 'Powered by Azure AI Search · Microsoft AI GBB Korea',
+      footer: 'Powered by Azure AI Search · Microsoft AI Apps Global Black Belt',
       whatIsFoundryIQ: 'Foundry IQ とは？',
     },
     hi: {
@@ -187,7 +187,7 @@ export const t = {
       phase3ExecTitle: 'डेटा और दस्तावेज़ मिलते हैं',
       phase3ExecDesc:
         '"JFK पर 2 घंटे से अधिक देरी कितनी बार हुई और नीति क्या है?" — Fabric फ्लाइट डेटा (127 देरी) + DOT नीति PDF (3 घंटे से अधिक पर पूर्ण रिफंड), उद्धरण के साथ संयुक्त उत्तर।',
-      footer: 'Powered by Azure AI Search · Microsoft AI GBB Korea',
+      footer: 'Powered by Azure AI Search · Microsoft AI Apps Global Black Belt',
       whatIsFoundryIQ: 'Foundry IQ क्या है?',
     },
   },
