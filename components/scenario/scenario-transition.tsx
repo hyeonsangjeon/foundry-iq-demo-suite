@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import type { Locale } from '@/lib/i18n'
 import { scenarioT } from '@/data/scenario-translations'
@@ -12,46 +12,26 @@ interface TransitionProps {
 }
 
 export function ScenarioTransition({ transitionNumber, locale, onNext }: TransitionProps) {
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
-  const hasAdvanced = useRef(false)
-
-  const autoAdvanceMs: Record<1 | 2 | 3, number> = { 1: 4000, 2: 4000, 3: 5000 }
-
-  const advance = useCallback(() => {
-    if (hasAdvanced.current) return
-    hasAdvanced.current = true
-    if (timerRef.current) clearTimeout(timerRef.current)
-    onNext()
-  }, [onNext])
-
-  useEffect(() => {
-    hasAdvanced.current = false
-    timerRef.current = setTimeout(advance, autoAdvanceMs[transitionNumber])
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-    }
-  }, [advance, transitionNumber])
-
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' ') {
-        advance()
+        onNext()
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [advance])
+  }, [onNext])
 
-  if (transitionNumber === 1) return <Transition1 locale={locale} advance={advance} />
-  if (transitionNumber === 2) return <Transition2 locale={locale} advance={advance} />
-  return <Transition3 locale={locale} advance={advance} />
+  if (transitionNumber === 1) return <Transition1 locale={locale} onNext={onNext} />
+  if (transitionNumber === 2) return <Transition2 locale={locale} onNext={onNext} />
+  return <Transition3 locale={locale} onNext={onNext} />
 }
 
-function Transition1({ locale, advance }: { locale: Locale; advance: () => void }) {
+function Transition1({ locale, onNext }: { locale: Locale; onNext: () => void }) {
   const t = scenarioT.transition1[locale]
   const common = scenarioT.common[locale]
   return (
-    <div onClick={advance} className="flex flex-col items-center justify-center min-h-[60dvh] px-6 pb-20 cursor-pointer text-center">
+    <div onClick={onNext} className="flex flex-col items-center justify-center min-h-[60dvh] px-6 pb-20 cursor-pointer text-center">
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }}>
         <span className="text-4xl mb-4 block">⚠️</span>
         <h2 className="text-2xl md:text-3xl font-bold text-amber-400 mb-3">{t.warning}</h2>
@@ -59,21 +39,21 @@ function Transition1({ locale, advance }: { locale: Locale; advance: () => void 
       </motion.div>
       <motion.p
         initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
-        transition={{ delay: 1.5 }}
-        className="text-xs text-fg-subtle mt-8"
+        animate={{ opacity: 0.7 }}
+        transition={{ delay: 2 }}
+        className="text-sm text-fg-subtle mt-8"
       >
-        {common.clickToContinue}
+        {common.clickToContinue} →
       </motion.p>
     </div>
   )
 }
 
-function Transition2({ locale, advance }: { locale: Locale; advance: () => void }) {
+function Transition2({ locale, onNext }: { locale: Locale; onNext: () => void }) {
   const t = scenarioT.transition2[locale]
   const common = scenarioT.common[locale]
   return (
-    <div onClick={advance} className="flex flex-col items-center justify-center min-h-[60dvh] px-6 pb-20 cursor-pointer text-center">
+    <div onClick={onNext} className="flex flex-col items-center justify-center min-h-[60dvh] px-6 pb-20 cursor-pointer text-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -88,21 +68,21 @@ function Transition2({ locale, advance }: { locale: Locale; advance: () => void 
       </motion.div>
       <motion.p
         initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
-        transition={{ delay: 1.5 }}
-        className="text-xs text-fg-subtle mt-8"
+        animate={{ opacity: 0.7 }}
+        transition={{ delay: 2 }}
+        className="text-sm text-fg-subtle mt-8"
       >
-        {common.clickToContinue}
+        {common.clickToContinue} →
       </motion.p>
     </div>
   )
 }
 
-function Transition3({ locale, advance }: { locale: Locale; advance: () => void }) {
+function Transition3({ locale, onNext }: { locale: Locale; onNext: () => void }) {
   const t = scenarioT.transition3[locale]
   const common = scenarioT.common[locale]
   return (
-    <div onClick={advance} className="flex flex-col items-center justify-center min-h-[60dvh] px-6 pb-20 cursor-pointer text-center">
+    <div onClick={onNext} className="flex flex-col items-center justify-center min-h-[60dvh] px-6 pb-20 cursor-pointer text-center">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }}>
         <div className="flex items-center justify-center gap-3 mb-6">
           <span className="w-3 h-3 rounded-full bg-accent" />
@@ -115,11 +95,11 @@ function Transition3({ locale, advance }: { locale: Locale; advance: () => void 
       </motion.div>
       <motion.p
         initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
-        transition={{ delay: 1.5 }}
-        className="text-xs text-fg-subtle mt-8"
+        animate={{ opacity: 0.7 }}
+        transition={{ delay: 2 }}
+        className="text-sm text-fg-subtle mt-8"
       >
-        {common.clickToContinue}
+        {common.clickToContinue} →
       </motion.p>
     </div>
   )
