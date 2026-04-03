@@ -484,9 +484,12 @@ export function LandingPage() {
 
       {/* Zone 3: Footer */}
       <footer className="py-12 text-center border-t border-stroke-divider">
-        <p className="text-xs text-fg-subtle font-mono tracking-wide">
-          {text.footer}
-        </p>
+        <div className="flex items-center justify-center gap-3">
+          <Image src="/icons/gbb-logo-white-footer.svg" alt="GBB" width={80} height={10} className="opacity-50" />
+          <p className="text-xs text-fg-subtle font-mono tracking-wide">
+            {text.footer}
+          </p>
+        </div>
       </footer>
     </div>
   )
