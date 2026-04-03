@@ -54,10 +54,10 @@ const sharePointDemo = {
 const fabricIqDemo = {
   id: 'fabric-search-join',
   title: 'Semantic JOIN Demo',
-  subtitle: 'Fabric IQ + Foundry IQ',
+  subtitle: 'Fabric OneLake + Foundry IQ',
   phase: 'Phase 3',
   description:
-    'One question answered by combining structured data from Fabric OneLake and policy documents from Fabric OneLake — AI Search routes to both sources simultaneously.',
+    'One question answered by combining pre-aggregated Fabric Lakehouse data and policy documents in a unified KB — AI Search routes to both sources simultaneously.',
   features: [
     { label: 'Semantic JOIN', desc: 'One question, two data sources' },
     { label: 'Fabric OneLake', desc: '5.8M structured flight records' },
@@ -78,12 +78,12 @@ const comingSoon: Array<{
   href?: string
 }> = [
   {
-    id: 'agent-connector',
-    title: 'MCP Agent Grounding',
-    subtitle: 'Azure AI Search',
-    phase: 'Phase 3',
+    id: 'fabric-iq-ks',
+    title: 'Fabric IQ Knowledge Source',
+    subtitle: 'Fabric IQ + Foundry IQ',
+    phase: 'Phase 4',
     icon: PlugConnected24Regular,
-    desc: 'MCP RemoteTool integration — AI agents use knowledge bases as grounding sources.',
+    desc: 'Preview — One call from Foundry IQ reaches Fabric IQ ontology, triggering Data Agent for real-time NL→SQL on Lakehouse. No pre-indexing, no JSON snapshots.',
   },
 ]
 
@@ -342,16 +342,12 @@ function ComingSoonCards() {
       {comingSoon.map((demo, i) => {
         const cardContent = (
           <div className={cn(
-            'group relative overflow-hidden rounded-xl p-5',
+            'group relative rounded-xl p-5',
             'border border-stroke-divider bg-bg-elevated/30 backdrop-blur-sm',
             'hover:border-stroke-strong hover:bg-bg-elevated/50',
             'transition-all duration-200',
             demo.href && 'cursor-pointer'
           )}>
-            <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-10 w-56 rounded-lg border border-glass-border bg-bg-elevated p-3 text-xs text-fg-muted shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-center">
-              {demo.desc}
-            </div>
-
             <div className="flex items-start gap-3">
               <div className={cn(
                 'shrink-0 w-9 h-9 rounded-lg bg-bg-subtle border border-stroke-divider flex items-center justify-center',
@@ -367,13 +363,13 @@ function ComingSoonCards() {
                     {demo.phase}
                   </span>
                 </div>
-                <p className="text-xs text-fg-subtle">
-                  {demo.href ? (
-                    <span className="text-accent">Preview data profile →</span>
-                  ) : (
-                    'Coming soon'
-                  )}
-                </p>
+                <p className="text-xs text-fg-muted leading-relaxed mt-1">{demo.desc}</p>
+                {!demo.href && (
+                  <p className="text-[10px] text-fg-subtle mt-2 font-mono uppercase tracking-wide">Coming soon</p>
+                )}
+                {demo.href && (
+                  <p className="text-xs text-accent mt-2">Preview data profile →</p>
+                )}
               </div>
             </div>
           </div>
