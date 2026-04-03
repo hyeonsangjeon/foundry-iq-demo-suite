@@ -366,6 +366,19 @@ function ComingSoonCards() {
             demo.href && 'cursor-pointer'
           )}>
             <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-mono text-fg-subtle uppercase tracking-wide">{demo.subtitle}</div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm font-semibold text-fg-default truncate">{demo.title}</span>
+                </div>
+                <p className="text-xs text-fg-muted leading-relaxed mt-1">{demo.desc}</p>
+                {!demo.href && (
+                  <p className="text-[10px] text-fg-subtle mt-2 font-mono uppercase tracking-wide">Coming soon</p>
+                )}
+                {demo.href && (
+                  <p className="text-xs text-accent mt-2">Preview data profile →</p>
+                )}
+              </div>
               <div className="hidden md:flex shrink-0 items-center gap-2 opacity-60 pt-0.5">
                 <div className="flex flex-col items-center gap-0.5">
                   <Image src="/icons/foundryiq.svg" alt="Foundry IQ" width={20} height={20} className="w-5 h-5" />
@@ -381,19 +394,6 @@ function ComingSoonCards() {
                   <Image src="/icons/data-agent.svg" alt="Data Agent" width={20} height={20} className="w-5 h-5" />
                   <span className="text-[9px] text-fg-subtle">Data Agent</span>
                 </div>
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[10px] font-mono text-fg-subtle uppercase tracking-wide">{demo.subtitle}</div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-semibold text-fg-default truncate">{demo.title}</span>
-                </div>
-                <p className="text-xs text-fg-muted leading-relaxed mt-1">{demo.desc}</p>
-                {!demo.href && (
-                  <p className="text-[10px] text-fg-subtle mt-2 font-mono uppercase tracking-wide">Coming soon</p>
-                )}
-                {demo.href && (
-                  <p className="text-xs text-accent mt-2">Preview data profile →</p>
-                )}
               </div>
             </div>
           </div>
