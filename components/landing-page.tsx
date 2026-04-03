@@ -12,6 +12,8 @@ import {
   ChevronRight20Regular,
   DataTrending24Regular,
 } from '@fluentui/react-icons'
+import { ProductFlow } from '@/components/product-flow'
+import Image from 'next/image'
 import { getLocale, type Locale } from '@/lib/i18n'
 import { t } from '@/lib/i18n/translations'
 import { ModeToggle, type ViewMode } from '@/components/mode-toggle'
@@ -157,8 +159,15 @@ function ActiveDemoCard({ locale, isExec }: { locale: Locale; isExec: boolean })
               </div>
             </div>
 
-            <div className="hidden md:flex shrink-0 w-28 h-28 rounded-2xl bg-accent/10 border border-accent/20 items-center justify-center">
-              <activeDemo.icon className="w-12 h-12 text-accent" />
+            <div className="hidden md:flex shrink-0 rounded-xl bg-accent/5 border border-accent/10 p-4 items-center justify-center self-start mt-6">
+              <ProductFlow
+                nodes={[
+                  { icon: '/icons/foundryiq.svg', label: 'Foundry IQ' },
+                  { icon: '/icons/knowledge_base.svg', label: 'Knowledge Base' },
+                ]}
+                color="accent"
+                direction="left"
+              />
             </div>
           </div>
         </motion.div>
@@ -206,9 +215,6 @@ function SharePointDemoCard({ locale, isExec }: { locale: Locale; isExec: boolea
                   <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
                   Live Demo
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-bg-subtle border border-stroke-divider text-fg-subtle font-mono">
-                  Phase 2
-                </span>
               </div>
 
               <div className="text-xs font-mono text-violet-500/70 uppercase tracking-widest mb-1">
@@ -240,8 +246,15 @@ function SharePointDemoCard({ locale, isExec }: { locale: Locale; isExec: boolea
               </div>
             </div>
 
-            <div className="hidden md:flex shrink-0 w-20 h-20 rounded-2xl bg-violet-500/10 border border-violet-500/20 items-center justify-center">
-              <sharePointDemo.icon className="w-9 h-9 text-violet-500" />
+            <div className="hidden md:flex shrink-0 rounded-xl bg-violet-500/5 border border-violet-500/10 p-4 items-center justify-center self-start mt-6">
+              <ProductFlow
+                nodes={[
+                  { icon: '/icons/sharepoint.svg', label: 'SharePoint (M365)' },
+                  { icon: '/icons/foundryiq.svg', label: 'Foundry IQ' },
+                ]}
+                color="violet"
+                direction="right"
+              />
             </div>
           </div>
         </motion.div>
@@ -289,9 +302,6 @@ function FabricIqDemoCard({ locale, isExec }: { locale: Locale; isExec: boolean 
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Live Demo
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-bg-subtle border border-stroke-divider text-fg-subtle font-mono">
-                  {fabricIqDemo.phase}
-                </span>
               </div>
 
               <div className="text-xs font-mono text-emerald-500/70 uppercase tracking-widest mb-1">
@@ -323,8 +333,15 @@ function FabricIqDemoCard({ locale, isExec }: { locale: Locale; isExec: boolean 
               </div>
             </div>
 
-            <div className="hidden md:flex shrink-0 w-20 h-20 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 items-center justify-center">
-              <fabricIqDemo.icon className="w-9 h-9 text-emerald-500" />
+            <div className="hidden md:flex shrink-0 rounded-xl bg-emerald-500/5 border border-emerald-500/10 p-4 items-center justify-center self-start mt-6">
+              <ProductFlow
+                nodes={[
+                  { icon: '/icons/foundryiq.svg', label: 'Foundry IQ' },
+                  { icon: '/icons/onelake-color.svg', label: 'Fabric OneLake' },
+                ]}
+                color="emerald"
+                direction="left"
+              />
             </div>
           </div>
         </motion.div>
@@ -349,19 +366,26 @@ function ComingSoonCards() {
             demo.href && 'cursor-pointer'
           )}>
             <div className="flex items-start gap-3">
-              <div className={cn(
-                'shrink-0 w-9 h-9 rounded-lg bg-bg-subtle border border-stroke-divider flex items-center justify-center',
-                demo.href ? 'opacity-70' : 'opacity-50'
-              )}>
-                <demo.icon className={cn('w-5 h-5', demo.href ? 'text-fg-muted' : 'text-fg-subtle')} />
+              <div className="hidden md:flex shrink-0 items-center gap-2 opacity-60 pt-0.5">
+                <div className="flex flex-col items-center gap-0.5">
+                  <Image src="/icons/foundryiq.svg" alt="Foundry IQ" width={20} height={20} className="w-5 h-5" />
+                  <span className="text-[9px] text-fg-subtle">Foundry IQ</span>
+                </div>
+                <span className="text-[10px] text-fg-subtle/50">→</span>
+                <div className="flex flex-col items-center gap-0.5">
+                  <Image src="/icons/fabric_knowledge.svg" alt="Fabric IQ" width={20} height={20} className="w-5 h-5" />
+                  <span className="text-[9px] text-fg-subtle">Fabric IQ</span>
+                </div>
+                <span className="text-[10px] text-fg-subtle/50">→</span>
+                <div className="flex flex-col items-center gap-0.5">
+                  <Image src="/icons/data-agent.svg" alt="Data Agent" width={20} height={20} className="w-5 h-5" />
+                  <span className="text-[9px] text-fg-subtle">Data Agent</span>
+                </div>
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-mono text-fg-subtle uppercase tracking-wide">{demo.subtitle}</div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-sm font-semibold text-fg-default truncate">{demo.title}</span>
-                  <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-bg-subtle border border-stroke-divider text-fg-subtle font-mono">
-                    {demo.phase}
-                  </span>
                 </div>
                 <p className="text-xs text-fg-muted leading-relaxed mt-1">{demo.desc}</p>
                 {!demo.href && (
