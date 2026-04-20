@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { getLocale, type Locale } from '@/lib/i18n'
 import { ScenarioIntro } from '@/components/scenario/scenario-intro'
 import { ScenarioScene } from '@/components/scenario/scenario-scene'
+import { ScenarioScene3b } from '@/components/scenario/scenario-scene3b'
 import { ScenarioTransition } from '@/components/scenario/scenario-transition'
 import { ScenarioInterlude } from '@/components/scenario/scenario-interlude'
 import { ScenarioSummary } from '@/components/scenario/scenario-summary'
@@ -13,9 +14,9 @@ import { ScenarioStepper } from '@/components/scenario/scenario-stepper'
 import { ModeToggle } from '@/components/mode-toggle'
 import { scenarioT } from '@/data/scenario-translations'
 
-const TOTAL_STEPS = 9
+const TOTAL_STEPS = 11
 
-// Step mapping: 0=intro, 1=scene1, 2=transition1, 3=scene2, 4=transition2, 5=interlude, 6=scene3, 7=transition3, 8=summary
+// Step mapping: 0=intro, 1=scene1, 2=t1, 3=scene2, 4=t2, 5=interlude, 6=scene3, 7=t3(VP), 8=scene3b, 9=t4, 10=summary
 
 export default function ScenarioPage() {
   const [locale, setLocaleState] = useState<Locale>('en')
@@ -44,7 +45,7 @@ export default function ScenarioPage() {
   // Keyboard navigation — skip ArrowRight on Transition steps (they handle it internally)
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      const isTransitionStep = step === 2 || step === 4 || step === 7
+      const isTransitionStep = step === 2 || step === 4 || step === 7 || step === 9
       if (e.key === 'ArrowRight' && !isTransitionStep) goNext()
       if (e.key === 'ArrowLeft') goPrev()
     }
@@ -92,7 +93,9 @@ export default function ScenarioPage() {
             {step === 5 && <ScenarioInterlude locale={locale} onNext={goNext} />}
             {step === 6 && <ScenarioScene sceneNumber={3} locale={locale} onNext={goNext} onPrev={goPrev} />}
             {step === 7 && <ScenarioTransition transitionNumber={3} locale={locale} onNext={goNext} />}
-            {step === 8 && <ScenarioSummary locale={locale} />}
+            {step === 8 && <ScenarioScene3b locale={locale} onNext={goNext} onPrev={goPrev} />}
+            {step === 9 && <ScenarioTransition transitionNumber={4} locale={locale} onNext={goNext} />}
+            {step === 10 && <ScenarioSummary locale={locale} />}
           </motion.div>
         </AnimatePresence>
       </div>

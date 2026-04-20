@@ -2,14 +2,14 @@
 
 import { cn } from '@/lib/utils'
 
-const STEP_LABELS = ['Intro', 'S1', 'T1', 'S2', 'T2', 'Fabric', 'S3', 'T3', 'Summary']
+const STEP_LABELS = ['Intro', 'S1', 'T1', 'S2', 'T2', 'Fabric', 'S3', 'T3', 'S3b', 'T4', 'Summary']
 
 interface ScenarioStepperProps {
   currentStep: number
   totalSteps?: number
 }
 
-export function ScenarioStepper({ currentStep, totalSteps = 9 }: ScenarioStepperProps) {
+export function ScenarioStepper({ currentStep, totalSteps = 11 }: ScenarioStepperProps) {
   return (
     <div className="flex flex-col items-center gap-2">
       {/* Dots — hidden on very small screens */}
