@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Locale } from '@/lib/i18n'
 import { scenarioT } from '@/data/scenario-translations'
 import { CounterAnimation } from './counter-animation'
@@ -25,7 +26,7 @@ export function ScenarioSummary({ locale }: ScenarioSummaryProps) {
       </motion.h2>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
         {(t.kpis as any[]).map((kpi: any, i: number) => (
           <motion.div
             key={i}
@@ -42,6 +43,33 @@ export function ScenarioSummary({ locale }: ScenarioSummaryProps) {
           </motion.div>
         ))}
       </div>
+
+      {/* ★ Ontology proof — 실제 구축 증거 */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.7 }}
+        className="mb-8 rounded-xl border border-emerald-500/10 bg-emerald-500/5 p-4"
+      >
+        <div className="flex items-center gap-4">
+          <div className="relative w-32 h-20 rounded-lg overflow-hidden flex-shrink-0 border border-stroke-divider">
+            <Image
+              src="/scenario/interlude-ontology.webp"
+              alt={t.proofAlt || 'AirlineOntology'}
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-fg-default mb-1">{t.proofTitle}</p>
+            <p className="text-[10px] text-fg-muted font-mono leading-relaxed">
+              {t.proofLine1}
+              <br />
+              {t.proofLine2}
+            </p>
+          </div>
+        </div>
+      </motion.div>
 
       {/* CTAs */}
       <motion.div

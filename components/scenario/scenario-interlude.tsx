@@ -15,6 +15,8 @@ const ICONS: Record<string, string> = {
   code: '⚙️',
   file: '📄',
   search: '🔍',
+  ontology: '🕸️',
+  agent: '🤖',
 }
 
 export function ScenarioInterlude({ locale, onNext }: InterludeProps) {
@@ -89,11 +91,84 @@ export function ScenarioInterlude({ locale, onNext }: InterludeProps) {
         ))}
       </div>
 
+      {/* ★ Ontology layer — Scene 3b 복선 */}
+      {t.ontologyPipeline && (
+        <>
+          {/* Divider + eyebrow */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2 }}
+            className="mt-6 mb-4"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-px flex-1 bg-cyan-500/20" />
+              <span className="text-[10px] text-cyan-400 font-mono uppercase tracking-wider">{t.ontologyEyebrow}</span>
+              <div className="h-px flex-1 bg-cyan-500/20" />
+            </div>
+            <p className="text-sm text-fg-default font-semibold mb-1">{t.ontologyTitle}</p>
+          </motion.div>
+
+          {/* Ontology screenshot */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.4 }}
+            className="relative w-full aspect-[16/9] rounded-xl overflow-hidden border border-cyan-500/20 mb-4"
+          >
+            <Image
+              src="/scenario/interlude-ontology.webp"
+              alt={t.ontologyScreenshotAlt || 'AirlineOntology'}
+              fill
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+            <div className="absolute bottom-3 left-4 right-4">
+              <p className="text-[10px] text-white/80 font-mono">
+                {t.ontologyScreenshotCaption}
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Ontology pipeline — 4 cards (cyan theme) */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4">
+            {(t.ontologyPipeline as any[]).map((stage: any, i: number) => (
+              <motion.div
+                key={`onto-${i}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 1.6 + i * 0.15 }}
+                className="relative"
+              >
+                <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4 h-full">
+                  <div className="text-2xl mb-2">{ICONS[stage.icon] || '📦'}</div>
+                  <div className="text-sm font-semibold text-fg-default mb-1">{stage.label}</div>
+                  <div className="text-[11px] text-fg-subtle">{stage.sub}</div>
+                </div>
+                {i < 3 && (
+                  <div className="hidden sm:block absolute top-1/2 -right-2.5 -translate-y-1/2 z-10 text-cyan-500/50 text-sm">→</div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Ontology caption */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 2.3 }}
+            className="text-xs text-fg-muted italic mb-6"
+          >
+            {t.ontologyCaption}
+          </motion.p>
+        </>
+      )}
+
       {/* Punchline */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 1.1 }}
+        transition={{ duration: 0.5, delay: t.ontologyPipeline ? 2.6 : 1.1 }}
         className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4 mb-4"
       >
         <p className="text-sm text-fg-default">💡 {t.punchline}</p>
@@ -104,7 +179,7 @@ export function ScenarioInterlude({ locale, onNext }: InterludeProps) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.3 }}
+        transition={{ delay: t.ontologyPipeline ? 2.8 : 1.3 }}
         className="flex items-center justify-end"
       >
         <button
