@@ -22,7 +22,7 @@ AGENT*
 CLAUDE.md*
 # Production
 /build
-scripts/
+docs/handson-0423/guide*
 
 # Miscellaneous
 .DS_Store
@@ -37,8 +37,13 @@ next-env.d.ts
 
 # System files
 Thumbs.db
+# Demo-pack runtime artifacts (queries payloads + offline samples) — not for repo
+docs/handson-0423/demo-pack/queries/
+docs/handson-0423/demo-pack/samples/
 
-
+# Local migration scripts (one-off, not for repo)
+scripts/migration_hotels.py
+scripts/migration_sustainable_ai.py
 
 # HTTP test files
 *.http.mcp.json
