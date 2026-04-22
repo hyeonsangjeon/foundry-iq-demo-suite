@@ -162,7 +162,7 @@ Response synthesizes the structured count **and** the policy text into one answe
 ```mermaid
 flowchart TB
     U["User / App"]
-    Q["<b>Natural-language question (1 call)</b><br/>━━━━━━━━━━━━━━━<br/>'How many flights at airport X are 2h+ delayed,<br/>and what does DOT require for compensation?'"]
+    Q["<b>Natural-language question (1 call)</b><br/>━━━━━━━━━━━━━━━<br/>'How many flights are 2h+ delayed,<br/>and what does DOT require for compensation?'"]
 
     subgraph STEP1["<b>1. Retrieve API — single call</b>"]
         API["POST /knowledgebases/unified-airline-fabriciq-kb/retrieve<br/><br/><b>knowledgeSourceParams</b>:<br/>&nbsp;&nbsp;[ a. fabricIQ, b. searchIndex ]"]
@@ -170,7 +170,7 @@ flowchart TB
 
     subgraph STEP2["<b>2. Two KSes fan out in parallel</b>"]
         direction LR
-        KS1["<b>a. fabricIQ KS</b><br/>━━━━━━━━━━━<br/>airline-ontology-ks<br/><br/>Fabric ontology query<br/><i>'2h+ delay counts<br/>at airport X'</i>"]
+        KS1["<b>a. fabricIQ KS</b><br/>━━━━━━━━━━━<br/>airline-ontology-ks<br/><br/>Fabric ontology query<br/><i>'2h+ delay counts'</i>"]
         KS2["<b>b. searchIndex KS</b><br/>━━━━━━━━━━━<br/>unified-airline-ks<br/><br/>DOT PDF vector search<br/><i>'DOT compensation rules'</i>"]
     end
 
@@ -178,7 +178,7 @@ flowchart TB
         LLM["Answer Synthesis (GPT-4o)<br/>+ preserves both citations<br/>+ traceable evidence"]
     end
 
-    ANS["<b>Unified answer</b><br/>━━━━━━━━━━━━━━━━━━<br/>'At airport X, 2h+ delays: N flights.<br/>Per DOT, carriers owe up to $X per pax<br/>when delay exceeds 4h.'<br/><br/>refs: a. ontology row + b. doc chunk"]
+    ANS["<b>Unified answer</b><br/>━━━━━━━━━━━━━━━━━━<br/>'2h+ delays: N flights.<br/>Per DOT, carriers owe up to $X per pax<br/>when delay exceeds 4h.'<br/><br/>refs: a. ontology row + b. doc chunk"]
 
     U --> Q
     Q ==> API
