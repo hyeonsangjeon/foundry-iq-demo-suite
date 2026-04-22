@@ -156,7 +156,7 @@ flowchart TB
 
     subgraph STEP2["<b>2. 두 KS 병렬 fan-out (동시 실행)</b>"]
         direction LR
-        KS1["<b>a. fabricIQ KS</b><br/>━━━━━━━━━━━<br/>airline-ontology-ks<br/><br/>Fabric ontology 쿼리<br/><i>'2시간 이상<br/>지연 편수'</i>"]"]
+        KS1["<b>a. fabricIQ KS</b><br/>━━━━━━━━━━━<br/>airline-ontology-ks<br/><br/>Fabric ontology 쿼리<br/><i>'2시간 이상<br/>지연 편수'</i>"]
         KS2["<b>b. searchIndex KS</b><br/>━━━━━━━━━━━<br/>unified-airline-ks<br/><br/>DOT PDF 벡터 검색<br/><i>'DOT 보상<br/>규정'</i>"]
     end
 
