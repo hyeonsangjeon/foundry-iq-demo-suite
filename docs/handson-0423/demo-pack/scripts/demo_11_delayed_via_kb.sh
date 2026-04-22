@@ -9,7 +9,7 @@ if [ -f "${ROOT_DIR}/.env" ]; then set -a; . "${ROOT_DIR}/.env"; set +a; fi
 # shellcheck disable=SC1091
 . "${ROOT_DIR}/lib/foundry_kb_call.sh"
 
-QUERY="which flights are currently delayed"
+QUERY="list all delayed flights in our airline ontology with flight numbers"
 SAMPLE_FILE="${ROOT_DIR}/samples/11_delayed_via_kb.json"
 
 echo ""
