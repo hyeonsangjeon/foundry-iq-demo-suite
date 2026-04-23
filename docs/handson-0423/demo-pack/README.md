@@ -17,10 +17,10 @@
 
 ## What this shows
 
-This pack demonstrates **two paths** to the same Fabric ontology data:
+This pack puts **two paths to the same Fabric ontology data** side by side so you can compare them.
 
-- **Layer 1 — MCP direct call** (`scripts/demo_01~06`): Raw JSON-RPC POST to the Fabric IQ Ontology MCP endpoint. Exposes two tools (`list_ontology_entity_types`, `search_ontology`).
-- **Layer 2 — Foundry IQ KS path** (`scripts/demo_07~11`): The same NL queries (now scoped to *"our airline ontology"*) routed through the Foundry IQ Retrieve API on Azure AI Search. The KB `unified-airline-fabriciq-kb` has **both KSes registered** (fabricIQ + searchIndex), but the **scoping language signals the planner to stay inside the structured ontology**, so demo_07~11 row counts mirror Layer 1 (5 / 15 / 10 / 30 / 42). `knowledgeSourceParams` itself is a per-KS *override hint*, not an allow-list — demo_12 then **explicitly** opts both KSes in for the killer Semantic JOIN.
+- **Layer 1 — MCP direct call** (`scripts/demo_01~06`): Plain JSON-RPC POST straight to the Fabric IQ Ontology MCP endpoint. Only two tools (`list_ontology_entity_types`, `search_ontology`) are exposed, so this is the simplest possible surface.
+- **Layer 2 — Foundry IQ KS path** (`scripts/demo_07~11`): The same questions, but with one short hint — *"from our airline ontology"* — added to the prompt and routed through the Foundry IQ Retrieve API. The KB `unified-airline-fabriciq-kb` has both KSes registered (fabricIQ + searchIndex), but that hint is enough to keep the planner inside the ontology, so the row counts come back identical to Layer 1 (5 / 15 / 10 / 30 / 42). For context, `knowledgeSourceParams` is not a hard "use only this KS" lock — it is more like a "when you do use this KS, here are the options" hint. That is why demo_12 explicitly opts both KSes in to show off the killer Semantic JOIN.
 
 This pack contains:
 
@@ -37,33 +37,25 @@ This pack contains:
 
 ## Architecture note
 
-This pack supports **two paths to the same Fabric ontology**, plus a
-**cross-source killer demo** that fuses ontology with PDF citations:
+This pack walks through **two ways of reaching the same Fabric ontology**, plus a **cross-source killer demo** that pairs the ontology with PDF citations in one answer.
 
-- **Layer 1** (demo_01~06) hits the Fabric MCP endpoint **directly** with
-  JSON-RPC over HTTPS. Smallest, most reliable surface during Private Preview.
-- **Layer 2** (demo_07~11) calls the **Foundry IQ Retrieve API** on Azure AI
-  Search; the registered Knowledge Source (kind: fabricIQ) federates back to
-  the same MSIT Fabric ontology, so the data is identical to Layer 1 but the
-  request goes through one extra hop. This is the production path for
-  multi-source agents that combine ontology with searchIndex / web KSes.
-- **Semantic JOIN** (demo_12) calls the same Retrieve API with **two KSes at
-  once** — fabricIQ + searchIndex — so a single NL question pulls structured
-  ontology rows AND policy-document passages, fused by the reasoning model.
+- **Layer 1** (demo_01~06) hits the Fabric MCP endpoint **directly** over JSON-RPC. It is the smallest, most reliable surface during Private Preview.
+- **Layer 2** (demo_07~11) goes through Azure AI Search's **Foundry IQ Retrieve API**. The registered Knowledge Source (kind: fabricIQ) federates back to the same MSIT Fabric ontology, so the data is identical to Layer 1 — there is just one extra hop. This is the path real multi-source agents follow when they combine ontology with searchIndex / web KSes.
+- **Semantic JOIN** (demo_12) uses the same Retrieve API but calls **two KSes at once** — fabricIQ + searchIndex. A single question pulls both ontology rows and policy-document passages, and the reasoning model fuses them into one answer.
 
 ![Architecture — Layer 1 / Layer 2 / Semantic JOIN](./architecture.png)
 
-**Reading the diagram**
-- All three rows hit the same Microsoft 1P surface area. Layer 1 talks to Fabric directly; Layer 2 + Semantic JOIN go through Azure AI Search.
-- The KB `unified-airline-fabriciq-kb` has **two KSes registered side by side** (ⓐ + ⓑ). `knowledgeSourceParams` is a **per-KS override hint**, not an allow-list — the planner (`modelQueryPlanning`) considers all registered KSes.
-- **demo_07~11** pass `[{kind: "fabricIQ"}]` and use **scoped phrasing** (*"from our airline ontology"*). That scoping signals the planner to satisfy the question from the structured ontology, so the activity log shows fabricIQ-only and row counts match Layer 1 (5 / 15 / 10 / 30 / 42). If you swap the prompt for an unscoped *"list all airlines"*, the planner will often **also** wake ⓑ (searchIndex) because PDF chunks plausibly answer it too — that is realistic production behavior, not a bug.
-- **demo_12** explicitly passes `[{kind: "fabricIQ"}, {kind: "searchIndex"}]` so both KSes are guaranteed to run in parallel and the reasoning model fuses both result sets into one NL answer with citations from both backends.
+**How to read the diagram**
+- All three rows hit the same Microsoft 1P surface area, but enter at different points. Layer 1 talks to Fabric directly; Layer 2 and Semantic JOIN go through Azure AI Search first.
+- The KB `unified-airline-fabriciq-kb` has the fabricIQ KS (ⓐ) and the searchIndex KS (ⓑ) registered **side by side**. `knowledgeSourceParams` is a per-KS *option hint*, not an allow-list — the planner (`modelQueryPlanning`) still considers every registered KS as a candidate.
+- **demo_07~11** pass `[{kind: "fabricIQ"}]` and add a small hint to the prompt — *"from our airline ontology"*. That hint tells the planner "this question can be answered from the structured ontology", so the activity log shows fabricIQ-only and the row counts match Layer 1 (5 / 15 / 10 / 30 / 42). Drop the hint and ask the unscoped *"list all airlines"* and the planner will often wake ⓑ (searchIndex) too, because PDF chunks plausibly answer it as well — that is realistic production behavior, not a bug.
+- **demo_12** explicitly sends `[{kind: "fabricIQ"}, {kind: "searchIndex"}]` so both KSes are guaranteed to run in parallel. The reasoning model then merges both result sets into one answer and keeps citations from both backends.
 
-> Layer 1 is the most reliable path during the current Private Preview
-> (no allowlist required beyond Workspace Member). Layer 2 is the
-> production-shaped call once tenant allowlisting completes. Semantic JOIN
-> (demo_12) is the production-shaped call **plus** multi-source fusion —
-> the pattern most real Foundry IQ agents will use.
+> Layer 1 is the safest path during the current Private Preview (Workspace
+> Member is enough — no extra allowlist needed). Layer 2 is the call shape
+> you'll actually use in production once tenant allowlisting is done, and
+> Semantic JOIN (demo_12) adds multi-source fusion on top of that — the
+> pattern most real Foundry IQ agents will end up using.
 
 ---
 
@@ -130,7 +122,7 @@ OFFLINE=1 ./scripts/demo_07_airlines_via_kb.sh
 
 #### Layer 2 — Foundry IQ KS Path (added 2026-04-22)
 
-Same NL queries (scoped to *our airline ontology*) routed through the production path (own-app → Azure AI Search → KB → KSes). The scoping holds the planner inside the fabricIQ KS, so row counts mirror Layer 1 1:1. The activity log confirms fabricIQ-only execution. demo_12 is where we **explicitly** opt both KSes in for the killer Semantic JOIN.
+Same NL queries, but routed through the production path (own-app → Azure AI Search → KB → KSes). Even with both KSes registered on the KB, adding a small hint like *"from our airline ontology"* is enough for the planner to wake fabricIQ only, and the row counts come back identical to Layer 1 (5 / 15 / 10 / 30 / 42). The activity log makes this visible — fabricIQ-only execution, end to end. The full multi-KS fusion comes in demo_12.
 
 | # | Script | Layer 1 baseline | Expected (Layer 2) |
 |---|--------|------------------|--------------------|
@@ -140,24 +132,24 @@ Same NL queries (scoped to *our airline ontology*) routed through the production
 | 10 | `demo_10_fleet_via_kb.sh` | demo_05 → 30 aircraft | 30 aircraft (3-way JOIN), fabricIQ-only |
 | 11 | `demo_11_delayed_via_kb.sh` | demo_06 → 42 delayed | 42 delayed (Flight filter), fabricIQ-only |
 
-> **Demo narrative tip**: After running demo_07~11 (clean fabricIQ-only mirror of Layer 1), drop the scoping and re-ask *"list all airlines"* to show that the planner now ALSO wakes searchIndex — evidence that the operating model can naturally fan out across KSes when the question warrants it. Then move to demo_12, where we **explicitly** force the multi-KS path for guaranteed semantic JOIN.
+> **Demo narrative tip**: Run demo_07~11 first to show that, with the right hint, even the production path stays clean and answers from the ontology only. Then drop the hint and re-ask *"list all airlines"* — the planner will likely also wake searchIndex, which lets you point at the activity log and say "and when the question warrants it, the system fans out across KSes on its own". From there, demo_12 lands naturally: we now **explicitly** ask both KSes at once for the full Semantic JOIN.
 
 #### Layer 2 — Semantic JOIN (killer demo)
 
-A single NL query is **routed to two KSes of different kinds in parallel** — Foundry IQ fuses the operational data from the fabricIQ KS with the regulatory PDF passages from the searchIndex KS into one answer.
+A single question fans out to **two KSes of different kinds at the same time** — operational data from the fabricIQ KS, regulatory PDF passages from the searchIndex KS — and comes back as one answer.
 
 | # | Script | KSes | Expected |
 |---|--------|------|----------|
-| 12 ⭐ | `demo_12_semantic_join.sh` | `airline-ontology-ks` (fabricIQ) + `unified-airline-ks` (searchIndex) | Unified NL answer covering 2h+ delay counts at a specific airport + DOT compensation rules; activity shows both KSes; references include both fabricIQ raw rows and searchIndex PDF citations |
+| 12 ⭐ | `demo_12_semantic_join.sh` | `airline-ontology-ks` (fabricIQ) + `unified-airline-ks` (searchIndex) | One unified NL answer that combines 2h+ delay counts with DOT compensation rules. Activity log shows both KSes; references include both fabricIQ raw rows and searchIndex PDF citations |
 
 **The Killer Demo — demo_12**
 
-Single natural language question invokes both KSes in parallel:
+One natural-language question wakes both KSes at the same time:
 
-- `airline-ontology-ks` (fabricIQ) → queries the Fabric ontology for delay counts at a specific airport (`Flight WHERE delay_minutes > 120`; airport configured in `demo_12_semantic_join.sh`)
-- `unified-airline-ks` (searchIndex) → retrieves DOT 14 CFR Part 250 / Aviation Consumer Protection PDF passages on compensation
+- `airline-ontology-ks` (fabricIQ) → counts 2h+ delays from the Fabric ontology (`Flight WHERE delay_minutes > 120`)
+- `unified-airline-ks` (searchIndex) → pulls compensation passages from DOT 14 CFR Part 250 / Aviation Consumer Protection PDFs
 
-Response synthesizes the structured count **and** the policy text into one answer, with citations from both sources side by side. This is what **"Semantic JOIN"** means in practice: *one query, multiple KSes of different kinds, unified answer*.
+The answer that comes back ties together "how many flights were delayed" from operational data with "how much you owe per passenger past N hours" from the policy doc, and it carries citations from both sources side by side. That's what people actually mean when they say **"Semantic JOIN"** — *one question, several KSes of different kinds, one answer*.
 
 ```mermaid
 flowchart TB
@@ -206,7 +198,7 @@ flowchart TB
     class ANS answer
 ```
 
-> **Layer 2 prerequisites** (for online calls):
-> - Set `AZURE_SEARCH_ENDPOINT` / `AZURE_SEARCH_API_KEY` / `KB_NAME` / `DEFAULT_KS_NAME` in `.env`
-> - MSIT tenant login (`az login --tenant 72f988bf-86f1-41af-91ab-2d7cd011db47`)
-> - If either is missing, scripts automatically fall back to OFFLINE samples under `samples/0[7-9]_*.json` / `samples/1[01]_*.json`
+> **What you need for Layer 2** (online mode):
+> - Fill in `AZURE_SEARCH_ENDPOINT` / `AZURE_SEARCH_API_KEY` / `KB_NAME` / `DEFAULT_KS_NAME` in `.env`
+> - Sign in to the MSIT tenant (`az login --tenant 72f988bf-86f1-41af-91ab-2d7cd011db47`)
+> - If either is missing, the scripts automatically replay captured responses from `samples/0[7-9]_*.json` / `samples/1[01]_*.json` in OFFLINE mode.

@@ -17,10 +17,10 @@
 
 ## 무엇을 보여주는가
 
-이 팩은 같은 Fabric ontology 데이터에 대한 **두 가지 경로**를 시연한다:
+같은 Fabric ontology 데이터에 닿는 **두 가지 길**을 나란히 놓고 비교하는 데모다.
 
-- **Layer 1 — MCP 직접 호출** (`scripts/demo_01~06`): Fabric IQ Ontology MCP 엔드포인트로 raw JSON-RPC POST. 두 개의 tool (`list_ontology_entity_types`, `search_ontology`) 노출.
-- **Layer 2 — Foundry IQ KS 경로** (`scripts/demo_07~11`): 같은 NL 질의를 (이제 우리 *"airline ontology"* 로 **스코프**) Azure AI Search의 Foundry IQ Retrieve API로 라우팅. KB `unified-airline-fabriciq-kb`에는 **두 KS가 동시 등록**되어 있지만, 스코핑 표현이 planner가 **구조화된 ontology 안에 머물도록 신호**를 주기 때문에 demo_07~11은 Layer 1 행 수와 1:1로 맞는다 (5 / 15 / 10 / 30 / 42). `knowledgeSourceParams` 자체는 *"이 KS를 쓰면 이런 파라미터"* override 힌트이지 allow-list가 아니며, demo_12에서는 두 KS를 **명시적으로** 함께 깨워 Semantic JOIN을 강제한다.
+- **Layer 1 — MCP 직접 호출** (`scripts/demo_01~06`): Fabric IQ Ontology MCP 엔드포인트에 곧장 JSON-RPC POST를 던지는 방식. tool은 두 개 (`list_ontology_entity_types`, `search_ontology`)뿐이라 가장 단순하다.
+- **Layer 2 — Foundry IQ KS 경로** (`scripts/demo_07~11`): 같은 질문에 *"airline ontology"* 라는 한 마디만 덧붙여 Foundry IQ Retrieve API로 보낸다. KB `unified-airline-fabriciq-kb`에는 fabricIQ KS와 searchIndex KS가 **둘 다** 등록돼 있지만, 이 한 마디 덕분에 planner가 ontology 안에서만 답을 찾는다. 결과적으로 행 수는 Layer 1과 똑같이 5 / 15 / 10 / 30 / 42로 떨어진다. 참고로 `knowledgeSourceParams`는 "이 KS만 써라"라는 강제가 아니라 "이 KS를 쓸 때는 이 옵션" 정도의 힌트다. 그래서 demo_12에서는 두 KS를 **명시적으로** 같이 호출해 Semantic JOIN을 보여준다.
 
 이 팩에 포함된 것:
 
@@ -37,21 +37,21 @@
 
 ## 아키텍처 노트
 
-이 팩은 **같은 Fabric ontology에 대한 두 가지 경로** + ontology와 PDF citation을 융합하는 **cross-source killer demo** 를 지원:
+이 팩은 **같은 Fabric ontology를 두 가지 길로 부르는 모습**과, 거기에 PDF citation을 더해 한 답변으로 묶는 **cross-source killer demo**까지 함께 보여준다.
 
-- **Layer 1** (demo_01~06): Fabric MCP 엔드포인트를 JSON-RPC over HTTPS로 **직접** 호출. Private Preview 기간 가장 작고 안정적인 경로.
-- **Layer 2** (demo_07~11): Azure AI Search의 **Foundry IQ Retrieve API** 호출. 등록된 Knowledge Source(kind: fabricIQ)가 같은 MSIT Fabric ontology로 federation 하므로 데이터는 Layer 1과 동일하지만 한 hop을 더 거친다. ontology + searchIndex / web KS를 결합하는 멀티소스 에이전트의 운영 경로.
-- **Semantic JOIN** (demo_12): 같은 Retrieve API를 **두 KS에 동시** 호출 — fabricIQ + searchIndex — 한 NL 질의가 구조화된 ontology 행 AND 정책 문서 passage를 모두 끌어와 reasoning model이 융합.
+- **Layer 1** (demo_01~06): Fabric MCP 엔드포인트에 곧장 JSON-RPC over HTTPS로 붙는다. Private Preview 기간에는 가장 작고 안정적인 표면이다.
+- **Layer 2** (demo_07~11): Azure AI Search의 **Foundry IQ Retrieve API**를 거친다. 등록된 Knowledge Source(kind: fabricIQ)가 같은 MSIT Fabric ontology로 federation 하기 때문에 데이터는 Layer 1과 똑같지만, 호출이 한 hop 더 길어진다. ontology + searchIndex / web KS를 같이 쓰는 멀티소스 에이전트가 실제 운영에서 따라가는 길이다.
+- **Semantic JOIN** (demo_12): 같은 Retrieve API를 쓰되 **두 KS를 동시에** 호출한다 — fabricIQ + searchIndex. 질문 하나가 ontology 행과 정책 문서 passage를 모두 끌어오고, reasoning model이 그 둘을 한 답변으로 묶는다.
 
 ![아키텍처 — Layer 1 / Layer 2 / Semantic JOIN](./architecture.png)
 
-**다이어그램 읽는 법**
-- 세 경로 모두 같은 Microsoft 1P 표면을 호출. Layer 1은 Fabric을 직접, Layer 2 + Semantic JOIN은 Azure AI Search를 경유.
-- KB `unified-airline-fabriciq-kb`에는 **두 KS가 나란히 등록** (ⓐ + ⓑ). `knowledgeSourceParams`는 **per-KS override 힌트**이지 allow-list가 아니며, planner(`modelQueryPlanning`)는 등록된 모든 KS를 후보로 고려한다.
-- **demo_07~11**은 `[{kind: "fabricIQ"}]`만 전송하고 NL 질의를 **스코프된 표현** (*"from our airline ontology"*)으로 쓴다. 스코핑이 planner에게 *"이 질문은 구조화된 ontology에서 충분히 답할 수 있다"* 신호를 주므로, activity log는 fabricIQ-only가 되고 행 수는 Layer 1과 일치한다 (5 / 15 / 10 / 30 / 42). 만약 스코핑을 빼고 *"list all airlines"* 식의 generic 질문으로 바꾸면 planner가 ⓑ (searchIndex)도 **함께 깨우는 경우가 많다** (PDF에서도 답변 가능하므로). 버그가 아니라 실제 운영 동작.
-- **demo_12**는 `[{kind: "fabricIQ"}, {kind: "searchIndex"}]`를 **명시적으로** 전송해 두 KS 병렬 실행을 보장하고, reasoning model이 두 결과셋을 하나의 NL 답변 + 양쪽 백엔드 citation으로 융합한다.
+**다이어그램 보는 법**
+- 세 경로 모두 같은 Microsoft 1P 표면을 쓰지만 진입 지점이 다르다. Layer 1은 Fabric에 곧장 붙고, Layer 2와 Semantic JOIN은 Azure AI Search를 한 번 거친다.
+- KB `unified-airline-fabriciq-kb`에는 fabricIQ KS (ⓐ)와 searchIndex KS (ⓑ)가 **나란히** 등록돼 있다. `knowledgeSourceParams`는 KS별 **옵션 힌트**일 뿐 "이 KS만 써라"라는 잠금장치가 아니다 — planner(`modelQueryPlanning`)는 등록된 모든 KS를 후보로 두고 판단한다.
+- **demo_07~11**은 `[{kind: "fabricIQ"}]`만 보내고 질문에 *"from our airline ontology"* 라는 힌트를 섞는다. 그러면 planner가 "이건 ontology에서 답이 나온다" 고 판단해 fabricIQ-only로 흘러가고, 행 수도 Layer 1과 그대로 (5 / 15 / 10 / 30 / 42) 맞는다. 만약 힌트를 빼고 그냥 *"list all airlines"* 라고 물으면 planner가 PDF 쪽 (ⓑ)도 같이 깨우는 경우가 흔하다 — 버그가 아니라 "PDF에서도 답이 나올 만하다" 고 판단한 정상 동작이다.
+- **demo_12**는 `[{kind: "fabricIQ"}, {kind: "searchIndex"}]`를 **둘 다** 명시적으로 보내서 두 KS를 강제로 병렬 실행시킨다. 그 다음 reasoning model이 두 결과를 한 답변으로 묶고, 양쪽 출처의 citation을 함께 남긴다.
 
-> Layer 1은 현재 Private Preview에서 가장 안정적인 경로 (Workspace Member 외 별도 allowlist 불필요). Layer 2는 테넌트 allowlisting 완료 후의 운영 형태 호출. Semantic JOIN (demo_12)은 운영 형태 호출 **+** 멀티소스 융합 — 실제 Foundry IQ 에이전트 대부분이 사용하게 될 패턴.
+> Layer 1은 지금 Private Preview에서 가장 안전한 길이다 (Workspace Member만 있으면 된다). Layer 2는 테넌트 allowlisting이 끝나면 운영에서 실제로 쓰게 될 호출 형태고, Semantic JOIN (demo_12)은 거기에 멀티소스 융합까지 더한 형태다 — Foundry IQ 에이전트 대부분이 결국 사용하게 될 패턴이다.
 
 ---
 
@@ -116,34 +116,34 @@ OFFLINE=1 ./scripts/demo_07_airlines_via_kb.sh
 
 #### Layer 2 — Foundry IQ KS 경로 (2026-04-22 추가)
 
-같은 NL 질의를 운영 경로 (own-app → Azure AI Search → KB → KSes)로 라우팅. KB에 **두 KS가 등록**되어 있어 planner가 둘 다 깨우는 경우가 많다 (fabricIQ 행 + searchIndex passage). 스크립트 버그가 아니라 **API 설계 동작**. Layer 1 행 수와 비교해 Fabric ontology 기여를 확인하고, activity log에서 searchIndex 호출 시점을 관찰.
+같은 NL 질의를 운영 경로 (own-app → Azure AI Search → KB → KSes)로 흘려본다. KB에 KS가 둘 다 등록돼 있어도, 질문에 *"from our airline ontology"* 같은 한 마디만 섞으면 planner가 fabricIQ KS만 깨워서 Layer 1과 똑같은 행 수로 답한다 (5 / 15 / 10 / 30 / 42). activity log를 열어보면 fabricIQ-only로만 호출됐음이 그대로 보인다. 두 KS를 같이 쓰는 본격 멀티소스 융합은 demo_12에서 다룬다.
 
 | # | 스크립트 | Layer 1 baseline | 기대 결과 (Layer 2) |
 |---|--------|------------------|--------------------|
-| 07 | `demo_07_airlines_via_kb.sh` | demo_02 → 항공사 5개 | fabricIQ 항공사 5개 + searchIndex passage (planner fan-out) |
-| 08 | `demo_08_airports_via_kb.sh` | demo_03 → 공항 15개 | fabricIQ 공항 15개 + searchIndex passage |
-| 09 | `demo_09_flights_via_kb.sh` | demo_04 → 항공편 10개 | 항공편 10개 (2-way JOIN) ± searchIndex passage |
-| 10 | `demo_10_fleet_via_kb.sh` | demo_05 → 항공기 30대 | 항공기 30대 (3-way JOIN) ± searchIndex passage |
-| 11 | `demo_11_delayed_via_kb.sh` | demo_06 → 지연 42편 | 지연 42편 (Flight 필터) ± searchIndex passage |
+| 07 | `demo_07_airlines_via_kb.sh` | demo_02 → 항공사 5개 | 항공사 5개 (fabricIQ-only) |
+| 08 | `demo_08_airports_via_kb.sh` | demo_03 → 공항 15개 | 공항 15개 (fabricIQ-only) |
+| 09 | `demo_09_flights_via_kb.sh` | demo_04 → 항공편 10개 | 항공편 10개, 2-way JOIN (fabricIQ-only) |
+| 10 | `demo_10_fleet_via_kb.sh` | demo_05 → 항공기 30대 | 항공기 30대, 3-way JOIN (fabricIQ-only) |
+| 11 | `demo_11_delayed_via_kb.sh` | demo_06 → 지연 42편 | 지연 42편, Flight 필터 (fabricIQ-only) |
 
-> **발표 팁**: demo_07~11로 *"Layer 2 KB 호출은 planner 판단에 따라 등록된 여러 KS로 자연스럽게 fan-out 된다"* 는 점을 보여주고, demo_12에서는 **명시적**으로 multi-KS 경로를 강제해 완전한 semantic JOIN을 시연한다 — 내럴티브 빌드업이 자연스럽다.
+> **발표 흐름 팁**: demo_07~11에서 "힌트만 잘 넣으면 운영 경로에서도 ontology만 깔끔하게 답한다"를 먼저 보여주고, 이어서 *힌트를 빼고* `"list all airlines"` 같은 generic 질문으로 한 번 더 던져보세요. planner가 PDF 쪽도 같이 깨우는 모습이 활성 로그에 자연스럽게 잡히고, "필요하면 알아서 멀티소스로 퍼진다"는 흐름이 만들어집니다. 그 다음 demo_12로 넘어가 두 KS를 **명시적으로** 같이 호출하는 본격 Semantic JOIN을 보여주면 빌드업이 매끄럽게 이어집니다.
 
 #### Layer 2 — Semantic JOIN (killer demo)
 
-한 NL 질의를 **종류가 다른 두 KS에 동시 라우팅** — fabricIQ KS의 운영 데이터와 searchIndex KS의 규제 PDF를 Foundry IQ가 융합해 답변.
+질문 하나가 **종류가 다른 두 KS로 동시에** 갈라진다. fabricIQ KS의 운영 데이터와 searchIndex KS의 규제 PDF가 한 답변에 함께 묶여 돌아온다.
 
 | # | 스크립트 | KSes | 기대 결과 |
 |---|--------|------|----------|
-| 12 ⭐ | `demo_12_semantic_join.sh` | `airline-ontology-ks` (fabricIQ) + `unified-airline-ks` (searchIndex) | 2시간+ 지연 편수 + DOT 보상 규정 통합 NL 응답, activity에 두 KS 모두 표시, references가 fabricIQ raw 데이터 + searchIndex PDF citation 둘 다 포함 |
+| 12 ⭐ | `demo_12_semantic_join.sh` | `airline-ontology-ks` (fabricIQ) + `unified-airline-ks` (searchIndex) | 2시간+ 지연 편수와 DOT 보상 규정을 묶은 통합 NL 답변. activity 로그에 두 KS가 모두 보이고, references에 fabricIQ raw 행과 searchIndex PDF citation이 함께 들어온다 |
 
 **The Killer Demo — demo_12**
 
-단 하나의 자연어 질의가 두 KS를 병렬 호출:
+자연어 질문 한 번에 두 KS가 동시에 깨어난다.
 
-- `airline-ontology-ks` (fabricIQ) → 2시간+ 지연 편수에 대해 Fabric ontology 질의 (`Flight WHERE delay_minutes > 120`)
-- `unified-airline-ks` (searchIndex) → DOT 14 CFR Part 250 / Aviation Consumer Protection PDF 보상 조항 검색
+- `airline-ontology-ks` (fabricIQ) → Fabric ontology에서 2시간+ 지연 편수를 집계한다 (`Flight WHERE delay_minutes > 120`)
+- `unified-airline-ks` (searchIndex) → DOT 14 CFR Part 250 / Aviation Consumer Protection PDF에서 보상 조항을 찾아온다
 
-응답은 구조화된 카운트 **와** 정책 문서 텍스트를 하나의 답변으로 합성하고, 두 출처의 citation을 나란히 표시한다. 이것이 실전에서 **"Semantic JOIN"** 이 의미하는 바다: *하나의 질의, 종류가 다른 여러 KS, 통합된 답변*.
+돌아오는 답에는 운영 데이터의 "몇 편 지연됐다" 와 정책 문서의 "몇 시간 이상이면 얼마를 보상해야 한다" 가 한 문단으로 묶여 있고, 양쪽 출처의 citation이 나란히 붙는다. 흔히 말하는 **"Semantic JOIN"** 이 실제로 어떻게 생긴 건지 한눈에 보여주는 장면이다 — *질문 하나, 종류가 다른 KS 여러 개, 답변 하나*.
 
 ```mermaid
 flowchart TB
@@ -192,7 +192,7 @@ flowchart TB
     class ANS answer
 ```
 
-> **Layer 2 사전 요건** (online 호출용):
-> - `.env`의 `AZURE_SEARCH_ENDPOINT` / `AZURE_SEARCH_API_KEY` / `KB_NAME` / `DEFAULT_KS_NAME` 설정
+> **Layer 2 호출에 필요한 것** (online 모드):
+> - `.env`에 `AZURE_SEARCH_ENDPOINT` / `AZURE_SEARCH_API_KEY` / `KB_NAME` / `DEFAULT_KS_NAME` 채워두기
 > - MSIT 테넌트 로그인 (`az login --tenant 72f988bf-86f1-41af-91ab-2d7cd011db47`)
-> - 위 둘 중 하나라도 없으면 자동으로 `samples/0[7-9]_*.json`/`samples/1[01]_*.json` OFFLINE fallback
+> - 둘 중 하나라도 없으면 `samples/0[7-9]_*.json` / `samples/1[01]_*.json` 캡처 응답으로 OFFLINE 자동 재생.
