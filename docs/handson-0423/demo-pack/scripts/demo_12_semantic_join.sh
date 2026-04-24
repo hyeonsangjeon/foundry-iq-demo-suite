@@ -22,6 +22,8 @@ if [ -f "${ROOT_DIR}/.env" ]; then
 fi
 # shellcheck disable=SC1091
 . "${ROOT_DIR}/lib/foundry_kb_call.sh"
+# shellcheck disable=SC1091
+. "${ROOT_DIR}/lib/timing.sh"
 
 QUERY="How many flights in our airline ontology were delayed more than 2 hours, and what is our compensation exposure under DOT regulations?"
 SAMPLE_FILE="${ROOT_DIR}/samples/12_semantic_join.json"

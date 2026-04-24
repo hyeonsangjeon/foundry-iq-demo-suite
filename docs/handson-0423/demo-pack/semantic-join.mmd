@@ -1,0 +1,44 @@
+flowchart TB
+    U["User / App"]
+    Q["<b>Natural-language question (1 call)</b><br/>━━━━━━━━━━━━━━━<br/>'How many flights are 2h+ delayed,<br/>and what does DOT require for compensation?'"]
+
+    subgraph STEP1["<b>1. Retrieve API — single call</b>"]
+        API["POST /knowledgebases/unified-airline-fabriciq-kb/retrieve<br/><br/><b>knowledgeSourceParams</b>:<br/>&nbsp;&nbsp;[ a. fabricIQ, b. searchIndex ]"]
+    end
+
+    subgraph STEP2["<b>2. Two KSes fan out in parallel</b>"]
+        direction LR
+        KS1["<b>a. fabricIQ KS</b><br/>━━━━━━━━━━━<br/>airline-ontology-ks<br/><br/>Fabric ontology query<br/><i>'2h+ delay counts'</i>"]
+        KS2["<b>b. searchIndex KS</b><br/>━━━━━━━━━━━<br/>unified-airline-ks<br/><br/>DOT PDF vector search<br/><i>'DOT compensation rules'</i>"]
+    end
+
+    subgraph STEP3["<b>3. LLM answer synthesis — one response</b>"]
+        LLM["Answer Synthesis (GPT-4o)<br/>+ preserves both citations<br/>+ traceable evidence"]
+    end
+
+    ANS["<b>Unified answer</b><br/>━━━━━━━━━━━━━━━━━━<br/>'2h+ delays: N flights.<br/>Per DOT, carriers owe up to $X per pax<br/>when delay exceeds 4h.'<br/><br/>refs: a. ontology row + b. doc chunk"]
+
+    U --> Q
+    Q ==> API
+    API ==>|"parallel"| KS1
+    API ==>|"parallel"| KS2
+    KS1 ==> LLM
+    KS2 ==> LLM
+    LLM ==> ANS
+    ANS --> U
+
+    classDef user fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef question fill:#e3f2fd,stroke:#1565c0,stroke-width:2.5px,color:#0d47a1
+    classDef step fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#e65100
+    classDef ks1 fill:#ffe0b2,stroke:#e65100,stroke-width:2.5px,color:#bf360c
+    classDef ks2 fill:#c8e6c9,stroke:#2e7d32,stroke-width:2.5px,color:#1b5e20
+    classDef llm fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#4a148c
+    classDef answer fill:#fce4ec,stroke:#ad1457,stroke-width:3px,color:#880e4f
+
+    class U user
+    class Q question
+    class API step
+    class KS1 ks1
+    class KS2 ks2
+    class LLM llm
+    class ANS answer
