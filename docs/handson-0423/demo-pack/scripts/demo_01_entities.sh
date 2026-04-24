@@ -6,6 +6,8 @@ set -eu
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/../lib/mcp_call.sh"
+# shellcheck disable=SC1091
+source "${SCRIPT_DIR}/../lib/timing.sh"
 
 echo "═══════════════════════════════════════════════════════════════════"
 echo "  Demo 1 — Ontology Schema Inspection"

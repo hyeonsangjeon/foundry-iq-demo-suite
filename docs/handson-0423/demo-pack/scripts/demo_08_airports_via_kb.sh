@@ -8,6 +8,8 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 if [ -f "${ROOT_DIR}/.env" ]; then set -a; . "${ROOT_DIR}/.env"; set +a; fi
 # shellcheck disable=SC1091
 . "${ROOT_DIR}/lib/foundry_kb_call.sh"
+# shellcheck disable=SC1091
+. "${ROOT_DIR}/lib/timing.sh"
 
 QUERY="list all airports with their cities"
 SAMPLE_FILE="${ROOT_DIR}/samples/08_airports_via_kb.json"

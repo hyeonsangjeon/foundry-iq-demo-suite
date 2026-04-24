@@ -17,6 +17,8 @@ if [ -f "${ROOT_DIR}/.env" ]; then
 fi
 # shellcheck disable=SC1091
 . "${ROOT_DIR}/lib/foundry_kb_call.sh"
+# shellcheck disable=SC1091
+. "${ROOT_DIR}/lib/timing.sh"
 
 QUERY="list all airlines"
 SAMPLE_FILE="${ROOT_DIR}/samples/07_airlines_via_kb.json"
