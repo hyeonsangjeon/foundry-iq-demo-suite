@@ -4,25 +4,47 @@
       "id": "q1-delayed-comp",
       "nl": {
         "en": "How many delayed flights last week had compensation over $1,000?",
-        "ko": "How many delayed flights last week had compensation over $1,000?",
-        "ja": "How many delayed flights last week had compensation over $1,000?",
-        "zh": "How many delayed flights last week had compensation over $1,000?",
-        "hi": "How many delayed flights last week had compensation over $1,000?"
+        "ko": "지난주 보상금이 $1,000을 초과한 지연 항공편은 몇 건입니까?",
+        "ja": "先週、補償金が $1,000 を超えた遅延便は何件ですか?",
+        "zh": "上周补偿金额超过 $1,000 的延误航班有多少?",
+        "hi": "पिछले हफ़्ते $1,000 से ज़्यादा compensation वाली कितनी flights में देरी हुई?"
       },
       "vpAnswer": {
-        "primary": { "value": "23", "label": "flights", "unit": "delayed with comp > $1k" },
+        "primary": {
+          "value": "23",
+          "label": "flights",
+          "unit": "delayed with comp > $1k"
+        },
         "stats": [
-          { "label": "Total compensation paid", "value": "$33,400" },
-          { "label": "Average per flight", "value": "$1,452" },
-          { "label": "Top route", "value": "SFO–JFK (4 flights)" }
+          {
+            "label": "Total compensation paid",
+            "value": "$33,400"
+          },
+          {
+            "label": "Average per flight",
+            "value": "$1,452"
+          },
+          {
+            "label": "Top route",
+            "value": "SFO–JFK (4 flights)"
+          }
         ],
         "source": "Fabric IQ ontology · live query · 4.3s"
       },
       "kql": "delayed_flights\n| where last_7_days(actual_arr)\n| join compensation on flight_id\n| where amount > 1000\n| summarize count=count(), total=sum(amount), avg=avg(amount), top_route=top(1, route)",
       "trace": [
-        { "stage": "modelQueryPlanning", "ms": 320 },
-        { "stage": "fabricIQ", "ms": 3200 },
-        { "stage": "modelAnswerSynthesis", "ms": 780 }
+        {
+          "stage": "modelQueryPlanning",
+          "ms": 320
+        },
+        {
+          "stage": "fabricIQ",
+          "ms": 3200
+        },
+        {
+          "stage": "modelAnswerSynthesis",
+          "ms": 780
+        }
       ],
       "elapsedMs": 4300,
       "rawJson": "{\n  \"ref_id\": 0,\n  \"content\": \"23 flights total with compensation > $1,000 in the last 7 days. Top route: SFO-JFK.\",\n  \"rows\": [\n    { \"flight_id\": \"NW1042-20260504\", \"compensation\": 1450, \"route\": \"SFO-JFK\" },\n    { \"flight_id\": \"NW1287-20260505\", \"compensation\": 1820, \"route\": \"SFO-JFK\" }\n  ]\n}"
@@ -31,13 +53,17 @@
       "id": "q2-top-routes",
       "nl": {
         "en": "Top 5 routes by delay last month",
-        "ko": "Top 5 routes by delay last month",
-        "ja": "Top 5 routes by delay last month",
-        "zh": "Top 5 routes by delay last month",
-        "hi": "Top 5 routes by delay last month"
+        "ko": "지난달 지연 시간 기준 상위 5개 노선",
+        "ja": "先月の遅延時間が最も多い上位 5 路線",
+        "zh": "上月延误时长 Top 5 航线",
+        "hi": "पिछले महीने delay के हिसाब से Top 5 routes"
       },
       "vpAnswer": {
-        "primary": { "value": "5 routes", "label": "ranked by total delay minutes", "unit": "last 30 days" },
+        "primary": {
+          "value": "5 routes",
+          "label": "ranked by total delay minutes",
+          "unit": "last 30 days"
+        },
         "list": [
           "SFO–JFK · 142 delays",
           "LAX–ORD · 128 delays",
@@ -49,9 +75,18 @@
       },
       "kql": "flights | where last_30_days(actual_arr) | where delay_minutes > 15 | summarize count=count() by route | order by count desc | take 5",
       "trace": [
-        { "stage": "modelQueryPlanning", "ms": 280 },
-        { "stage": "fabricIQ", "ms": 2900 },
-        { "stage": "modelAnswerSynthesis", "ms": 620 }
+        {
+          "stage": "modelQueryPlanning",
+          "ms": 280
+        },
+        {
+          "stage": "fabricIQ",
+          "ms": 2900
+        },
+        {
+          "stage": "modelAnswerSynthesis",
+          "ms": 620
+        }
       ],
       "elapsedMs": 3800,
       "rawJson": "{\n  \"ref_id\": 0,\n  \"rows\": [\n    { \"route\": \"SFO-JFK\", \"count\": 142 },\n    { \"route\": \"LAX-ORD\", \"count\": 128 }\n  ]\n}"
@@ -60,13 +95,17 @@
       "id": "q3-avg-comp-airline",
       "nl": {
         "en": "Average compensation per airline this quarter",
-        "ko": "Average compensation per airline this quarter",
-        "ja": "Average compensation per airline this quarter",
-        "zh": "Average compensation per airline this quarter",
-        "hi": "Average compensation per airline this quarter"
+        "ko": "이번 분기 항공사별 평균 보상금",
+        "ja": "今四半期、航空会社別の平均補償金",
+        "zh": "本季度各航空公司的平均补偿金额",
+        "hi": "इस तिमाही में airline-वार average compensation"
       },
       "vpAnswer": {
-        "primary": { "value": "$1,268", "label": "average across 5 airlines", "unit": "Q2 2026" },
+        "primary": {
+          "value": "$1,268",
+          "label": "average across 5 airlines",
+          "unit": "Q2 2026"
+        },
         "list": [
           "Northwind Airlines · $1,840",
           "Contoso Air · $1,510",
@@ -78,9 +117,18 @@
       },
       "kql": "compensation | join airlines on airline_id | where quarter='2026Q2' | summarize avg=avg(amount) by airline_name | order by avg desc",
       "trace": [
-        { "stage": "modelQueryPlanning", "ms": 410 },
-        { "stage": "fabricIQ", "ms": 3500 },
-        { "stage": "modelAnswerSynthesis", "ms": 690 }
+        {
+          "stage": "modelQueryPlanning",
+          "ms": 410
+        },
+        {
+          "stage": "fabricIQ",
+          "ms": 3500
+        },
+        {
+          "stage": "modelAnswerSynthesis",
+          "ms": 690
+        }
       ],
       "elapsedMs": 4600,
       "rawJson": "{\n  \"ref_id\": 0,\n  \"rows\": [\n    { \"airline\": \"Northwind\", \"avg\": 1840 }\n  ]\n}"
@@ -89,13 +137,17 @@
       "id": "q4-maint-aircraft",
       "nl": {
         "en": "Aircraft with most maintenance events",
-        "ko": "Aircraft with most maintenance events",
-        "ja": "Aircraft with most maintenance events",
-        "zh": "Aircraft with most maintenance events",
-        "hi": "Aircraft with most maintenance events"
+        "ko": "정비 이벤트가 가장 많은 항공기",
+        "ja": "整備イベントが最も多い機体",
+        "zh": "维修事件最多的飞机",
+        "hi": "सबसे ज़्यादा maintenance events वाले aircraft"
       },
       "vpAnswer": {
-        "primary": { "value": "3 aircraft", "label": "with elevated maintenance frequency", "unit": "this quarter" },
+        "primary": {
+          "value": "3 aircraft",
+          "label": "with elevated maintenance frequency",
+          "unit": "this quarter"
+        },
         "list": [
           "N12345 · Boeing 737-800 · 12 events",
           "N67890 · Airbus A320 · 9 events",
@@ -105,9 +157,18 @@
       },
       "kql": "aircraft | join maintenance on aircraft_id | where quarter='2026Q2' | summarize events=count() by aircraft_id, model | order by events desc | take 3",
       "trace": [
-        { "stage": "modelQueryPlanning", "ms": 290 },
-        { "stage": "fabricIQ", "ms": 2600 },
-        { "stage": "modelAnswerSynthesis", "ms": 510 }
+        {
+          "stage": "modelQueryPlanning",
+          "ms": 290
+        },
+        {
+          "stage": "fabricIQ",
+          "ms": 2600
+        },
+        {
+          "stage": "modelAnswerSynthesis",
+          "ms": 510
+        }
       ],
       "elapsedMs": 3400,
       "rawJson": "{\n  \"ref_id\": 0,\n  \"rows\": [\n    { \"aircraft_id\": \"N12345\", \"events\": 12 }\n  ]\n}"
@@ -116,13 +177,17 @@
       "id": "q5-list-airlines",
       "nl": {
         "en": "List all airlines",
-        "ko": "List all airlines",
-        "ja": "List all airlines",
-        "zh": "List all airlines",
-        "hi": "List all airlines"
+        "ko": "모든 항공사 나열",
+        "ja": "すべての航空会社を一覧表示",
+        "zh": "列出所有航空公司",
+        "hi": "सभी airlines सूचीबद्ध करें"
       },
       "vpAnswer": {
-        "primary": { "value": "5", "label": "airlines", "unit": "in the ontology" },
+        "primary": {
+          "value": "5",
+          "label": "airlines",
+          "unit": "in the ontology"
+        },
         "list": [
           "Blue Ridge Air (AL000004)",
           "Contoso Air (AL000005)",
@@ -134,9 +199,18 @@
       },
       "kql": "airlines | project airline_id, name | order by name asc",
       "trace": [
-        { "stage": "modelQueryPlanning", "ms": 180 },
-        { "stage": "fabricIQ", "ms": 1200 },
-        { "stage": "modelAnswerSynthesis", "ms": 520 }
+        {
+          "stage": "modelQueryPlanning",
+          "ms": 180
+        },
+        {
+          "stage": "fabricIQ",
+          "ms": 1200
+        },
+        {
+          "stage": "modelAnswerSynthesis",
+          "ms": 520
+        }
       ],
       "elapsedMs": 1900,
       "rawJson": "{\n  \"ref_id\": 0,\n  \"content\": \"5 airlines in the ontology.\",\n  \"rows\": [\n    { \"airline_id\": \"AL000001\", \"name\": \"Northwind Airlines\" },\n    { \"airline_id\": \"AL000002\", \"name\": \"Fabrikam Jet\" },\n    { \"airline_id\": \"AL000003\", \"name\": \"Pacific Skies\" },\n    { \"airline_id\": \"AL000004\", \"name\": \"Blue Ridge Air\" },\n    { \"airline_id\": \"AL000005\", \"name\": \"Contoso Air\" }\n  ]\n}"
