@@ -1227,4 +1227,125 @@ export const t = {
       },
     },
   },
+
+  // ─── Phase 4 — Fabric IQ Knowledge Source ────────────────────────────────
+  // EN is the source-of-truth baseline. Other locales duplicate EN until T6
+  // translation polish lands. Every key MUST exist in every locale.
+  fabricIqKs: {
+    en: {
+      hero: {
+        badge: 'PHASE 4 · LIVE',
+        title: 'Ask the ontology directly.',
+        subtitle: 'No data team in the middle. No tickets. No week of waiting.',
+        milestone: 'Cross-tenant federation unblocked May 7, 2026 · First working trace captured',
+      },
+      card: {
+        badge: 'PHASE 4',
+        badgeLabel: 'LIVE',
+        subtitle: 'Fabric IQ + Foundry IQ',
+        title: 'Fabric IQ Knowledge Source',
+        description:
+          'Live ontology, queried in natural language. Federated MCP call hits a real-time business-semantic graph — no pre-indexing, no JSON snapshots. Cross-tenant pattern unblocked May 7.',
+        features: [
+          { label: 'Live Ontology', desc: 'Real-time, no snapshots' },
+          { label: 'NL → KQL', desc: 'Data Agent generated' },
+          { label: 'Federated MCP', desc: 'Cross-tenant OBO' },
+          { label: 'Data Democratization', desc: 'VP view ↔ Engineer view' },
+        ],
+        button: 'Try Fabric IQ KS →',
+      },
+    },
+    ko: {
+      hero: {
+        badge: 'PHASE 4 · LIVE',
+        title: 'Ask the ontology directly.',
+        subtitle: 'No data team in the middle. No tickets. No week of waiting.',
+        milestone: 'Cross-tenant federation unblocked May 7, 2026 · First working trace captured',
+      },
+      card: {
+        badge: 'PHASE 4',
+        badgeLabel: 'LIVE',
+        subtitle: 'Fabric IQ + Foundry IQ',
+        title: 'Fabric IQ Knowledge Source',
+        description:
+          'Live ontology, queried in natural language. Federated MCP call hits a real-time business-semantic graph — no pre-indexing, no JSON snapshots. Cross-tenant pattern unblocked May 7.',
+        features: [
+          { label: 'Live Ontology', desc: 'Real-time, no snapshots' },
+          { label: 'NL → KQL', desc: 'Data Agent generated' },
+          { label: 'Federated MCP', desc: 'Cross-tenant OBO' },
+          { label: 'Data Democratization', desc: 'VP view ↔ Engineer view' },
+        ],
+        button: 'Try Fabric IQ KS →',
+      },
+    },
+    zh: {
+      hero: {
+        badge: 'PHASE 4 · LIVE',
+        title: 'Ask the ontology directly.',
+        subtitle: 'No data team in the middle. No tickets. No week of waiting.',
+        milestone: 'Cross-tenant federation unblocked May 7, 2026 · First working trace captured',
+      },
+      card: {
+        badge: 'PHASE 4',
+        badgeLabel: 'LIVE',
+        subtitle: 'Fabric IQ + Foundry IQ',
+        title: 'Fabric IQ Knowledge Source',
+        description:
+          'Live ontology, queried in natural language. Federated MCP call hits a real-time business-semantic graph — no pre-indexing, no JSON snapshots. Cross-tenant pattern unblocked May 7.',
+        features: [
+          { label: 'Live Ontology', desc: 'Real-time, no snapshots' },
+          { label: 'NL → KQL', desc: 'Data Agent generated' },
+          { label: 'Federated MCP', desc: 'Cross-tenant OBO' },
+          { label: 'Data Democratization', desc: 'VP view ↔ Engineer view' },
+        ],
+        button: 'Try Fabric IQ KS →',
+      },
+    },
+    ja: {
+      hero: {
+        badge: 'PHASE 4 · LIVE',
+        title: 'Ask the ontology directly.',
+        subtitle: 'No data team in the middle. No tickets. No week of waiting.',
+        milestone: 'Cross-tenant federation unblocked May 7, 2026 · First working trace captured',
+      },
+      card: {
+        badge: 'PHASE 4',
+        badgeLabel: 'LIVE',
+        subtitle: 'Fabric IQ + Foundry IQ',
+        title: 'Fabric IQ Knowledge Source',
+        description:
+          'Live ontology, queried in natural language. Federated MCP call hits a real-time business-semantic graph — no pre-indexing, no JSON snapshots. Cross-tenant pattern unblocked May 7.',
+        features: [
+          { label: 'Live Ontology', desc: 'Real-time, no snapshots' },
+          { label: 'NL → KQL', desc: 'Data Agent generated' },
+          { label: 'Federated MCP', desc: 'Cross-tenant OBO' },
+          { label: 'Data Democratization', desc: 'VP view ↔ Engineer view' },
+        ],
+        button: 'Try Fabric IQ KS →',
+      },
+    },
+    hi: {
+      hero: {
+        badge: 'PHASE 4 · LIVE',
+        title: 'Ask the ontology directly.',
+        subtitle: 'No data team in the middle. No tickets. No week of waiting.',
+        milestone: 'Cross-tenant federation unblocked May 7, 2026 · First working trace captured',
+      },
+      card: {
+        badge: 'PHASE 4',
+        badgeLabel: 'LIVE',
+        subtitle: 'Fabric IQ + Foundry IQ',
+        title: 'Fabric IQ Knowledge Source',
+        description:
+          'Live ontology, queried in natural language. Federated MCP call hits a real-time business-semantic graph — no pre-indexing, no JSON snapshots. Cross-tenant pattern unblocked May 7.',
+        features: [
+          { label: 'Live Ontology', desc: 'Real-time, no snapshots' },
+          { label: 'NL → KQL', desc: 'Data Agent generated' },
+          { label: 'Federated MCP', desc: 'Cross-tenant OBO' },
+          { label: 'Data Democratization', desc: 'VP view ↔ Engineer view' },
+        ],
+        button: 'Try Fabric IQ KS →',
+      },
+    },
+  },
 }
