@@ -31,10 +31,32 @@ export function NlToKqlPanel({ kql, locale, animate }: NlToKqlPanelProps) {
   // Conditional render per Master Spec §3.3 v2 — never fabricate.
   if (kql === null) return null
 
-  if (!animate) {
-    return <NlToKqlPanelStatic kql={kql} locale={locale} />
+  return <NlToKqlPanelBody kql={kql} locale={locale} animate={animate} />
+}
+
+/**
+ * Body captures `animate` at first render via useState and never updates it.
+ *
+ * Why: the parent's 1500 ms timer flips `revealedOnce` → true, which flips
+ * the `animate` prop true → false WHILE typing is in progress. If the
+ * top-level component swapped its child component type based on the live
+ * `animate` value, React would unmount the typing subtree mid-stream and
+ * the user would see a hard jump from partial-KQL to full-KQL.
+ *
+ * By snapshotting `animate` once with `useState`, the typing branch keeps
+ * running through the prop change. When the user toggles VP, the entire
+ * panel unmounts via RevealCurtain's AnimatePresence exit. When they
+ * toggle back to Engineer, the panel re-mounts with the new `animate`
+ * value (now `false` because `revealedOnce` is `true`) and the static
+ * branch is selected — instant show, no re-fire.
+ */
+function NlToKqlPanelBody({ kql, locale, animate }: { kql: string; locale: Locale; animate: boolean }) {
+  const [shouldType] = useState(animate)
+
+  if (shouldType) {
+    return <NlToKqlPanelTyping kql={kql} locale={locale} />
   }
-  return <NlToKqlPanelTyping kql={kql} locale={locale} />
+  return <NlToKqlPanelStatic kql={kql} locale={locale} />
 }
 
 function NlToKqlPanelTyping({ kql, locale }: { kql: string; locale: Locale }) {
