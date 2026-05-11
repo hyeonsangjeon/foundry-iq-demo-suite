@@ -1378,6 +1378,7 @@ export const t = {
         vpResultLabel: '결과',
         vpFiveStar: '⭐ 5/7/2026 최초 트레이스',
         sourceLabel: '출처',
+        // REVIEW-KO: revealCta — chose '안쪽 보기' for tight button width; alt: '안의 모습을 보여주세요'.
         revealCta: '안쪽 보기 ↓',
         modeLabel: '모드',
         modeMock: 'Mock',
@@ -1462,8 +1463,8 @@ export const t = {
         vpResultLabel: '结果',
         vpFiveStar: '⭐ 5/7/2026 首条跟踪',
         sourceLabel: '来源',
-        // REVIEW-ZH: revealCta — chose "揭开背后" for product-page tone; alt: "让我看看背后".
-        revealCta: '揭开背后 ↓',
+        // REVIEW-ZH: revealCta — chose '看看背后是什么' per spec §3.4; alts: '揭开背后', '让我看看背后'.
+        revealCta: '看看背后是什么 ↓',
         modeLabel: '模式',
         modeMock: 'Mock',
         modeLive: 'Live',
@@ -1471,7 +1472,7 @@ export const t = {
         personaLabel: '视图',
         personaVp: 'VP',
         personaEngineer: '工程师',
-        personaEngineerTooltipDisabled: '点击下方"揭开背后"展开',
+        personaEngineerTooltipDisabled: '点击下方"看看背后是什么"展开',
         loadingLabel: '正在查询 Fabric IQ 本体...',
         errorFallbackLabel: '查询失败,已回退到 Mock。',
         nlToKqlHeading: 'NL → KQL',
@@ -1632,8 +1633,8 @@ export const t = {
         vpResultLabel: 'परिणाम',
         vpFiveStar: '⭐ 5/7/2026 पहला trace',
         sourceLabel: 'स्रोत',
-        // REVIEW-HI: revealCta — chose "अंदर का देखें" for short button; alt: "नीचे क्या है, दिखाएँ".
-        revealCta: 'अंदर का देखें ↓',
+        // REVIEW-HI: revealCta — chose 'अंदर देखें' for natural Hindi grammar; alts: 'अंदर का देखें', 'नीचे क्या है, दिखाएँ'.
+        revealCta: 'अंदर देखें ↓',
         modeLabel: 'मोड',
         modeMock: 'Mock',
         modeLive: 'Live',
@@ -1641,7 +1642,7 @@ export const t = {
         personaLabel: 'व्यू',
         personaVp: 'VP',
         personaEngineer: 'Engineer',
-        personaEngineerTooltipDisabled: 'विस्तार के लिए नीचे "अंदर का देखें" क्लिक करें',
+        personaEngineerTooltipDisabled: 'विस्तार के लिए नीचे "अंदर देखें" क्लिक करें',
         loadingLabel: 'Fabric IQ ontology से query हो रही है...',
         errorFallbackLabel: 'Query विफल। Mock पर fallback कर रहे हैं।',
         nlToKqlHeading: 'NL → KQL',
