@@ -1548,6 +1548,7 @@ export const t = {
         vpResultLabel: '結果',
         vpFiveStar: '⭐ 5/7/2026 初回トレース',
         sourceLabel: 'ソース',
+        // REVIEW-JA: revealCta — chose '中身を見せて' (the inside / content) over spec §3.4 '裏側を見せて' (the back side / behind) for friendlier product-page tone; alt: '裏側を覗く'.
         revealCta: '中身を見せて ↓',
         modeLabel: 'モード',
         modeMock: 'Mock',
