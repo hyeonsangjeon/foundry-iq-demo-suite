@@ -1,0 +1,87 @@
+{
+  "nodes": [
+    {
+      "id": "Airline",
+      "type": "entity",
+      "color": "emerald",
+      "count": 5,
+      "schema": [
+        { "name": "airline_id", "type": "string", "example": "AL000001" },
+        { "name": "name",       "type": "string", "example": "Northwind Airlines" },
+        { "name": "country",    "type": "string", "example": "United States" },
+        { "name": "founded",    "type": "int",    "example": 1985 }
+      ]
+    },
+    {
+      "id": "Airport",
+      "type": "entity",
+      "color": "cyan",
+      "count": 30,
+      "schema": [
+        { "name": "airport_id", "type": "string", "example": "SFO" },
+        { "name": "name",       "type": "string", "example": "San Francisco International" },
+        { "name": "city",       "type": "string", "example": "San Francisco" },
+        { "name": "country",    "type": "string", "example": "United States" }
+      ]
+    },
+    {
+      "id": "Flight",
+      "type": "entity",
+      "color": "violet",
+      "count": 5819079,
+      "schema": [
+        { "name": "flight_id",      "type": "string",   "example": "NW1234-20260507" },
+        { "name": "airline_id",     "type": "string",   "example": "AL000001" },
+        { "name": "origin",         "type": "string",   "example": "SFO" },
+        { "name": "destination",    "type": "string",   "example": "JFK" },
+        { "name": "scheduled_dep",  "type": "datetime", "example": "2026-05-07T08:30:00Z" },
+        { "name": "actual_dep",     "type": "datetime", "example": "2026-05-07T08:42:00Z" },
+        { "name": "scheduled_arr",  "type": "datetime", "example": "2026-05-07T17:05:00Z" },
+        { "name": "actual_arr",     "type": "datetime", "example": "2026-05-07T17:23:00Z" }
+      ]
+    },
+    {
+      "id": "Aircraft",
+      "type": "entity",
+      "color": "amber",
+      "count": 50,
+      "schema": [
+        { "name": "aircraft_id", "type": "string", "example": "N12345" },
+        { "name": "model",       "type": "string", "example": "Boeing 737-800" },
+        { "name": "airline_id",  "type": "string", "example": "AL000001" },
+        { "name": "seats",       "type": "int",    "example": 162 }
+      ]
+    },
+    {
+      "id": "Delay",
+      "type": "metric",
+      "color": "rose",
+      "count": null,
+      "schema": [
+        { "name": "flight_id",      "type": "string", "example": "NW1234-20260507" },
+        { "name": "delay_minutes",  "type": "int",    "example": 18 },
+        { "name": "reason_code",    "type": "string", "example": "WEATHER" }
+      ]
+    },
+    {
+      "id": "Compensation",
+      "type": "metric",
+      "color": "orange",
+      "count": null,
+      "schema": [
+        { "name": "flight_id", "type": "string",  "example": "NW1234-20260507" },
+        { "name": "amount",    "type": "decimal", "example": 1450.00 },
+        { "name": "currency",  "type": "string",  "example": "USD" }
+      ]
+    }
+  ],
+  "links": [
+    { "source": "Airline",  "target": "Flight",       "label": "operates" },
+    { "source": "Airline",  "target": "Aircraft",     "label": "owns" },
+    { "source": "Flight",   "target": "Airport",      "label": "departs_from" },
+    { "source": "Flight",   "target": "Airport",      "label": "arrives_at" },
+    { "source": "Flight",   "target": "Delay",        "label": "has" },
+    { "source": "Delay",    "target": "Compensation", "label": "triggers" },
+    { "source": "Aircraft", "target": "Flight",       "label": "assigned_to" }
+  ]
+}
