@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { ModeToggleRow } from './mode-toggle-row'
 import { QueryInput } from './query-input'
@@ -16,28 +16,32 @@ import { t } from '@/lib/i18n/translations'
 export function DemocratizationSection({ locale }: { locale: Locale }) {
   const [mode, setMode] = useState<Mode>('mock')
   const [persona, setPersona] = useState<'vp' | 'engineer'>('vp')
-  // `revealedOnce` tracks whether the curtain animation has played already in
-  // this mount. Subsequent persona toggles must not re-fire the animation —
-  // per spec §3 visual state matrix.
+  // Spec §3 calls this `revealedOnce`. We implement the latch as a ref —
+  // not state — so it satisfies three constraints simultaneously:
   //
-  // IMPORTANT: we deliberately do NOT flip `revealedOnce` inside the click
-  // handler. React 18 batches state updates in the same render, which would
-  // make `animateFirst` evaluate to `false` on the first render after the
-  // click (persona='engineer' AND revealedOnce=true simultaneously) — and the
-  // wow animation would silently never fire.
+  //   (a) Stable within the same render where the click handler flips
+  //       persona to 'engineer'. React 18 batches setState calls in the
+  //       same handler tick, so deriving `animateFirst` from a state
+  //       flag set in `handleRevealClick` would evaluate to `false` on
+  //       Render 1 (persona='engineer' AND revealedOnce=true together)
+  //       and silently suppress the wow animation.
   //
-  // We also can't flip `revealedOnce` in a useEffect immediately after the
-  // first render: framer-motion uses the latest `transition` prop for
-  // in-flight animations, so promoting `revealedOnce` before the curtain +
-  // stagger finish would cut them mid-animation (duration → 0).
+  //   (b) Mutating the ref does NOT trigger a re-render that flips
+  //       framer-motion `transition.duration` to 0 mid-animation. The
+  //       ref is set in a useEffect after Render 1 commits; the
+  //       subsequent re-renders that read `animateFirst=false` pass an
+  //       unchanged `animate` prop to motion components, so in-flight
+  //       animations are not interrupted.
   //
-  // So we promote `revealedOnce` via a timer sized to cover the orchestrated
-  // animations: curtain 600 ms + last activity-trace bar delay (0.4 s + 2 *
-  // 0.2 s) + duration 0.5 s ≈ 1300 ms. We use 1500 ms as a safety margin.
-  // Typing animation (~200 ms delay + ~6 s for typical KQL) is self-contained
-  // — flipping the gate while typing is in progress is harmless because the
-  // typing component owns its own timers.
-  const [revealedOnce, setRevealedOnce] = useState(false)
+  //   (c) Once latched, stays latched until unmount / page refresh —
+  //       even if the user quickly toggles back to VP before the
+  //       orchestrated animations finish. Spec §3 visual state matrix +
+  //       §10 acceptance #8 require "once per session" REGARDLESS of
+  //       interim toggles. A previous timer-based implementation
+  //       cancelled the promotion on `engineerVisible=false`, which
+  //       caused the curtain + stagger to replay on toggle-back —
+  //       reviewer flagged this as a Block.
+  const hasPlayedRevealRef = useRef(false)
   const { result, runQuery } = useFabricIqQuery()
   const text = t.fabricIqKs[locale].democratization
 
@@ -46,14 +50,13 @@ export function DemocratizationSection({ locale }: { locale: Locale }) {
   }
 
   const engineerVisible = persona === 'engineer'
-  const animateFirst = engineerVisible && !revealedOnce
+  const animateFirst = engineerVisible && !hasPlayedRevealRef.current
 
   useEffect(() => {
-    if (!engineerVisible || revealedOnce) return
-    const ORCHESTRATED_ANIM_MS = 1500
-    const timer = window.setTimeout(() => setRevealedOnce(true), ORCHESTRATED_ANIM_MS)
-    return () => window.clearTimeout(timer)
-  }, [engineerVisible, revealedOnce])
+    if (engineerVisible && !hasPlayedRevealRef.current) {
+      hasPlayedRevealRef.current = true
+    }
+  }, [engineerVisible])
 
   return (
     <section className="bg-bg-subtle px-6 py-20">
