@@ -14,21 +14,64 @@ type NlToKqlPanelProps = {
    */
   kql: string | null
   locale: Locale
+  /**
+   * When true, KQL types in character-by-character (first reveal). When
+   * false, the full KQL is shown instantly — used for subsequent persona
+   * toggles after the panel has been revealed once, so the typing
+   * animation does not re-fire on re-mount (spec §3 visual state matrix
+   * row "engineer + revealedOnce=true → Animation: None").
+   */
+  animate: boolean
 }
 
 // 35 chars/sec → 1000 / 35 ≈ 28.6 ms per character.
 const TYPING_SPEED_MS = 29
 
-export function NlToKqlPanel({ kql, locale }: NlToKqlPanelProps) {
+export function NlToKqlPanel({ kql, locale, animate }: NlToKqlPanelProps) {
   // Conditional render per Master Spec §3.3 v2 — never fabricate.
   if (kql === null) return null
 
-  return <NlToKqlPanelBody kql={kql} locale={locale} />
+  if (!animate) {
+    return <NlToKqlPanelStatic kql={kql} locale={locale} />
+  }
+  return <NlToKqlPanelTyping kql={kql} locale={locale} />
 }
 
-function NlToKqlPanelBody({ kql, locale }: { kql: string; locale: Locale }) {
-  const text = t.fabricIqKs[locale].democratization
+function NlToKqlPanelTyping({ kql, locale }: { kql: string; locale: Locale }) {
   const { displayedText, isComplete } = useTypingEffect(kql, TYPING_SPEED_MS, 200)
+  return (
+    <NlToKqlPanelLayout
+      kql={kql}
+      locale={locale}
+      displayedText={displayedText}
+      isComplete={isComplete}
+    />
+  )
+}
+
+function NlToKqlPanelStatic({ kql, locale }: { kql: string; locale: Locale }) {
+  return (
+    <NlToKqlPanelLayout
+      kql={kql}
+      locale={locale}
+      displayedText={kql}
+      isComplete
+    />
+  )
+}
+
+function NlToKqlPanelLayout({
+  kql,
+  locale,
+  displayedText,
+  isComplete,
+}: {
+  kql: string
+  locale: Locale
+  displayedText: string
+  isComplete: boolean
+}) {
+  const text = t.fabricIqKs[locale].democratization
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {

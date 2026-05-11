@@ -95,7 +95,7 @@ export function DemocratizationSection({ locale }: { locale: Locale }) {
 
         {result?.query && !result.loading && !result.error && (
           <RevealCurtain isVisible={engineerVisible} animateOnFirstReveal={animateFirst}>
-            <NlToKqlPanel kql={result.query.kql ?? null} locale={locale} />
+            <NlToKqlPanel kql={result.query.kql ?? null} locale={locale} animate={animateFirst} />
             <ActivityTraceTimeline
               stages={result.query.trace}
               totalMs={result.query.elapsedMs}
