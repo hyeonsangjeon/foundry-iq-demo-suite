@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { FabricIqHero } from './fabric-iq-hero'
 import { OntologySection } from './ontology-section'
+import { DemocratizationSection } from './democratization-section'
 import { FederationFlowSection } from './federation-flow-section'
 import { getLocale, type Locale } from '@/lib/i18n'
 
@@ -18,15 +19,9 @@ export function FabricIqKsLanding() {
 
       <OntologySection locale={locale} />
 
-      {/* T4 + T5 will add: <DemocratizationSection /> in the middle */}
+      <DemocratizationSection locale={locale} />
 
-      {/* Temporary placeholder for middle sections — replaced by T4/T5 */}
-      <section className="py-16 text-center text-fg-muted text-sm">
-        <p>More sections shipping in upcoming PRs.</p>
-        <p className="text-xs text-fg-subtle mt-1">
-          T4 (VP view) · T5 (Reveal animation)
-        </p>
-      </section>
+      {/* T5 will add: reveal animation + engineer panels inside DemocratizationSection */}
 
       <FederationFlowSection locale={locale} />
     </div>
