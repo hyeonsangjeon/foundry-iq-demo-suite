@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils'
 import {
   Search24Regular,
   Document24Regular,
-  PlugConnected24Regular,
   ChevronRight20Regular,
   DataTrending24Regular,
 } from '@fluentui/react-icons'
@@ -17,6 +16,7 @@ import Image from 'next/image'
 import { getLocale, type Locale } from '@/lib/i18n'
 import { t } from '@/lib/i18n/translations'
 import { ModeToggle, type ViewMode } from '@/components/mode-toggle'
+import { FabricIqKsCard } from '@/components/fabric-iq-ks/fabric-iq-ks-card'
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -78,16 +78,7 @@ const comingSoon: Array<{
   icon: typeof DataTrending24Regular
   desc: string
   href?: string
-}> = [
-  {
-    id: 'fabric-iq-ks',
-    title: 'Fabric IQ Knowledge Source',
-    subtitle: 'Fabric IQ + Foundry IQ',
-    phase: 'Phase 4',
-    icon: PlugConnected24Regular,
-    desc: 'Preview — One call from Foundry IQ reaches Fabric IQ ontology, triggering Data Agent for real-time NL→SQL on Lakehouse. No pre-indexing, no JSON snapshots.',
-  },
-]
+}> = []
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -354,6 +345,9 @@ function ComingSoonCards() {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-10%' })
 
+  // Hide the section entirely when no upcoming demos are queued.
+  if (comingSoon.length === 0) return null
+
   return (
     <div ref={ref} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {comingSoon.map((demo, i) => {
@@ -468,6 +462,7 @@ export function LandingPage() {
         <ActiveDemoCard locale={locale} isExec={isExec} />
         <SharePointDemoCard locale={locale} isExec={isExec} />
         <FabricIqDemoCard locale={locale} isExec={isExec} />
+        <FabricIqKsCard locale={locale} />
         <ComingSoonCards />
 
         {/* Architecture link */}
