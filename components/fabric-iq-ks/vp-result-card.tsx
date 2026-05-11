@@ -12,9 +12,14 @@ type VpResultCardProps = {
   elapsedMs: number
   locale: Locale
   onRevealClick: () => void
+  /**
+   * When true, the VP card dims to ~70% opacity so the engineer view
+   * below carries the visual weight. Used after reveal per spec §8.
+   */
+  dimmed?: boolean
 }
 
-export function VpResultCard({ data, elapsedMs, locale, onRevealClick }: VpResultCardProps) {
+export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = false }: VpResultCardProps) {
   const text = t.fabricIqKs[locale].democratization
   const seconds = (elapsedMs / 1000).toFixed(1)
   const stats = 'stats' in data ? data.stats : undefined
@@ -23,7 +28,7 @@ export function VpResultCard({ data, elapsedMs, locale, onRevealClick }: VpResul
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{ opacity: dimmed ? 0.7 : 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
       className="mt-8 rounded-2xl border border-stroke-divider bg-bg-card p-8 shadow-lg md:p-10"
     >
