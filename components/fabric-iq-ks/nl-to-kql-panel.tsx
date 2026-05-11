@@ -37,18 +37,22 @@ export function NlToKqlPanel({ kql, locale, animate }: NlToKqlPanelProps) {
 /**
  * Body captures `animate` at first render via useState and never updates it.
  *
- * Why: the parent's 1500 ms timer flips `revealedOnce` → true, which flips
- * the `animate` prop true → false WHILE typing is in progress. If the
- * top-level component swapped its child component type based on the live
- * `animate` value, React would unmount the typing subtree mid-stream and
- * the user would see a hard jump from partial-KQL to full-KQL.
+ * Why: the public NlToKqlPanel switches between two component types
+ * (Typing vs Static) based on `animate`. If we keyed that branch directly
+ * off the live `animate` prop, any later prop flip would cause React to
+ * unmount the typing subtree mid-stream and the user would see a hard
+ * jump from partial-KQL to full-KQL.
  *
- * By snapshotting `animate` once with `useState`, the typing branch keeps
- * running through the prop change. When the user toggles VP, the entire
- * panel unmounts via RevealCurtain's AnimatePresence exit. When they
- * toggle back to Engineer, the panel re-mounts with the new `animate`
- * value (now `false` because `revealedOnce` is `true`) and the static
- * branch is selected — instant show, no re-fire.
+ * Concretely: when the user runs a new query while still in Engineer
+ * view, the parent re-renders with the same `animate` value (the ref
+ * latch in democratization-section ensures `animateFirst` stays false
+ * after first reveal) but a fresh `kql` prop. Snapshotting `animate`
+ * once means the same branch keeps rendering across kql changes, so
+ * subsequent KQL updates are shown instantly via the Static branch
+ * without re-typing. On Persona toggle to VP, RevealCurtain unmounts the
+ * panel entirely via AnimatePresence exit; the re-mount on toggle back
+ * captures the fresh `animate` value (false after first reveal) and
+ * stays in Static.
  */
 function NlToKqlPanelBody({ kql, locale, animate }: { kql: string; locale: Locale; animate: boolean }) {
   const [shouldType] = useState(animate)
