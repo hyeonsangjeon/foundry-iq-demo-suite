@@ -1319,9 +1319,9 @@ export const t = {
     ko: {
       hero: {
         badge: 'PHASE 4 · LIVE',
-        title: 'Ask the ontology directly.',
-        subtitle: 'No data team in the middle. No tickets. No week of waiting.',
-        milestone: 'Cross-tenant federation unblocked May 7, 2026 · First working trace captured',
+        title: '온톨로지에 직접 물어보세요.',
+        subtitle: '데이터 팀을 거칠 필요 없습니다. 티켓도, 일주일의 기다림도 없습니다.',
+        milestone: '크로스 테넌트 페더레이션이 2026년 5월 7일 해제되었습니다 · 첫 실 작동 트레이스 확보',
       },
       federationFlow: {
         heading: 'Phase 4 federation path',
@@ -1349,14 +1349,14 @@ export const t = {
         subtitle: 'Fabric IQ + Foundry IQ',
         title: 'Fabric IQ Knowledge Source',
         description:
-          'Live ontology, queried in natural language. Federated MCP call hits a real-time business-semantic graph — no pre-indexing, no JSON snapshots. Cross-tenant pattern unblocked May 7.',
+          '라이브 온톨로지를 자연어로 질의합니다. 페더레이션 MCP 호출이 실시간 비즈니스 시맨틱 그래프에 도달합니다 — 사전 인덱싱 없이, JSON 스냅샷 없이. 크로스 테넌트 패턴이 5월 7일 해제되었습니다.',
         features: [
-          { label: 'Live Ontology', desc: 'Real-time, no snapshots' },
-          { label: 'NL → KQL', desc: 'Data Agent generated' },
-          { label: 'Federated MCP', desc: 'Cross-tenant OBO' },
-          { label: 'Data Democratization', desc: 'VP view ↔ Engineer view' },
+          { label: 'Live Ontology', desc: '실시간, 스냅샷 없음' },
+          { label: 'NL → KQL', desc: 'Data Agent 생성' },
+          { label: 'Federated MCP', desc: '크로스 테넌트 OBO' },
+          { label: 'Data Democratization', desc: 'VP 뷰 ↔ 엔지니어 뷰' },
         ],
-        button: 'Try Fabric IQ KS →',
+        button: 'Fabric IQ KS 체험하기 →',
       },
       ontology: {
         heading: 'The ontology, made visible.',
@@ -1403,9 +1403,9 @@ export const t = {
     zh: {
       hero: {
         badge: 'PHASE 4 · LIVE',
-        title: 'Ask the ontology directly.',
-        subtitle: 'No data team in the middle. No tickets. No week of waiting.',
-        milestone: 'Cross-tenant federation unblocked May 7, 2026 · First working trace captured',
+        title: '直接向本体提问。',
+        subtitle: '中间不需要数据团队。无工单、无须等待一周。',
+        milestone: '跨租户联邦于 2026 年 5 月 7 日打通 · 首条成功跟踪已捕获',
       },
       federationFlow: {
         heading: 'Phase 4 federation path',
@@ -1433,14 +1433,14 @@ export const t = {
         subtitle: 'Fabric IQ + Foundry IQ',
         title: 'Fabric IQ Knowledge Source',
         description:
-          'Live ontology, queried in natural language. Federated MCP call hits a real-time business-semantic graph — no pre-indexing, no JSON snapshots. Cross-tenant pattern unblocked May 7.',
+          '使用自然语言查询实时本体。联邦 MCP 调用直达实时业务语义图——无需预索引,无需 JSON 快照。跨租户模式已于 5 月 7 日打通。',
         features: [
-          { label: 'Live Ontology', desc: 'Real-time, no snapshots' },
-          { label: 'NL → KQL', desc: 'Data Agent generated' },
-          { label: 'Federated MCP', desc: 'Cross-tenant OBO' },
-          { label: 'Data Democratization', desc: 'VP view ↔ Engineer view' },
+          { label: 'Live Ontology', desc: '实时,无快照' },
+          { label: 'NL → KQL', desc: 'Data Agent 生成' },
+          { label: 'Federated MCP', desc: '跨租户 OBO' },
+          { label: 'Data Democratization', desc: 'VP 视图 ↔ 工程师视图' },
         ],
-        button: 'Try Fabric IQ KS →',
+        button: '试用 Fabric IQ KS →',
       },
       ontology: {
         heading: 'The ontology, made visible.',
@@ -1487,9 +1487,9 @@ export const t = {
     ja: {
       hero: {
         badge: 'PHASE 4 · LIVE',
-        title: 'Ask the ontology directly.',
-        subtitle: 'No data team in the middle. No tickets. No week of waiting.',
-        milestone: 'Cross-tenant federation unblocked May 7, 2026 · First working trace captured',
+        title: 'オントロジーに直接、聞いてみる。',
+        subtitle: '間にデータチームは要りません。チケットも、1週間の待ち時間も。',
+        milestone: 'クロステナント連携が2026年5月7日に解禁 · 初の実トレース取得',
       },
       federationFlow: {
         heading: 'Phase 4 federation path',
@@ -1517,14 +1517,14 @@ export const t = {
         subtitle: 'Fabric IQ + Foundry IQ',
         title: 'Fabric IQ Knowledge Source',
         description:
-          'Live ontology, queried in natural language. Federated MCP call hits a real-time business-semantic graph — no pre-indexing, no JSON snapshots. Cross-tenant pattern unblocked May 7.',
+          'ライブのオントロジーを自然言語でクエリします。連携 MCP 呼び出しがリアルタイムのビジネス・セマンティック・グラフに到達 — 事前インデックス不要、JSON スナップショット不要。クロステナント連携は 5 月 7 日に解禁されました。',
         features: [
-          { label: 'Live Ontology', desc: 'Real-time, no snapshots' },
-          { label: 'NL → KQL', desc: 'Data Agent generated' },
-          { label: 'Federated MCP', desc: 'Cross-tenant OBO' },
-          { label: 'Data Democratization', desc: 'VP view ↔ Engineer view' },
+          { label: 'Live Ontology', desc: 'リアルタイム、スナップショットなし' },
+          { label: 'NL → KQL', desc: 'Data Agent が生成' },
+          { label: 'Federated MCP', desc: 'クロステナント OBO' },
+          { label: 'Data Democratization', desc: 'VP ビュー ↔ エンジニアビュー' },
         ],
-        button: 'Try Fabric IQ KS →',
+        button: 'Fabric IQ KS を試す →',
       },
       ontology: {
         heading: 'The ontology, made visible.',
@@ -1571,9 +1571,9 @@ export const t = {
     hi: {
       hero: {
         badge: 'PHASE 4 · LIVE',
-        title: 'Ask the ontology directly.',
-        subtitle: 'No data team in the middle. No tickets. No week of waiting.',
-        milestone: 'Cross-tenant federation unblocked May 7, 2026 · First working trace captured',
+        title: 'ontology से सीधे पूछें।',
+        subtitle: 'बीच में कोई data टीम नहीं। न ticket, न हफ्ते भर का इंतज़ार।',
+        milestone: 'क्रॉस-टेनेंट federation 7 मई 2026 को अनब्लॉक हुआ · पहला working trace रिकॉर्ड',
       },
       federationFlow: {
         heading: 'Phase 4 federation path',
@@ -1601,14 +1601,14 @@ export const t = {
         subtitle: 'Fabric IQ + Foundry IQ',
         title: 'Fabric IQ Knowledge Source',
         description:
-          'Live ontology, queried in natural language. Federated MCP call hits a real-time business-semantic graph — no pre-indexing, no JSON snapshots. Cross-tenant pattern unblocked May 7.',
+          'लाइव ontology, natural language में query। Federated MCP कॉल रियल-टाइम बिज़नेस-सेमेन्टिक ग्राफ़ तक पहुँचता है — कोई pre-indexing नहीं, कोई JSON snapshot नहीं। क्रॉस-टेनेंट पैटर्न 7 मई को अनब्लॉक हुआ।',
         features: [
-          { label: 'Live Ontology', desc: 'Real-time, no snapshots' },
+          { label: 'Live Ontology', desc: 'रियल-टाइम, snapshot नहीं' },
           { label: 'NL → KQL', desc: 'Data Agent generated' },
-          { label: 'Federated MCP', desc: 'Cross-tenant OBO' },
+          { label: 'Federated MCP', desc: 'क्रॉस-टेनेंट OBO' },
           { label: 'Data Democratization', desc: 'VP view ↔ Engineer view' },
         ],
-        button: 'Try Fabric IQ KS →',
+        button: 'Fabric IQ KS आज़माएँ →',
       },
       ontology: {
         heading: 'The ontology, made visible.',
