@@ -1314,6 +1314,10 @@ export const t = {
         copiedButton: 'Copied!',
         closingLine: "Same backend. Two faces. That's democratization.",
         kqlNotAvailableNote: 'KQL not surfaced by API in Live mode. See trace + JSON below.',
+        liveDisabledTooltip: 'Live mode requires Microsoft sign-in. Coming soon.',
+        signInCta: 'Sign in to enable Live →',
+        signInPlaceholderToast: 'Microsoft sign-in coming soon — for now, Mock mode shows verified responses from a real fabricIQ federation trace captured 2026-05-07.',
+        mockVerifiedCaption: 'verified replay · 2026-05-07 real fabricIQ trace',
       },
     },
     ko: {
@@ -1399,6 +1403,10 @@ export const t = {
         copiedButton: '복사됨!',
         closingLine: '같은 백엔드, 두 가지 얼굴. 그것이 데이터 민주화입니다.',
         kqlNotAvailableNote: 'Live 모드에서 API가 KQL을 노출하지 않았습니다. 아래 트레이스 + JSON을 참고하세요.',
+        liveDisabledTooltip: 'Live 모드는 Microsoft 로그인이 필요합니다. 곧 제공 예정입니다.',
+        signInCta: '로그인하여 Live 활성화 →',
+        signInPlaceholderToast: 'Microsoft 로그인은 곧 제공됩니다 — 그 동안 Mock 모드는 2026-05-07에 포착된 실제 fabricIQ 페더레이션 트레이스의 검증된 응답을 보여 드립니다.',
+        mockVerifiedCaption: '검증된 재생 · 2026-05-07 실측 fabricIQ 트레이스',
       },
     },
     zh: {
@@ -1484,6 +1492,10 @@ export const t = {
         copiedButton: '已复制!',
         closingLine: '同一个后端,两副面孔。这就是数据民主化。',
         kqlNotAvailableNote: 'Live 模式下 API 未返回 KQL。请参阅下方跟踪与 JSON。',
+        liveDisabledTooltip: 'Live 模式需要 Microsoft 登录。即将推出。',
+        signInCta: '登录以启用 Live →',
+        signInPlaceholderToast: 'Microsoft 登录即将推出 — 当前 Mock 模式展示的是 2026-05-07 捕获的真实 fabricIQ 联邦跟踪的已验证响应。',
+        mockVerifiedCaption: '已验证回放 · 2026-05-07 真实 fabricIQ 跟踪',
       },
     },
     ja: {
@@ -1570,6 +1582,11 @@ export const t = {
         // REVIEW-JA: closing line — paraphrased, not literal. Punchline reads "Same backend. Two views. That's democratization."
         closingLine: '同じバックエンド、二つの顔。それがデータの民主化です。',
         kqlNotAvailableNote: 'Live モードで API が KQL を出力しませんでした。下のトレースと JSON をご確認ください。',
+        liveDisabledTooltip: 'Live モードには Microsoft サインインが必要です。近日提供予定。',
+        signInCta: 'サインインして Live を有効化 →',
+        // REVIEW-JA: signInPlaceholderToast — long; consider 2-sentence split if it overflows on mobile.
+        signInPlaceholderToast: 'Microsoft サインインは近日提供予定です — 現在は、2026-05-07 に取得した実際の fabricIQ フェデレーション トレースの検証済みレスポンスを Mock モードで表示しています。',
+        mockVerifiedCaption: '検証済みリプレイ · 2026-05-07 実トレース',
       },
     },
     hi: {
@@ -1655,6 +1672,10 @@ export const t = {
         copiedButton: 'कॉपी हो गया!',
         closingLine: 'एक ही backend। दो चेहरे। यही है data democratization।',
         kqlNotAvailableNote: 'Live मोड में API ने KQL नहीं दिया। नीचे trace + JSON देखें।',
+        liveDisabledTooltip: 'Live मोड के लिए Microsoft sign-in चाहिए। जल्द आ रहा है।',
+        signInCta: 'Live सक्षम करने के लिए sign in →',
+        signInPlaceholderToast: 'Microsoft sign-in जल्द आ रहा है — अभी Mock मोड 2026-05-07 को capture किए गए असली fabricIQ federation trace से verified responses दिखा रहा है।',
+        mockVerifiedCaption: 'verified replay · 2026-05-07 असली fabricIQ trace',
       },
     },
   },
