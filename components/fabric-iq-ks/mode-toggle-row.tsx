@@ -70,13 +70,8 @@ export function ModeToggleRow({
             // The native `title` attribute provides keyboard-friendly + screen-reader-friendly
             // tooltip. The visual hover tooltip is rendered by SegmentedControl's group below.
             title={liveDisabled ? text.liveDisabledTooltip : undefined}
-            onClick={() => {
-              if (liveDisabled) {
-                onLiveBlocked?.()
-                return
-              }
-              onModeChange('live')
-            }}
+            onClick={() => onModeChange('live')}
+            onDisabledClick={onLiveBlocked}
           >
             {text.modeLive}
           </ToggleButton>
@@ -138,18 +133,27 @@ function ToggleButton({
   disabled,
   title,
   onClick,
+  onDisabledClick,
   children,
 }: {
   active: boolean
   disabled?: boolean
   title?: string
+  /** Fires only when the button is NOT disabled. */
   onClick: () => void
+  /**
+   * Fires only when the button IS disabled. Use this to surface an
+   * explainer (e.g. toast) without mutating state. If omitted, disabled
+   * clicks are swallowed silently — preserving the original T4/T5
+   * contract where `engineerDisabled` callers expect no state change.
+   */
+  onDisabledClick?: () => void
   children: ReactNode
 }) {
   // We use `aria-disabled` (not native `disabled`) so the click event still
-  // reaches the parent's onClick handler. The handler can then decide to
-  // either swallow the click silently (default) or surface an explainer
-  // (T7-Mock Live toggle → `onLiveBlocked` toast).
+  // reaches our handler — letting the parent opt into an explainer toast.
+  // But we never call `onClick` when disabled; mutation only happens via
+  // `onDisabledClick` if the parent explicitly provides one.
   return (
     <button
       type="button"
@@ -158,9 +162,8 @@ function ToggleButton({
       onClick={(e) => {
         if (disabled) {
           e.preventDefault()
-          // Still call onClick so the parent can fire a side effect
-          // (e.g. a toast) — the parent is responsible for NOT mutating
-          // state when disabled.
+          onDisabledClick?.()
+          return
         }
         onClick()
       }}
