@@ -10,6 +10,7 @@ import { NlToKqlPanel } from './nl-to-kql-panel'
 import { ActivityTraceTimeline } from './activity-trace-timeline'
 import { RawJsonPanel } from './raw-json-panel'
 import { useFabricIqQuery, type Mode } from '@/hooks/use-fabric-iq-query'
+import { useToast } from '@/components/ui/toast'
 import type { Locale } from '@/lib/i18n'
 import { t } from '@/lib/i18n/translations'
 
@@ -43,10 +44,22 @@ export function DemocratizationSection({ locale }: { locale: Locale }) {
   //       reviewer flagged this as a Block.
   const hasPlayedRevealRef = useRef(false)
   const { result, runQuery } = useFabricIqQuery()
+  const { toast } = useToast()
   const text = t.fabricIqKs[locale].democratization
 
   function handleRevealClick() {
     setPersona('engineer')
+  }
+
+  function handleSignInPlaceholder() {
+    // T7-Mock placeholder. Actual Microsoft Entra sign-in flow lands in a
+    // future PR after the auth model is finalized with the Foundry team.
+    toast({
+      type: 'info',
+      title: text.signInCta,
+      description: text.signInPlaceholderToast,
+      duration: 6000,
+    })
   }
 
   const engineerVisible = persona === 'engineer'
@@ -68,6 +81,8 @@ export function DemocratizationSection({ locale }: { locale: Locale }) {
           onPersonaChange={setPersona}
           locale={locale}
           liveDisabled
+          onLiveBlocked={handleSignInPlaceholder}
+          onSignInClick={handleSignInPlaceholder}
         />
 
         <QueryInput
