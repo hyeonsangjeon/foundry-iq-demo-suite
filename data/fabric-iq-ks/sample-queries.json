@@ -134,6 +134,41 @@
       "rawJson": "{\n  \"ref_id\": 0,\n  \"rows\": [\n    { \"airline\": \"Northwind\", \"avg\": 1840 }\n  ]\n}"
     },
     {
+      "id": "q6-semantic-join-dot-compensation",
+      "nl": {
+        "en": "How many flights were delayed over 2 hours at JFK last week, and what's our DOT compensation exposure?",
+        "ko": "지난주 JFK에서 2시간 이상 지연된 항공편은 몇 편이고, DOT 규정상 보상 노출은 얼마인가요?",
+        "ja": "先週JFKで2時間以上遅延した便は何便で、DOT規制上の補償エクスポージャーはいくらですか?",
+        "zh": "上周在 JFK 延误超过 2 小时的航班有多少,以及我们在 DOT 法规下的赔偿敞口是多少?",
+        "hi": "पिछले हफ़्ते JFK पर 2 घंटे से अधिक देरी से चलने वाली कितनी flights थीं, और DOT नियमों के तहत हमारा compensation exposure क्या है?"
+      },
+      "vpAnswer": {
+        "kind": "advisory",
+        "narrative": {
+          "en": "18 flights delayed over 2 hours at JFK in the past 7 days (12 departure delays, 6 arrival delays), per the operational ontology. Under DOT 14 CFR Part 250 (Oversales) and DOT Aviation Consumer Protection guidance, airline-controllable delays exceeding 2 hours warrant meal/lodging/transport vouchers; involuntary denied boarding triggers $200–$1,550 cash compensation. Voucher exposure: ~$27,000 (18 flights × ~150 avg pax). Cash exposure depends on actual IDB events and controllability classification.",
+          "ko": "지난 7일간 JFK에서 2시간 이상 지연된 항공편은 총 18편이며 (출발 지연 12편, 도착 지연 6편), 운영 ontology의 Flight.flight_status='Delayed' 및 delay_minutes > 120 필터로 확인되었습니다. DOT 14 CFR Part 250 (Oversales) 및 DOT Aviation Consumer Protection 가이드에 따르면, 항공사가 통제 가능한 사유(정비, 승무 운영)로 인한 2시간 초과 지연 시 식사·숙박·교통 바우처 제공이 권고되며, IDB(involuntary denied boarding)가 발생한 경우 200~1,550 USD 범위의 cash compensation 의무가 발생합니다. 18편 × 평균 탑승객 수(약 150명) 기준 잠재 바우처 노출은 약 27,000 USD, IDB 발생 시 추가 cash 노출 가능. 정확한 노출액은 영향받은 승객 수 및 통제 가능성 분류에 따라 산정 필요.",
+          "ja": "過去7日間に JFK で2時間以上遅延した便は計18便 (出発遅延12便、到着遅延6便) で、運用 ontology の Flight.flight_status='Delayed' および delay_minutes > 120 フィルタで確認されました。DOT 14 CFR Part 250 (Oversales) および DOT Aviation Consumer Protection ガイドによると、航空会社の責に帰すべき事由 (整備、運航乗務) による2時間超の遅延では食事・宿泊・送迎バウチャー提供が推奨され、IDB (involuntary denied boarding) 発生時は 200~1,550 USD の cash compensation 義務が発生します。18便 × 平均搭乗客数 (約150名) 基準で voucher 換算の潜在エクスポージャーは約 27,000 USD、IDB 発生時は追加 cash 露出の可能性あり。正確な負担額は影響を受ける乗客数と controllability 分類により算出が必要です。",
+          "zh": "过去 7 天内在 JFK 延误超过 2 小时的航班共 18 班 (出发延误 12 班、到达延误 6 班),通过运营 ontology 的 Flight.flight_status='Delayed' 与 delay_minutes > 120 过滤确认。根据 DOT 14 CFR Part 250 (Oversales) 与 DOT Aviation Consumer Protection 指南,因航空公司可控原因 (维修、机组运营) 造成的 2 小时以上延误应提供餐饮·住宿·交通 voucher,IDB (involuntary denied boarding) 发生时则承担 200~1,550 USD 的 cash compensation 义务。按 18 班 × 平均旅客数 (约 150 人) 计算,voucher 换算的潜在敞口约 27,000 USD,IDB 发生时另有 cash 敞口。准确金额需依据受影响旅客数与可控性分类核算。",
+          "hi": "पिछले 7 दिनों में JFK पर 2 घंटे से अधिक देरी वाली कुल 18 flights थीं (12 departure delays, 6 arrival delays), operational ontology के Flight.flight_status='Delayed' और delay_minutes > 120 filter से confirm हुआ। DOT 14 CFR Part 250 (Oversales) और DOT Aviation Consumer Protection guidance के अनुसार, airline-controllable कारणों (maintenance, crew operations) से 2 घंटे से अधिक delay पर meal·lodging·transport voucher देने की सिफ़ारिश है; IDB (involuntary denied boarding) पर $200–$1,550 cash compensation की obligation बनती है। 18 flights × औसत pax (~150) के हिसाब से potential voucher exposure ~$27,000, IDB होने पर additional cash exposure संभव। सटीक amount affected passenger count और controllability classification पर निर्भर करता है।"
+        },
+        "citations": [
+          { "label": "Ontology query", "detail": "18 flights · JFK · delay_minutes > 120 · last 7 days" },
+          { "label": "DOT 14 CFR Part 250", "detail": "Oversales · $775 (1–2h delay) / $1,550 (>2h delay)" },
+          { "label": "DOT Aviation Consumer Protection", "detail": "Vouchers under airline-controllable delays" }
+        ],
+        "source": "Fabric IQ ontology + DOT regulation index · semantic JOIN · 4.7s"
+      },
+      "kql": "delayed_flights\n| where origin_airport == 'JFK'\n| where last_7_days(actual_dep)\n| where delay_minutes > 120\n| summarize count=count(), dep_delays=countif(delay_type=='departure'), arr_delays=countif(delay_type=='arrival')",
+      "trace": [
+        { "stage": "modelQueryPlanning",    "ms": 1213 },
+        { "stage": "fabricIQ",              "ms": 842  },
+        { "stage": "searchIndex",           "ms": 467  },
+        { "stage": "modelAnswerSynthesis",  "ms": 2154 }
+      ],
+      "elapsedMs": 4676,
+      "rawJson": "{\n  \"response\": [\n    { \"role\": \"assistant\", \"content\": [{ \"type\": \"text\", \"text\": \"지난 7일간 JFK에서 2시간 이상 지연된 항공편은 총 18편 (출발 12편, 도착 6편). DOT 14 CFR Part 250 및 Aviation Consumer Protection 가이드에 따라 voucher 노출 약 $27,000, IDB 발생 시 추가 cash 노출 가능.\" }] }\n  ],\n  \"activity\": [\n    { \"type\": \"AzureSearchKnowledgeSourceQuery\", \"knowledgeSourceName\": \"airline-ontology-ks\", \"elapsedMs\": 842 },\n    { \"type\": \"AzureSearchKnowledgeSourceQuery\", \"knowledgeSourceName\": \"unified-airline-ks\", \"elapsedMs\": 467 },\n    { \"type\": \"ModelQueryPlanning\", \"elapsedMs\": 1213 },\n    { \"type\": \"ModelAnswerGeneration\", \"elapsedMs\": 2154 }\n  ],\n  \"references\": [\n    { \"type\": \"AzureSearchDoc\", \"knowledgeSourceName\": \"airline-ontology-ks\", \"id\": \"ontology:flight:delay-jfk-aggregate\", \"sourceData\": { \"summary\": \"JFK departures, last 7 days, delay_minutes > 120\", \"row_count\": 18 } },\n    { \"type\": \"AzureSearchDoc\", \"knowledgeSourceName\": \"unified-airline-ks\", \"id\": \"doc:dot-14cfr-part250-oversales\", \"sourceData\": { \"title\": \"DOT 14 CFR Part 250 — Oversales\", \"page\": 4, \"snippet\": \"Carriers shall provide cash or check compensation in the amount of $775 to passengers involuntarily denied boarding for delays of 1–2 hours on domestic flights, and $1,550 for delays exceeding 2 hours.\" } },\n    { \"type\": \"AzureSearchDoc\", \"knowledgeSourceName\": \"unified-airline-ks\", \"id\": \"doc:dot-aviation-consumer-protection-guide\", \"sourceData\": { \"title\": \"DOT Aviation Consumer Protection — Flight Delays & Cancellations\", \"page\": 12, \"snippet\": \"While DOT does not require airlines to provide passengers with money or other compensation for delays in arrival, airlines have customer service plans that may provide meal vouchers, hotel accommodations, or rebooking on the next available flight when delays are within the airline's control.\" } }\n  ]\n}"
+    },
+    {
       "id": "q4-maint-aircraft",
       "nl": {
         "en": "Aircraft with most maintenance events",

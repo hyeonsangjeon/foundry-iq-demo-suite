@@ -1295,6 +1295,7 @@ export const t = {
         vpResultLabel: 'Result',
         vpFiveStar: '⭐ first 5/7/2026 trace',
         sourceLabel: 'Source',
+        citationsLabel: 'Sources cited',
         revealCta: 'Show me what\'s underneath ↓',
         modeLabel: 'Mode',
         modeMock: 'Mock',
@@ -1384,6 +1385,7 @@ export const t = {
         vpResultLabel: '결과',
         vpFiveStar: '⭐ 5/7/2026 최초 트레이스',
         sourceLabel: '출처',
+        citationsLabel: '인용 출처',
         // REVIEW-KO: revealCta — chose '안쪽 보기' for tight button width; alt: '안의 모습을 보여주세요'.
         revealCta: '안쪽 보기 ↓',
         modeLabel: '모드',
@@ -1474,6 +1476,7 @@ export const t = {
         vpResultLabel: '结果',
         vpFiveStar: '⭐ 5/7/2026 首条跟踪',
         sourceLabel: '来源',
+        citationsLabel: '引用来源',
         // REVIEW-ZH: revealCta — chose '看看背后是什么' per spec §3.4; alts: '揭开背后', '让我看看背后'.
         revealCta: '看看背后是什么 ↓',
         modeLabel: '模式',
@@ -1564,6 +1567,7 @@ export const t = {
         vpResultLabel: '結果',
         vpFiveStar: '⭐ 5/7/2026 初回トレース',
         sourceLabel: 'ソース',
+        citationsLabel: '引用ソース',
         // REVIEW-JA: revealCta — chose '中身を見せて' (the inside / content) over spec §3.4 '裏側を見せて' (the back side / behind) for friendlier product-page tone; alt: '裏側を覗く'.
         revealCta: '中身を見せて ↓',
         modeLabel: 'モード',
@@ -1656,6 +1660,7 @@ export const t = {
         vpResultLabel: 'परिणाम',
         vpFiveStar: '⭐ 5/7/2026 पहला trace',
         sourceLabel: 'स्रोत',
+        citationsLabel: 'उद्धृत स्रोत',
         // REVIEW-HI: revealCta — chose 'अंदर देखें' for natural Hindi grammar; alts: 'अंदर का देखें', 'नीचे क्या है, दिखाएँ'.
         revealCta: 'अंदर देखें ↓',
         modeLabel: 'मोड',

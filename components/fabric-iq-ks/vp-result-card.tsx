@@ -22,8 +22,11 @@ type VpResultCardProps = {
 export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = false }: VpResultCardProps) {
   const text = t.fabricIqKs[locale].democratization
   const seconds = (elapsedMs / 1000).toFixed(1)
-  const stats = 'stats' in data ? data.stats : undefined
-  const list = 'list' in data ? data.list : undefined
+  const isAdvisory = 'kind' in data && data.kind === 'advisory'
+  const stats = !isAdvisory && 'stats' in data ? data.stats : undefined
+  const list = !isAdvisory && 'list' in data ? data.list : undefined
+  const narrative = isAdvisory ? (data.narrative[locale] ?? data.narrative.en) : undefined
+  const citations = isAdvisory ? data.citations : undefined
 
   return (
     <motion.div
@@ -41,17 +44,44 @@ export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = 
         </div>
       </div>
 
-      <div className="rounded-2xl border border-stroke-divider bg-bg-elevated p-6">
-        <p className="text-6xl font-bold tracking-tight bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-transparent">
-          {data.primary.value}
-        </p>
-        <p className="mt-3 text-lg font-semibold text-fg-default">
-          {data.primary.label}
-        </p>
-        <p className="mt-1 text-sm text-fg-muted">
-          {data.primary.unit}
-        </p>
-      </div>
+      {isAdvisory ? (
+        <div className="rounded-2xl border border-stroke-divider bg-bg-elevated p-6">
+          <p className="text-base leading-relaxed text-fg-default md:text-lg">
+            {narrative}
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-stroke-divider bg-bg-elevated p-6">
+          <p className="text-6xl font-bold tracking-tight bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-transparent">
+            {data.primary.value}
+          </p>
+          <p className="mt-3 text-lg font-semibold text-fg-default">
+            {data.primary.label}
+          </p>
+          <p className="mt-1 text-sm text-fg-muted">
+            {data.primary.unit}
+          </p>
+        </div>
+      )}
+
+      {citations && citations.length > 0 && (
+        <div className="mt-6">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-fg-subtle">
+            {text.citationsLabel}
+          </p>
+          <ul className="space-y-2">
+            {citations.map((citation, index) => (
+              <li
+                key={`${citation.label}-${index}`}
+                className="flex flex-col gap-1 rounded-xl border border-stroke-divider bg-bg-elevated p-4 text-sm sm:flex-row sm:items-baseline sm:gap-3"
+              >
+                <span className="font-semibold text-fg-default">{citation.label}</span>
+                <span className="text-fg-muted">{citation.detail}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {stats && (
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
