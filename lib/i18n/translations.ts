@@ -1284,6 +1284,7 @@ export const t = {
         schemaPanelRecordsLabel: 'records in ontology',
         schemaPanelClose: 'Close',
         schemaPanelExampleLabel: 'example',
+        schemaPanelRelationsTitle: 'Relationships',
       },
       democratization: {
         sectionHeading: 'Ask anything about your operations',
@@ -1372,6 +1373,7 @@ export const t = {
         schemaPanelRecordsLabel: '온톨로지의 레코드',
         schemaPanelClose: '닫기',
         schemaPanelExampleLabel: '예시',
+        schemaPanelRelationsTitle: '관계',
       },
       democratization: {
         sectionHeading: '운영에 관해 무엇이든 물어보세요',
@@ -1461,6 +1463,7 @@ export const t = {
         schemaPanelRecordsLabel: '本体中的记录',
         schemaPanelClose: '关闭',
         schemaPanelExampleLabel: '示例',
+        schemaPanelRelationsTitle: '关系',
       },
       democratization: {
         sectionHeading: '关于业务,你随便问',
@@ -1550,6 +1553,7 @@ export const t = {
         schemaPanelRecordsLabel: 'オントロジー内のレコード',
         schemaPanelClose: '閉じる',
         schemaPanelExampleLabel: '例',
+        schemaPanelRelationsTitle: '関係',
       },
       democratization: {
         sectionHeading: '業務について何でも聞いてください',
@@ -1641,6 +1645,7 @@ export const t = {
         schemaPanelRecordsLabel: 'ontology में records',
         schemaPanelClose: 'बंद करें',
         schemaPanelExampleLabel: 'उदाहरण',
+        schemaPanelRelationsTitle: 'Relationships',
       },
       democratization: {
         sectionHeading: 'अपने operations के बारे में कुछ भी पूछें',
