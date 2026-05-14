@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { BriefcaseBusiness, ChevronDown, Database } from 'lucide-react'
+import { BriefcaseBusiness, ChevronDown, Database, FileText, Link2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { Locale } from '@/lib/i18n'
 import { t } from '@/lib/i18n/translations'
@@ -19,6 +19,14 @@ type VpResultCardProps = {
   dimmed?: boolean
 }
 
+type CitationSource = 'fabricIQ' | 'searchIndex'
+
+function citationSourceOf(citation: { source?: string }): CitationSource | undefined {
+  return citation.source === 'fabricIQ' || citation.source === 'searchIndex'
+    ? citation.source
+    : undefined
+}
+
 export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = false }: VpResultCardProps) {
   const text = t.fabricIqKs[locale].democratization
   const seconds = (elapsedMs / 1000).toFixed(1)
@@ -27,6 +35,19 @@ export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = 
   const list = !isAdvisory && 'list' in data ? data.list : undefined
   const narrative = isAdvisory ? (data.narrative[locale] ?? data.narrative.en) : undefined
   const citations = isAdvisory ? data.citations : undefined
+
+  // Multi-source badge: count distinct citation source kinds (fabricIQ, searchIndex)
+  const distinctSourceKinds = citations
+    ? new Set(
+        citations
+          .map((c) => citationSourceOf(c))
+          .filter((s): s is CitationSource => Boolean(s))
+      )
+    : new Set<CitationSource>()
+  const showMultiSourceBadge = isAdvisory && distinctSourceKinds.size >= 2
+  const badgeLabel = showMultiSourceBadge
+    ? text.multiSourceBadge.replace('{count}', String(distinctSourceKinds.size))
+    : ''
 
   return (
     <motion.div
@@ -42,6 +63,12 @@ export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = 
           </span>
           {text.vpResultLabel} · {seconds}s
         </div>
+        {showMultiSourceBadge && (
+          <span className="inline-flex items-center gap-1.5 self-start rounded-full bg-gradient-to-r from-violet-500/15 to-cyan-500/15 px-3 py-1.5 text-xs font-semibold text-fg-default ring-1 ring-inset ring-violet-500/30 sm:self-auto">
+            <Link2 className="h-3.5 w-3.5 text-violet-500" aria-hidden="true" />
+            {badgeLabel}
+          </span>
+        )}
       </div>
 
       {isAdvisory ? (
@@ -70,15 +97,40 @@ export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = 
             {text.citationsLabel}
           </p>
           <ul className="space-y-2">
-            {citations.map((citation, index) => (
-              <li
-                key={`${citation.label}-${index}`}
-                className="flex flex-col gap-1 rounded-xl border border-stroke-divider bg-bg-elevated p-4 text-sm sm:flex-row sm:items-baseline sm:gap-3"
-              >
-                <span className="font-semibold text-fg-default">{citation.label}</span>
-                <span className="text-fg-muted">{citation.detail}</span>
-              </li>
-            ))}
+            {citations.map((citation, index) => {
+              const sourceKind = citationSourceOf(citation)
+              const isFabric = sourceKind === 'fabricIQ'
+              const isSearch = sourceKind === 'searchIndex'
+              const Icon = isFabric ? Database : isSearch ? FileText : null
+              const iconColorClass = isFabric
+                ? 'text-violet-500'
+                : isSearch
+                  ? 'text-cyan-500'
+                  : 'text-fg-subtle'
+              const sourceLabel = isFabric
+                ? text.sourceKindFabricIq
+                : isSearch
+                  ? text.sourceKindSearchIndex
+                  : null
+
+              return (
+                <li
+                  key={`${citation.label}-${index}`}
+                  className="flex flex-col gap-1 rounded-xl border border-stroke-divider bg-bg-elevated p-4 text-sm sm:flex-row sm:items-baseline sm:gap-3"
+                >
+                  {Icon && (
+                    <span
+                      className={`inline-flex shrink-0 items-center gap-1.5 ${iconColorClass}`}
+                    >
+                      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                      {sourceLabel && <span className="sr-only">{sourceLabel}</span>}
+                    </span>
+                  )}
+                  <span className="font-semibold text-fg-default">{citation.label}</span>
+                  <span className="text-fg-muted">{citation.detail}</span>
+                </li>
+              )
+            })}
           </ul>
         </div>
       )}
