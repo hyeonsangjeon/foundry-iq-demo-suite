@@ -152,9 +152,9 @@
           "hi": "पिछले 7 दिनों में JFK पर 2 घंटे से अधिक देरी वाली कुल 18 flights थीं (12 departure delays, 6 arrival delays), operational ontology के Flight.flight_status='Delayed' और delay_minutes > 120 filter से confirm हुआ। DOT 14 CFR Part 250 (Oversales) और DOT Aviation Consumer Protection guidance के अनुसार, airline-controllable कारणों (maintenance, crew operations) से 2 घंटे से अधिक delay पर meal·lodging·transport voucher देने की सिफ़ारिश है; IDB (involuntary denied boarding) पर $200–$1,550 cash compensation की obligation बनती है। 18 flights × औसत pax (~150) के हिसाब से potential voucher exposure ~$27,000, IDB होने पर additional cash exposure संभव। सटीक amount affected passenger count और controllability classification पर निर्भर करता है।"
         },
         "citations": [
-          { "label": "Ontology query", "detail": "18 flights · JFK · delay_minutes > 120 · last 7 days" },
-          { "label": "DOT 14 CFR Part 250", "detail": "Oversales · $775 (1–2h delay) / $1,550 (>2h delay)" },
-          { "label": "DOT Aviation Consumer Protection", "detail": "Vouchers under airline-controllable delays" }
+          { "label": "Ontology query", "detail": "18 flights · JFK · delay_minutes > 120 · last 7 days", "source": "fabricIQ" },
+          { "label": "DOT 14 CFR Part 250", "detail": "Oversales · $775 (1–2h delay) / $1,550 (>2h delay)", "source": "searchIndex" },
+          { "label": "DOT Aviation Consumer Protection", "detail": "Vouchers under airline-controllable delays", "source": "searchIndex" }
         ],
         "source": "Fabric IQ ontology + DOT regulation index · semantic JOIN · 4.7s"
       },
