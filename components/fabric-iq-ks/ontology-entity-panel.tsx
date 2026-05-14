@@ -19,11 +19,23 @@ type OntologyEntityPanelProps = {
   node: OntologyNode | null
   onClose: () => void
   locale: Locale
+  /**
+   * Optional relationship list for the selected node. Rendered on mobile only,
+   * where the SVG hides edge labels for legibility — the panel surfaces them
+   * here instead so the relationship vocabulary stays discoverable.
+   */
+  relations?: OntologyRelation[]
+}
+
+export type OntologyRelation = {
+  direction: 'out' | 'in'
+  label: string
+  other: string
 }
 
 const TITLE_ID = 'ontology-entity-panel-title'
 
-export function OntologyEntityPanel({ node, onClose, locale }: OntologyEntityPanelProps) {
+export function OntologyEntityPanel({ node, onClose, locale, relations = [] }: OntologyEntityPanelProps) {
   const text = t.fabricIqKs[locale].ontology
   const [isMobile, setIsMobile] = useState(false)
   const prefersReducedMotion = useReducedMotion()
@@ -183,6 +195,31 @@ export function OntologyEntityPanel({ node, onClose, locale }: OntologyEntityPan
             </p>
 
             <hr className="border-stroke-divider" />
+
+            {/* Relationships — mobile only (edge labels hidden in SVG at <768px) */}
+            {isMobile && relations.length > 0 && (
+              <>
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-semibold text-fg-default mb-2">
+                    {text.schemaPanelRelationsTitle} ({relations.length})
+                  </p>
+                  {relations.map((rel, idx) => (
+                    <div
+                      key={`${rel.direction}-${rel.label}-${rel.other}-${idx}`}
+                      className="py-2 border-b border-stroke-divider last:border-b-0 flex items-center gap-2 text-sm"
+                    >
+                      <span aria-hidden="true" className="text-fg-subtle font-mono">
+                        {rel.direction === 'out' ? '→' : '←'}
+                      </span>
+                      <span className="font-mono text-fg-default">{rel.label}</span>
+                      <span className="text-fg-subtle">·</span>
+                      <span className="text-fg-default">{rel.other}</span>
+                    </div>
+                  ))}
+                </div>
+                <hr className="border-stroke-divider" />
+              </>
+            )}
 
             {/* Schema */}
             <div className="flex flex-col gap-1">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   forceSimulation,
   forceManyBody,
@@ -50,6 +50,24 @@ const colorMap: Record<string, string> = {
   amber:   '#f59e0b',
   rose:    '#f43f5e',
   orange:  '#f97316',
+}
+
+const DESKTOP_WIDTH = 700
+const DESKTOP_HEIGHT = 600
+
+// Mobile uses a 400x600 viewBox with hand-tuned fixed positions so the
+// 6-node graph reads cleanly at 360-414px without the d3-force simulation
+// collapsing everything into the center. Coordinates are in viewBox units;
+// percentages from the spec converted: x = pct * 400, y = pct * 600.
+const MOBILE_WIDTH = 400
+const MOBILE_HEIGHT = 600
+const MOBILE_POSITIONS: Record<string, { x: number; y: number }> = {
+  Compensation: { x: 200, y: 60 },   // 50/10
+  Delay:        { x: 200, y: 180 },  // 50/30
+  Airline:      { x: 320, y: 270 },  // 80/45
+  Aircraft:     { x: 340, y: 420 },  // 85/70
+  Flight:       { x: 200, y: 360 },  // 50/60
+  Airport:      { x: 80,  y: 420 },  // 20/70
 }
 
 function formatCount(n: number): string {
@@ -103,34 +121,54 @@ export function OntologyGraph({
     onNodeHoverRef.current = onNodeHover
   })
 
-  const WIDTH = 700
-  const HEIGHT = 600
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
-  // Initial D3 setup — runs once after mount
+  // Build (or rebuild on viewport-class change) the SVG. Mobile and desktop
+  // are two distinct paths because at <768px the d3-force simulation can't
+  // resolve a clean layout for 6 entities in ~360px of width — it collapses
+  // them on top of each other. Mobile path therefore pre-pins positions and
+  // skips the simulation entirely.
   useEffect(() => {
     if (!svgRef.current) return
 
     const svg = select(svgRef.current)
     svg.selectAll('*').remove()
 
+    // Reset any previously-pinned positions so a viewport-class flip starts
+    // from a clean slate (mobile→desktop must release fx/fy; desktop→mobile
+    // must release prior simulation-driven x/y so MOBILE_POSITIONS wins).
+    nodesRef.current.forEach((n) => {
+      n.fx = null
+      n.fy = null
+      n.x = undefined
+      n.y = undefined
+      n.vx = undefined
+      n.vy = undefined
+    })
+    // Reset link source/target back to id strings — d3-force resolves them
+    // to node refs in-place during init, so a viewport flip would otherwise
+    // carry stale refs from the prior path.
+    linksRef.current.forEach((l, idx) => {
+      const original = initialLinks[idx]
+      l.source = original.source
+      l.target = original.target
+    })
+
+    // Stop any prior simulation before rebuilding.
+    simRef.current?.stop()
+    simRef.current = null
+
     const edgeGroup = svg.append('g').attr('class', 'edges')
     const nodeGroup = svg.append('g').attr('class', 'nodes')
 
-    const simulation = forceSimulation<GraphNode>(nodesRef.current)
-      .force(
-        'link',
-        forceLink<GraphNode, GraphLink>(linksRef.current)
-          .id((d) => d.id)
-          .distance(140)
-      )
-      .force('charge', forceManyBody<GraphNode>().strength(-300))
-      .force('center', forceCenter(WIDTH / 2, HEIGHT / 2))
-      .force('collide', forceCollide<GraphNode>(50))
-      .alphaDecay(0.04)
-
-    simRef.current = simulation
-
-    // Edges
+    // ── Build edges (line + optional label) ─────────────────────────────
     const edges = edgeGroup
       .selectAll<SVGGElement, GraphLink>('.edge-group')
       .data(linksRef.current)
@@ -141,22 +179,140 @@ export function OntologyGraph({
 
     edges.append('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5)
 
-    edges
+    // Edge labels render only on desktop. On mobile they're omitted entirely
+    // (per spec) — the OntologyEntityPanel surfaces relationships textually
+    // when a node is tapped instead.
+    if (!isMobile) {
+      edges
+        .append('text')
+        .text((d) => d.label as string)
+        .attr('text-anchor', 'middle')
+        .attr('fill', 'currentColor')
+        .attr('font-size', '16px')
+        .attr('pointer-events', 'none')
+        // Halo: stroke painted under fill so labels stay legible when crossing edge lines
+        .style('paint-order', 'stroke')
+        .style('stroke', 'hsl(var(--color-bg-card))')
+        .style('stroke-width', '4px')
+        .style('stroke-linecap', 'round')
+        .style('stroke-linejoin', 'round')
+    }
+
+    // ── Build node groups ───────────────────────────────────────────────
+    const nodeGroups = nodeGroup
+      .selectAll<SVGGElement, GraphNode>('.node-group')
+      .data(nodesRef.current)
+      .enter()
+      .append('g')
+      .attr('class', 'node-group')
+      .style('cursor', 'pointer')
+      .on('mouseenter', (_, d) => { onNodeHoverRef.current(d.id) })
+      .on('mouseleave', () => { onNodeHoverRef.current(null) })
+      .on('click', (event, d) => {
+        event.stopPropagation()
+        onNodeSelectRef.current(d.id)
+      })
+
+    const circleR = isMobile ? 32 : 36
+    const labelDy = isMobile ? -42 : -44
+    const subDy = isMobile ? 52 : 56
+    const labelFont = isMobile ? '16px' : '18px'
+    const labelWeight = isMobile ? '700' : '600'
+    const subFont = isMobile ? '12px' : '14px'
+    // On mobile we use an opaque dark halo so labels read even if they
+    // accidentally overlap circles or edge lines. On desktop the bg-card
+    // halo blends naturally with the surrounding card surface.
+    const haloStroke = isMobile ? 'rgba(0,0,0,0.95)' : 'hsl(var(--color-bg-card))'
+    const haloWidth = '4px'
+
+    nodeGroups
+      .append('circle')
+      .attr('r', circleR)
+      .attr('fill', (d) => colorMap[d.color] ?? '#6366f1')
+      .attr('stroke', 'transparent')
+      .attr('stroke-width', 3)
+
+    nodeGroups
       .append('text')
-      .text((d) => d.label as string)
+      .text((d) => d.id)
       .attr('text-anchor', 'middle')
+      .attr('dy', labelDy)
+      .attr('font-size', labelFont)
+      .attr('font-weight', labelWeight)
       .attr('fill', 'currentColor')
-      .attr('font-size', '16px')
       .attr('pointer-events', 'none')
-      // Halo: stroke painted under fill so labels stay legible when crossing edge lines
-      // (Tailwind/PostCSS don't transform SVG style attrs, so we set them inline here.)
       .style('paint-order', 'stroke')
-      .style('stroke', 'hsl(var(--color-bg-card))')
-      .style('stroke-width', '4px')
+      .style('stroke', haloStroke)
+      .style('stroke-width', haloWidth)
       .style('stroke-linecap', 'round')
       .style('stroke-linejoin', 'round')
 
-    // Drag
+    nodeGroups
+      .append('text')
+      .text((d) => (d.count !== null ? formatCount(d.count) : ''))
+      .attr('text-anchor', 'middle')
+      .attr('dy', subDy)
+      .attr('font-size', subFont)
+      .attr('fill', '#94a3b8')
+      .attr('pointer-events', 'none')
+
+    // Deselect on SVG background click
+    svg.on('click', () => { onNodeSelectRef.current(null) })
+
+    if (isMobile) {
+      // Pin every node to its hand-tuned position. Resolve link source/target
+      // string refs to the actual node objects so edge x1/y1/x2/y2 reads work.
+      const nodeById = new Map<string, GraphNode>()
+      nodesRef.current.forEach((n) => {
+        const p = MOBILE_POSITIONS[n.id]
+        if (p) {
+          n.x = p.x
+          n.y = p.y
+          n.fx = p.x
+          n.fy = p.y
+        }
+        nodeById.set(n.id, n)
+      })
+      linksRef.current.forEach((l) => {
+        if (typeof l.source === 'string') {
+          const ref = nodeById.get(l.source)
+          if (ref) l.source = ref
+        }
+        if (typeof l.target === 'string') {
+          const ref = nodeById.get(l.target)
+          if (ref) l.target = ref
+        }
+      })
+
+      // Apply positions imperatively — no simulation, no drag.
+      nodeGroups.attr('transform', (d) => `translate(${d.x ?? 0},${d.y ?? 0})`)
+      edges
+        .select('line')
+        .attr('x1', (d) => (d.source as GraphNode).x ?? 0)
+        .attr('y1', (d) => (d.source as GraphNode).y ?? 0)
+        .attr('x2', (d) => (d.target as GraphNode).x ?? 0)
+        .attr('y2', (d) => (d.target as GraphNode).y ?? 0)
+      // No drag binding on mobile — taps select via the click handler above.
+      return () => {
+        // Cleanup of pinned positions handled at next effect entry.
+      }
+    }
+
+    // ── Desktop path: full d3-force simulation with drag ────────────────
+    const simulation = forceSimulation<GraphNode>(nodesRef.current)
+      .force(
+        'link',
+        forceLink<GraphNode, GraphLink>(linksRef.current)
+          .id((d) => d.id)
+          .distance(140)
+      )
+      .force('charge', forceManyBody<GraphNode>().strength(-300))
+      .force('center', forceCenter(DESKTOP_WIDTH / 2, DESKTOP_HEIGHT / 2))
+      .force('collide', forceCollide<GraphNode>(50))
+      .alphaDecay(0.04)
+
+    simRef.current = simulation
+
     const drag = d3drag<SVGGElement, GraphNode>()
       .on('start', (event, d) => {
         if (!event.active) simulation.alphaTarget(0.3).restart()
@@ -173,58 +329,7 @@ export function OntologyGraph({
         d.fy = null
       })
 
-    // Nodes
-    const nodeGroups = nodeGroup
-      .selectAll<SVGGElement, GraphNode>('.node-group')
-      .data(nodesRef.current)
-      .enter()
-      .append('g')
-      .attr('class', 'node-group')
-      .style('cursor', 'pointer')
-      .call(drag)
-      .on('mouseenter', (_, d) => { onNodeHoverRef.current(d.id) })
-      .on('mouseleave', () => { onNodeHoverRef.current(null) })
-      .on('click', (event, d) => {
-        event.stopPropagation()
-        onNodeSelectRef.current(d.id)
-      })
-
-    nodeGroups
-      .append('circle')
-      .attr('r', 36)
-      .attr('fill', (d) => colorMap[d.color] ?? '#6366f1')
-      .attr('stroke', 'transparent')
-      .attr('stroke-width', 3)
-
-    // Label above circle
-    nodeGroups
-      .append('text')
-      .text((d) => d.id)
-      .attr('text-anchor', 'middle')
-      .attr('dy', -44)
-      .attr('font-size', '18px')
-      .attr('font-weight', '600')
-      .attr('fill', 'currentColor')
-      .attr('pointer-events', 'none')
-      // Halo so the entity name stays readable over crossing edges in dense layouts.
-      .style('paint-order', 'stroke')
-      .style('stroke', 'hsl(var(--color-bg-card))')
-      .style('stroke-width', '4px')
-      .style('stroke-linecap', 'round')
-      .style('stroke-linejoin', 'round')
-
-    // Count label below circle
-    nodeGroups
-      .append('text')
-      .text((d) => (d.count !== null ? formatCount(d.count) : ''))
-      .attr('text-anchor', 'middle')
-      .attr('dy', 56)
-      .attr('font-size', '14px')
-      .attr('fill', '#94a3b8')
-      .attr('pointer-events', 'none')
-
-    // Deselect on SVG background click
-    svg.on('click', () => { onNodeSelectRef.current(null) })
+    nodeGroups.call(drag)
 
     simulation.on('tick', () => {
       edges
@@ -244,7 +349,7 @@ export function OntologyGraph({
 
     return () => { simulation.stop() }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isMobile])
 
   // Update opacity + selected ring when hover/selected changes
   useEffect(() => {
@@ -265,13 +370,24 @@ export function OntologyGraph({
       .attr('stroke-width', (d) => (d.id === selectedId ? 3 : 0))
   }, [hoveredId, selectedId])
 
+  const viewBoxW = isMobile ? MOBILE_WIDTH : DESKTOP_WIDTH
+  const viewBoxH = isMobile ? MOBILE_HEIGHT : DESKTOP_HEIGHT
+
   return (
     <svg
       ref={svgRef}
       width="100%"
-      height="600"
-      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-      className="rounded-2xl bg-card border border-stroke-divider text-fg-default"
+      // Desktop: explicit 600px height (matches the original layout). Mobile:
+      // omit height so the SVG sizes itself from the viewBox aspect ratio +
+      // the parent's full width — w-full alone suffices, h matches naturally.
+      {...(isMobile ? {} : { height: '600' })}
+      viewBox={`0 0 ${viewBoxW} ${viewBoxH}`}
+      preserveAspectRatio="xMidYMid meet"
+      className={
+        isMobile
+          ? 'w-full h-auto rounded-2xl bg-card border border-stroke-divider text-fg-default'
+          : 'rounded-2xl bg-card border border-stroke-divider text-fg-default'
+      }
     />
   )
 }
