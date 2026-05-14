@@ -15,7 +15,7 @@ export function OntologySection({ locale }: { locale: Locale }) {
   const selectedNode = (graphData.nodes as OntologyNode[]).find((n) => n.id === selectedId) ?? null
 
   return (
-    <section className="py-20 px-6">
+    <section className="pt-4 md:pt-6 pb-20 px-6">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 lg:gap-12 items-start">
           <OntologyGraph
