@@ -104,7 +104,7 @@ export function OntologyGraph({
   })
 
   const WIDTH = 700
-  const HEIGHT = 500
+  const HEIGHT = 600
 
   // Initial D3 setup — runs once after mount
   useEffect(() => {
@@ -121,11 +121,11 @@ export function OntologyGraph({
         'link',
         forceLink<GraphNode, GraphLink>(linksRef.current)
           .id((d) => d.id)
-          .distance(120)
+          .distance(140)
       )
       .force('charge', forceManyBody<GraphNode>().strength(-300))
       .force('center', forceCenter(WIDTH / 2, HEIGHT / 2))
-      .force('collide', forceCollide<GraphNode>(40))
+      .force('collide', forceCollide<GraphNode>(50))
       .alphaDecay(0.04)
 
     simRef.current = simulation
@@ -145,9 +145,16 @@ export function OntologyGraph({
       .append('text')
       .text((d) => d.label as string)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#94a3b8')
-      .attr('font-size', '10px')
+      .attr('fill', 'currentColor')
+      .attr('font-size', '16px')
       .attr('pointer-events', 'none')
+      // Halo: stroke painted under fill so labels stay legible when crossing edge lines
+      // (Tailwind/PostCSS don't transform SVG style attrs, so we set them inline here.)
+      .style('paint-order', 'stroke')
+      .style('stroke', 'hsl(var(--color-bg-card))')
+      .style('stroke-width', '4px')
+      .style('stroke-linecap', 'round')
+      .style('stroke-linejoin', 'round')
 
     // Drag
     const drag = d3drag<SVGGElement, GraphNode>()
@@ -184,7 +191,7 @@ export function OntologyGraph({
 
     nodeGroups
       .append('circle')
-      .attr('r', 28)
+      .attr('r', 36)
       .attr('fill', (d) => colorMap[d.color] ?? '#6366f1')
       .attr('stroke', 'transparent')
       .attr('stroke-width', 3)
@@ -194,19 +201,25 @@ export function OntologyGraph({
       .append('text')
       .text((d) => d.id)
       .attr('text-anchor', 'middle')
-      .attr('dy', -36)
-      .attr('font-size', '12px')
+      .attr('dy', -44)
+      .attr('font-size', '18px')
       .attr('font-weight', '600')
       .attr('fill', 'currentColor')
       .attr('pointer-events', 'none')
+      // Halo so the entity name stays readable over crossing edges in dense layouts.
+      .style('paint-order', 'stroke')
+      .style('stroke', 'hsl(var(--color-bg-card))')
+      .style('stroke-width', '4px')
+      .style('stroke-linecap', 'round')
+      .style('stroke-linejoin', 'round')
 
     // Count label below circle
     nodeGroups
       .append('text')
       .text((d) => (d.count !== null ? formatCount(d.count) : ''))
       .attr('text-anchor', 'middle')
-      .attr('dy', 48)
-      .attr('font-size', '10px')
+      .attr('dy', 56)
+      .attr('font-size', '14px')
       .attr('fill', '#94a3b8')
       .attr('pointer-events', 'none')
 
@@ -256,9 +269,9 @@ export function OntologyGraph({
     <svg
       ref={svgRef}
       width="100%"
-      height="500"
+      height="600"
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-      className="rounded-2xl bg-card border border-stroke-divider"
+      className="rounded-2xl bg-card border border-stroke-divider text-fg-default"
     />
   )
 }
