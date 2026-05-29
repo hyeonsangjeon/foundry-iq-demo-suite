@@ -201,7 +201,7 @@ export function OntologyGraph({
       .attr('font-weight', isMobile ? '600' : '400')
       .attr('pointer-events', 'none')
       .style('paint-order', 'stroke')
-      .style('stroke', isMobile ? 'rgba(0,0,0,0.92)' : 'hsl(var(--color-bg-card))')
+      .style('stroke', 'hsl(var(--color-bg-card))')
       .style('stroke-width', isMobile ? '3px' : '4px')
       .style('stroke-linecap', 'round')
       .style('stroke-linejoin', 'round')
@@ -238,10 +238,9 @@ export function OntologyGraph({
     const labelFont = isMobile ? '14px' : '18px'
     const labelWeight = isMobile ? '700' : '600'
     const subFont = isMobile ? '11px' : '14px'
-    // On mobile we use an opaque dark halo so labels read even if they
-    // accidentally overlap circles or edge lines. On desktop the bg-card
-    // halo blends naturally with the surrounding card surface.
-    const haloStroke = isMobile ? 'rgba(0,0,0,0.95)' : 'hsl(var(--color-bg-card))'
+    // Match the halo to the current card surface so labels remain crisp in
+    // both light and dark mode when they overlap circles or edge lines.
+    const haloStroke = 'hsl(var(--color-bg-card))'
     const haloWidth = isMobile ? '3px' : '4px'
     const hitWidth = isMobile ? 118 : 136
     const hitTop = isMobile ? -52 : -60
