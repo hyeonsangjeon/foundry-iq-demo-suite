@@ -17,6 +17,7 @@ import {
   Home20Regular,
   DocumentMultiple20Regular,
   ArrowJoin20Regular,
+  BranchForkLink20Regular,
 } from '@fluentui/react-icons'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -38,6 +39,7 @@ const navigation: NavItem[] = [
   { href: '/knowledge', labelKey: 'knowledge', icon: Database20Regular },
   { href: '/sharepoint', labelKey: 'sharepoint', icon: DocumentMultiple20Regular },
   { href: '/semantic-join', labelKey: 'semanticJoin', icon: ArrowJoin20Regular },
+  { href: '/fabric-iq-ks', labelKey: 'fabricIqKs', icon: BranchForkLink20Regular },
 ]
 
 interface AppShellProps {
