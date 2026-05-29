@@ -88,8 +88,7 @@ export function DemocratizationSection({ locale }: { locale: Locale }) {
         <QueryInput
           locale={locale}
           loading={result?.loading ?? false}
-          onSuggestionClick={(queryId) => runQuery({ queryId, mode, locale })}
-          onSubmit={(freeText) => runQuery({ freeText, mode, locale })}
+          onSuggestionClick={(queryId) => runQuery({ queryId, mode })}
         />
 
         {result?.error && (

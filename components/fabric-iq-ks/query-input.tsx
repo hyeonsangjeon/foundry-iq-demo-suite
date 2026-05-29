@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
 import {
   Clock3,
   Database,
@@ -12,8 +11,6 @@ import {
 } from 'lucide-react'
 import ontologyGraph from '@/data/fabric-iq-ks/ontology-graph.json'
 import sampleQueries from '@/data/fabric-iq-ks/sample-queries.json'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import type { Locale } from '@/lib/i18n'
 import { t } from '@/lib/i18n/translations'
@@ -21,7 +18,6 @@ import { t } from '@/lib/i18n/translations'
 type QueryInputProps = {
   locale: Locale
   onSuggestionClick: (queryId: string) => void
-  onSubmit: (freeText: string) => void
   loading: boolean
 }
 
@@ -38,8 +34,7 @@ function formatSeconds(ms: number) {
   return `${(ms / 1000).toFixed(1)}s`
 }
 
-export function QueryInput({ locale, onSuggestionClick, onSubmit, loading }: QueryInputProps) {
-  const [value, setValue] = useState('')
+export function QueryInput({ locale, onSuggestionClick, loading }: QueryInputProps) {
   const text = t.fabricIqKs[locale].democratization
   const flightCount = ontologyGraph.nodes.find((node) => node.id === 'Flight')?.count
   const airlineCount = ontologyGraph.nodes.find((node) => node.id === 'Airline')?.count
@@ -74,16 +69,6 @@ export function QueryInput({ locale, onSuggestionClick, onSubmit, loading }: Que
       tone: 'text-amber-400',
     },
   ]
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    const query = value.trim()
-    if (!query || loading) return
-
-    onSubmit(query)
-    setValue('')
-  }
 
   return (
     <div className="border-b border-stroke-divider pb-8">
@@ -131,31 +116,15 @@ export function QueryInput({ locale, onSuggestionClick, onSubmit, loading }: Que
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-[1fr_auto] gap-2">
-        <Input
-          value={value}
-          disabled={loading}
-          onChange={(event) => setValue(event.target.value)}
-          placeholder={text.inputPlaceholder}
-          className={cn(
-            'h-10 rounded-lg border-stroke-divider bg-bg-canvas px-3 text-sm focus-visible:ring-cyan-500',
-            loading && 'border-cyan-500/50 shadow-[0_0_0_1px_rgba(6,182,212,0.35)]'
-          )}
-        />
-        <Button
-          type="submit"
-          aria-label={text.askButton}
-          disabled={loading || value.trim().length === 0}
-          className="h-10 rounded-lg bg-cyan-500 px-3 text-white shadow-sm hover:bg-cyan-400 sm:px-4"
-        >
-          {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <Search className="h-4 w-4" aria-hidden="true" />
-          )}
-          <span className="hidden sm:inline">{text.askButton}</span>
-        </Button>
-      </form>
+      <div className="flex items-center justify-between gap-3 rounded-lg border border-stroke-divider bg-bg-canvas px-3 py-2.5 text-sm text-fg-muted">
+        <span className="flex min-w-0 items-center gap-2">
+          <Search className="h-4 w-4 shrink-0 text-cyan-300" aria-hidden="true" />
+          <span className="truncate">{text.inputPlaceholder}</span>
+        </span>
+        <span className="hidden shrink-0 rounded-full bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-300 sm:inline-flex">
+          {text.verifiedReplayLabel}
+        </span>
+      </div>
 
       {loading && (
         <div className="mt-4 flex items-center gap-2 text-sm text-fg-muted" role="status">
