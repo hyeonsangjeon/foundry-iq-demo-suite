@@ -55,19 +55,18 @@ const colorMap: Record<string, string> = {
 const DESKTOP_WIDTH = 700
 const DESKTOP_HEIGHT = 600
 
-// Mobile uses a 400x600 viewBox with hand-tuned fixed positions so the
-// 6-node graph reads cleanly at 360-414px without the d3-force simulation
-// collapsing everything into the center. Coordinates are in viewBox units;
-// percentages from the spec converted: x = pct * 400, y = pct * 600.
+// Mobile uses a compact fixed layout so the 6-node graph reads cleanly at
+// 360-414px without the d3-force simulation collapsing everything into the
+// center or forcing the card below the fold.
 const MOBILE_WIDTH = 400
-const MOBILE_HEIGHT = 600
+const MOBILE_HEIGHT = 430
 const MOBILE_POSITIONS: Record<string, { x: number; y: number }> = {
-  Compensation: { x: 200, y: 60 },   // 50/10
-  Delay:        { x: 200, y: 180 },  // 50/30
-  Airline:      { x: 320, y: 270 },  // 80/45
-  Aircraft:     { x: 340, y: 420 },  // 85/70
-  Flight:       { x: 200, y: 360 },  // 50/60
-  Airport:      { x: 80,  y: 420 },  // 20/70
+  Compensation: { x: 200, y: 66 },
+  Delay:        { x: 200, y: 154 },
+  Airline:      { x: 310, y: 202 },
+  Aircraft:     { x: 310, y: 326 },
+  Flight:       { x: 200, y: 260 },
+  Airport:      { x: 90,  y: 326 },
 }
 
 function formatCount(n: number): string {
@@ -125,9 +124,15 @@ export function OntologyGraph({
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)')
     setIsMobile(mq.matches)
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
+    const handler = (e: MediaQueryListEvent | MediaQueryList) => setIsMobile(e.matches)
+
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', handler)
+      return () => mq.removeEventListener('change', handler)
+    }
+
+    mq.addListener(handler)
+    return () => mq.removeListener(handler)
   }, [])
 
   // Build (or rebuild on viewport-class change) the SVG. Mobile and desktop
@@ -199,31 +204,56 @@ export function OntologyGraph({
     }
 
     // ── Build node groups ───────────────────────────────────────────────
+    let suppressNextClick = false
     const nodeGroups = nodeGroup
       .selectAll<SVGGElement, GraphNode>('.node-group')
       .data(nodesRef.current)
       .enter()
       .append('g')
       .attr('class', 'node-group')
+      .attr('pointer-events', 'all')
       .style('cursor', 'pointer')
+      .style('touch-action', isMobile ? 'none' : 'auto')
+      .style('-webkit-user-select', isMobile ? 'none' : 'auto')
+      .style('user-select', isMobile ? 'none' : 'auto')
       .on('mouseenter', (_, d) => { onNodeHoverRef.current(d.id) })
       .on('mouseleave', () => { onNodeHoverRef.current(null) })
       .on('click', (event, d) => {
         event.stopPropagation()
+        if (suppressNextClick) {
+          suppressNextClick = false
+          return
+        }
         onNodeSelectRef.current(d.id)
       })
 
-    const circleR = isMobile ? 32 : 36
-    const labelDy = isMobile ? -42 : -44
-    const subDy = isMobile ? 52 : 56
-    const labelFont = isMobile ? '16px' : '18px'
+    const circleR = isMobile ? 28 : 36
+    const labelDy = isMobile ? -38 : -44
+    const subDy = isMobile ? 46 : 56
+    const labelFont = isMobile ? '14px' : '18px'
     const labelWeight = isMobile ? '700' : '600'
-    const subFont = isMobile ? '12px' : '14px'
+    const subFont = isMobile ? '11px' : '14px'
     // On mobile we use an opaque dark halo so labels read even if they
     // accidentally overlap circles or edge lines. On desktop the bg-card
     // halo blends naturally with the surrounding card surface.
     const haloStroke = isMobile ? 'rgba(0,0,0,0.95)' : 'hsl(var(--color-bg-card))'
-    const haloWidth = '4px'
+    const haloWidth = isMobile ? '3px' : '4px'
+    const hitWidth = isMobile ? 118 : 136
+    const hitTop = isMobile ? -52 : -60
+    const hitHeight = isMobile ? 112 : 128
+
+    nodeGroups
+      .append('rect')
+      .attr('x', -hitWidth / 2)
+      .attr('y', hitTop)
+      .attr('width', hitWidth)
+      .attr('height', hitHeight)
+      .attr('rx', 12)
+      .attr('fill', 'transparent')
+      .attr('pointer-events', 'all')
+      .style('touch-action', isMobile ? 'none' : 'auto')
+      .style('-webkit-user-select', 'none')
+      .style('user-select', 'none')
 
     nodeGroups
       .append('circle')
@@ -231,6 +261,8 @@ export function OntologyGraph({
       .attr('fill', (d) => colorMap[d.color] ?? '#6366f1')
       .attr('stroke', 'transparent')
       .attr('stroke-width', 3)
+      .attr('pointer-events', 'all')
+      .style('touch-action', isMobile ? 'none' : 'auto')
 
     nodeGroups
       .append('text')
@@ -246,6 +278,8 @@ export function OntologyGraph({
       .style('stroke-width', haloWidth)
       .style('stroke-linecap', 'round')
       .style('stroke-linejoin', 'round')
+      .style('-webkit-user-select', 'none')
+      .style('user-select', 'none')
 
     nodeGroups
       .append('text')
@@ -255,9 +289,29 @@ export function OntologyGraph({
       .attr('font-size', subFont)
       .attr('fill', '#94a3b8')
       .attr('pointer-events', 'none')
+      .style('-webkit-user-select', 'none')
+      .style('user-select', 'none')
 
     // Deselect on SVG background click
     svg.on('click', () => { onNodeSelectRef.current(null) })
+
+    const updatePositions = () => {
+      edges
+        .select('line')
+        .attr('x1', (d) => (d.source as GraphNode).x ?? 0)
+        .attr('y1', (d) => (d.source as GraphNode).y ?? 0)
+        .attr('x2', (d) => (d.target as GraphNode).x ?? 0)
+        .attr('y2', (d) => (d.target as GraphNode).y ?? 0)
+
+      if (!isMobile) {
+        edges
+          .select('text')
+          .attr('x', (d) => (((d.source as GraphNode).x ?? 0) + ((d.target as GraphNode).x ?? 0)) / 2)
+          .attr('y', (d) => (((d.source as GraphNode).y ?? 0) + ((d.target as GraphNode).y ?? 0)) / 2)
+      }
+
+      nodeGroups.attr('transform', (d) => `translate(${d.x ?? 0},${d.y ?? 0})`)
+    }
 
     if (isMobile) {
       // Pin every node to its hand-tuned position. Resolve link source/target
@@ -284,17 +338,154 @@ export function OntologyGraph({
         }
       })
 
-      // Apply positions imperatively — no simulation, no drag.
-      nodeGroups.attr('transform', (d) => `translate(${d.x ?? 0},${d.y ?? 0})`)
-      edges
-        .select('line')
-        .attr('x1', (d) => (d.source as GraphNode).x ?? 0)
-        .attr('y1', (d) => (d.source as GraphNode).y ?? 0)
-        .attr('x2', (d) => (d.target as GraphNode).x ?? 0)
-        .attr('y2', (d) => (d.target as GraphNode).y ?? 0)
-      // No drag binding on mobile — taps select via the click handler above.
+      updatePositions()
+
+      const dragPaddingX = 52
+      const dragPaddingTop = 48
+      const dragPaddingBottom = 54
+      const cleanupHandlers: Array<() => void> = []
+      let activeNode: GraphNode | null = null
+      let activePointerId: number | null = null
+      let activeTouchId: number | null = null
+      let dragStartX = 0
+      let dragStartY = 0
+      let nodeStartX = 0
+      let nodeStartY = 0
+      let didDrag = false
+
+      const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
+      const clientToSvgPoint = (clientX: number, clientY: number) => {
+        const svgNode = svgRef.current
+        const matrix = svgNode?.getScreenCTM()
+        if (!svgNode || !matrix) return null
+
+        const point = svgNode.createSVGPoint()
+        point.x = clientX
+        point.y = clientY
+        return point.matrixTransform(matrix.inverse())
+      }
+
+      const startMobileDrag = (node: GraphNode, clientX: number, clientY: number) => {
+        const point = clientToSvgPoint(clientX, clientY)
+        if (!point) return
+
+        activeNode = node
+        dragStartX = point.x
+        dragStartY = point.y
+        nodeStartX = node.x ?? 0
+        nodeStartY = node.y ?? 0
+        didDrag = false
+        onNodeHoverRef.current(node.id)
+      }
+
+      const moveMobileDrag = (clientX: number, clientY: number) => {
+        if (!activeNode) return
+
+        const point = clientToSvgPoint(clientX, clientY)
+        if (!point) return
+
+        const dx = point.x - dragStartX
+        const dy = point.y - dragStartY
+        if (Math.abs(dx) > 2 || Math.abs(dy) > 2) didDrag = true
+
+        const nextX = clamp(nodeStartX + dx, dragPaddingX, MOBILE_WIDTH - dragPaddingX)
+        const nextY = clamp(nodeStartY + dy, dragPaddingTop, MOBILE_HEIGHT - dragPaddingBottom)
+        activeNode.x = nextX
+        activeNode.y = nextY
+        activeNode.fx = nextX
+        activeNode.fy = nextY
+        updatePositions()
+      }
+
+      const endMobileDrag = () => {
+        if (activeNode && didDrag) {
+          suppressNextClick = true
+          window.setTimeout(() => {
+            suppressNextClick = false
+          }, 350)
+        }
+        activeNode = null
+        activePointerId = null
+        activeTouchId = null
+        onNodeHoverRef.current(null)
+      }
+
+      nodeGroups.each(function bindMobileDrag(d) {
+        const element = this
+
+        if (typeof window.PointerEvent !== 'undefined') {
+          const onPointerDown = (event: PointerEvent) => {
+            if (event.pointerType === 'mouse' && event.button !== 0) return
+            event.preventDefault()
+            event.stopPropagation()
+            activePointerId = event.pointerId
+            element.setPointerCapture?.(event.pointerId)
+            startMobileDrag(d, event.clientX, event.clientY)
+          }
+          const onPointerMove = (event: PointerEvent) => {
+            if (activePointerId !== event.pointerId) return
+            event.preventDefault()
+            event.stopPropagation()
+            moveMobileDrag(event.clientX, event.clientY)
+          }
+          const onPointerEnd = (event: PointerEvent) => {
+            if (activePointerId !== event.pointerId) return
+            event.preventDefault()
+            event.stopPropagation()
+            element.releasePointerCapture?.(event.pointerId)
+            endMobileDrag()
+          }
+
+          element.addEventListener('pointerdown', onPointerDown, { passive: false })
+          element.addEventListener('pointermove', onPointerMove, { passive: false })
+          element.addEventListener('pointerup', onPointerEnd, { passive: false })
+          element.addEventListener('pointercancel', onPointerEnd, { passive: false })
+          cleanupHandlers.push(() => {
+            element.removeEventListener('pointerdown', onPointerDown)
+            element.removeEventListener('pointermove', onPointerMove)
+            element.removeEventListener('pointerup', onPointerEnd)
+            element.removeEventListener('pointercancel', onPointerEnd)
+          })
+          return
+        }
+
+        const onTouchStart = (event: TouchEvent) => {
+          if (event.touches.length !== 1) return
+          const touch = event.changedTouches[0]
+          event.preventDefault()
+          event.stopPropagation()
+          activeTouchId = touch.identifier
+          startMobileDrag(d, touch.clientX, touch.clientY)
+        }
+        const onTouchMove = (event: TouchEvent) => {
+          const touch = Array.from(event.changedTouches).find((tch) => tch.identifier === activeTouchId)
+          if (!touch) return
+          event.preventDefault()
+          event.stopPropagation()
+          moveMobileDrag(touch.clientX, touch.clientY)
+        }
+        const onTouchEnd = (event: TouchEvent) => {
+          const touch = Array.from(event.changedTouches).find((tch) => tch.identifier === activeTouchId)
+          if (!touch) return
+          event.preventDefault()
+          event.stopPropagation()
+          endMobileDrag()
+        }
+
+        element.addEventListener('touchstart', onTouchStart, { passive: false })
+        window.addEventListener('touchmove', onTouchMove, { passive: false })
+        window.addEventListener('touchend', onTouchEnd, { passive: false })
+        window.addEventListener('touchcancel', onTouchEnd, { passive: false })
+        cleanupHandlers.push(() => {
+          element.removeEventListener('touchstart', onTouchStart)
+          window.removeEventListener('touchmove', onTouchMove)
+          window.removeEventListener('touchend', onTouchEnd)
+          window.removeEventListener('touchcancel', onTouchEnd)
+        })
+      })
+
       return () => {
-        // Cleanup of pinned positions handled at next effect entry.
+        cleanupHandlers.forEach((cleanup) => cleanup())
       }
     }
 
@@ -331,21 +522,7 @@ export function OntologyGraph({
 
     nodeGroups.call(drag)
 
-    simulation.on('tick', () => {
-      edges
-        .select('line')
-        .attr('x1', (d) => (d.source as GraphNode).x ?? 0)
-        .attr('y1', (d) => (d.source as GraphNode).y ?? 0)
-        .attr('x2', (d) => (d.target as GraphNode).x ?? 0)
-        .attr('y2', (d) => (d.target as GraphNode).y ?? 0)
-
-      edges
-        .select('text')
-        .attr('x', (d) => (((d.source as GraphNode).x ?? 0) + ((d.target as GraphNode).x ?? 0)) / 2)
-        .attr('y', (d) => (((d.source as GraphNode).y ?? 0) + ((d.target as GraphNode).y ?? 0)) / 2)
-
-      nodeGroups.attr('transform', (d) => `translate(${d.x ?? 0},${d.y ?? 0})`)
-    })
+    simulation.on('tick', updatePositions)
 
     return () => { simulation.stop() }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -376,7 +553,9 @@ export function OntologyGraph({
   return (
     <svg
       ref={svgRef}
+      data-testid="ontology-graph"
       width="100%"
+      style={isMobile ? { touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none' } : undefined}
       // Desktop: explicit 600px height (matches the original layout). Mobile:
       // omit height so the SVG sizes itself from the viewBox aspect ratio +
       // the parent's full width — w-full alone suffices, h matches naturally.
