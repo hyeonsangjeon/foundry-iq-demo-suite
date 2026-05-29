@@ -100,6 +100,16 @@ function getEdgeOpacity(link: GraphLink, hoveredId: string | null, selectedId: s
   return 0.15
 }
 
+function getLinkLabelOffset(link: GraphLink): number {
+  const src = typeof link.source === 'object' ? (link.source as GraphNode).id : link.source
+  const tgt = typeof link.target === 'object' ? (link.target as GraphNode).id : link.target
+
+  if (src === 'Flight' && tgt === 'Airport') {
+    return link.label === 'departs_from' ? -8 : 10
+  }
+  return 0
+}
+
 export function OntologyGraph({
   nodes: initialNodes,
   links: initialLinks,
@@ -135,11 +145,9 @@ export function OntologyGraph({
     return () => mq.removeListener(handler)
   }, [])
 
-  // Build (or rebuild on viewport-class change) the SVG. Mobile and desktop
-  // are two distinct paths because at <768px the d3-force simulation can't
-  // resolve a clean layout for 6 entities in ~360px of width — it collapses
-  // them on top of each other. Mobile path therefore pre-pins positions and
-  // skips the simulation entirely.
+  // Build (or rebuild on viewport-class change) the SVG. Mobile starts from
+  // hand-tuned positions, then runs a bounded force simulation so nodes keep
+  // the "billiard ball" interaction without collapsing into the center.
   useEffect(() => {
     if (!svgRef.current) return
 
@@ -184,24 +192,21 @@ export function OntologyGraph({
 
     edges.append('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5)
 
-    // Edge labels render only on desktop. On mobile they're omitted entirely
-    // (per spec) — the OntologyEntityPanel surfaces relationships textually
-    // when a node is tapped instead.
-    if (!isMobile) {
-      edges
-        .append('text')
-        .text((d) => d.label as string)
-        .attr('text-anchor', 'middle')
-        .attr('fill', 'currentColor')
-        .attr('font-size', '16px')
-        .attr('pointer-events', 'none')
-        // Halo: stroke painted under fill so labels stay legible when crossing edge lines
-        .style('paint-order', 'stroke')
-        .style('stroke', 'hsl(var(--color-bg-card))')
-        .style('stroke-width', '4px')
-        .style('stroke-linecap', 'round')
-        .style('stroke-linejoin', 'round')
-    }
+    edges
+      .append('text')
+      .text((d) => d.label as string)
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'currentColor')
+      .attr('font-size', isMobile ? '9px' : '16px')
+      .attr('font-weight', isMobile ? '600' : '400')
+      .attr('pointer-events', 'none')
+      .style('paint-order', 'stroke')
+      .style('stroke', isMobile ? 'rgba(0,0,0,0.92)' : 'hsl(var(--color-bg-card))')
+      .style('stroke-width', isMobile ? '3px' : '4px')
+      .style('stroke-linecap', 'round')
+      .style('stroke-linejoin', 'round')
+      .style('-webkit-user-select', 'none')
+      .style('user-select', 'none')
 
     // ── Build node groups ───────────────────────────────────────────────
     let suppressNextClick = false
@@ -303,47 +308,82 @@ export function OntologyGraph({
         .attr('x2', (d) => (d.target as GraphNode).x ?? 0)
         .attr('y2', (d) => (d.target as GraphNode).y ?? 0)
 
-      if (!isMobile) {
-        edges
-          .select('text')
-          .attr('x', (d) => (((d.source as GraphNode).x ?? 0) + ((d.target as GraphNode).x ?? 0)) / 2)
-          .attr('y', (d) => (((d.source as GraphNode).y ?? 0) + ((d.target as GraphNode).y ?? 0)) / 2)
-      }
+      edges
+        .select('text')
+        .attr('x', (d) => (((d.source as GraphNode).x ?? 0) + ((d.target as GraphNode).x ?? 0)) / 2)
+        .attr('y', (d) => (
+          (((d.source as GraphNode).y ?? 0) + ((d.target as GraphNode).y ?? 0)) / 2
+        ) + (isMobile ? getLinkLabelOffset(d) : 0))
 
       nodeGroups.attr('transform', (d) => `translate(${d.x ?? 0},${d.y ?? 0})`)
     }
 
+    const viewWidth = isMobile ? MOBILE_WIDTH : DESKTOP_WIDTH
+    const viewHeight = isMobile ? MOBILE_HEIGHT : DESKTOP_HEIGHT
+    const boundsPaddingX = isMobile ? 48 : 54
+    const boundsPaddingTop = isMobile ? 68 : 56
+    const boundsPaddingBottom = isMobile ? 52 : 56
+    const cleanupHandlers: Array<() => void> = []
+
+    const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
+    const bounceWithinBounds = (node: GraphNode) => {
+      const minX = boundsPaddingX
+      const maxX = viewWidth - boundsPaddingX
+      const minY = boundsPaddingTop
+      const maxY = viewHeight - boundsPaddingBottom
+
+      if ((node.x ?? 0) < minX) {
+        node.x = minX
+        if ((node.vx ?? 0) < 0) node.vx = Math.abs(node.vx ?? 0) * 0.45
+      } else if ((node.x ?? 0) > maxX) {
+        node.x = maxX
+        if ((node.vx ?? 0) > 0) node.vx = -Math.abs(node.vx ?? 0) * 0.45
+      }
+
+      if ((node.y ?? 0) < minY) {
+        node.y = minY
+        if ((node.vy ?? 0) < 0) node.vy = Math.abs(node.vy ?? 0) * 0.45
+      } else if ((node.y ?? 0) > maxY) {
+        node.y = maxY
+        if ((node.vy ?? 0) > 0) node.vy = -Math.abs(node.vy ?? 0) * 0.45
+      }
+    }
+
     if (isMobile) {
-      // Pin every node to its hand-tuned position. Resolve link source/target
-      // string refs to the actual node objects so edge x1/y1/x2/y2 reads work.
-      const nodeById = new Map<string, GraphNode>()
+      // Start from a readable mobile layout, then let the physics take over.
       nodesRef.current.forEach((n) => {
         const p = MOBILE_POSITIONS[n.id]
         if (p) {
           n.x = p.x
           n.y = p.y
-          n.fx = p.x
-          n.fy = p.y
-        }
-        nodeById.set(n.id, n)
-      })
-      linksRef.current.forEach((l) => {
-        if (typeof l.source === 'string') {
-          const ref = nodeById.get(l.source)
-          if (ref) l.source = ref
-        }
-        if (typeof l.target === 'string') {
-          const ref = nodeById.get(l.target)
-          if (ref) l.target = ref
         }
       })
+    }
 
+    // ── Force simulation: desktop and mobile both keep springy graph physics ─
+    const simulation = forceSimulation<GraphNode>(nodesRef.current)
+      .force(
+        'link',
+        forceLink<GraphNode, GraphLink>(linksRef.current)
+          .id((d) => d.id)
+          .distance(isMobile ? 96 : 140)
+          .strength(isMobile ? 0.32 : 0.22)
+      )
+      .force('charge', forceManyBody<GraphNode>().strength(isMobile ? -210 : -300))
+      .force('center', forceCenter(viewWidth / 2, viewHeight / 2))
+      .force('collide', forceCollide<GraphNode>(isMobile ? 43 : 50).strength(0.95))
+      .velocityDecay(isMobile ? 0.1 : 0.18)
+      .alphaDecay(isMobile ? 0.012 : 0.018)
+      .alpha(1)
+
+    simRef.current = simulation
+
+    simulation.on('tick', () => {
+      nodesRef.current.forEach(bounceWithinBounds)
       updatePositions()
+    })
 
-      const dragPaddingX = 52
-      const dragPaddingTop = 48
-      const dragPaddingBottom = 54
-      const cleanupHandlers: Array<() => void> = []
+    if (isMobile) {
       let activeNode: GraphNode | null = null
       let activePointerId: number | null = null
       let activeTouchId: number | null = null
@@ -352,8 +392,12 @@ export function OntologyGraph({
       let nodeStartX = 0
       let nodeStartY = 0
       let didDrag = false
+      let lastSvgX = 0
+      let lastSvgY = 0
+      let lastMoveAt = 0
+      let releaseVx = 0
+      let releaseVy = 0
 
-      const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
       const clientToSvgPoint = (clientX: number, clientY: number) => {
         const svgNode = svgRef.current
         const matrix = svgNode?.getScreenCTM()
@@ -375,6 +419,14 @@ export function OntologyGraph({
         nodeStartX = node.x ?? 0
         nodeStartY = node.y ?? 0
         didDrag = false
+        lastSvgX = point.x
+        lastSvgY = point.y
+        lastMoveAt = performance.now()
+        releaseVx = 0
+        releaseVy = 0
+        node.fx = nodeStartX
+        node.fy = nodeStartY
+        simulation.alphaTarget(0.45).restart()
         onNodeHoverRef.current(node.id)
       }
 
@@ -388,17 +440,31 @@ export function OntologyGraph({
         const dy = point.y - dragStartY
         if (Math.abs(dx) > 2 || Math.abs(dy) > 2) didDrag = true
 
-        const nextX = clamp(nodeStartX + dx, dragPaddingX, MOBILE_WIDTH - dragPaddingX)
-        const nextY = clamp(nodeStartY + dy, dragPaddingTop, MOBILE_HEIGHT - dragPaddingBottom)
+        const now = performance.now()
+        const elapsed = Math.max(16, now - lastMoveAt)
+        releaseVx = ((point.x - lastSvgX) / elapsed) * 26
+        releaseVy = ((point.y - lastSvgY) / elapsed) * 26
+        lastSvgX = point.x
+        lastSvgY = point.y
+        lastMoveAt = now
+
+        const nextX = clamp(nodeStartX + dx, boundsPaddingX, MOBILE_WIDTH - boundsPaddingX)
+        const nextY = clamp(nodeStartY + dy, boundsPaddingTop, MOBILE_HEIGHT - boundsPaddingBottom)
         activeNode.x = nextX
         activeNode.y = nextY
         activeNode.fx = nextX
         activeNode.fy = nextY
+        simulation.alphaTarget(0.45).restart()
         updatePositions()
       }
 
       const endMobileDrag = () => {
         if (activeNode && didDrag) {
+          activeNode.fx = null
+          activeNode.fy = null
+          activeNode.vx = releaseVx
+          activeNode.vy = releaseVy
+          simulation.alphaTarget(0).alpha(Math.max(simulation.alpha(), 0.65)).restart()
           suppressNextClick = true
           window.setTimeout(() => {
             suppressNextClick = false
@@ -437,14 +503,14 @@ export function OntologyGraph({
           }
 
           element.addEventListener('pointerdown', onPointerDown, { passive: false })
-          element.addEventListener('pointermove', onPointerMove, { passive: false })
-          element.addEventListener('pointerup', onPointerEnd, { passive: false })
-          element.addEventListener('pointercancel', onPointerEnd, { passive: false })
+          window.addEventListener('pointermove', onPointerMove, { passive: false })
+          window.addEventListener('pointerup', onPointerEnd, { passive: false })
+          window.addEventListener('pointercancel', onPointerEnd, { passive: false })
           cleanupHandlers.push(() => {
             element.removeEventListener('pointerdown', onPointerDown)
-            element.removeEventListener('pointermove', onPointerMove)
-            element.removeEventListener('pointerup', onPointerEnd)
-            element.removeEventListener('pointercancel', onPointerEnd)
+            window.removeEventListener('pointermove', onPointerMove)
+            window.removeEventListener('pointerup', onPointerEnd)
+            window.removeEventListener('pointercancel', onPointerEnd)
           })
           return
         }
@@ -483,48 +549,33 @@ export function OntologyGraph({
           window.removeEventListener('touchcancel', onTouchEnd)
         })
       })
+    } else {
+      const drag = d3drag<SVGGElement, GraphNode>()
+        .on('start', (event, d) => {
+          if (!event.active) simulation.alphaTarget(0.35).restart()
+          d.fx = d.x
+          d.fy = d.y
+        })
+        .on('drag', (event, d) => {
+          d.fx = event.x
+          d.fy = event.y
+        })
+        .on('end', (event, d) => {
+          if (!event.active) simulation.alphaTarget(0)
+          d.fx = null
+          d.fy = null
+          d.vx = (event.dx ?? 0) * 0.75
+          d.vy = (event.dy ?? 0) * 0.75
+          simulation.alpha(Math.max(simulation.alpha(), 0.45)).restart()
+        })
 
-      return () => {
-        cleanupHandlers.forEach((cleanup) => cleanup())
-      }
+      nodeGroups.call(drag)
     }
 
-    // ── Desktop path: full d3-force simulation with drag ────────────────
-    const simulation = forceSimulation<GraphNode>(nodesRef.current)
-      .force(
-        'link',
-        forceLink<GraphNode, GraphLink>(linksRef.current)
-          .id((d) => d.id)
-          .distance(140)
-      )
-      .force('charge', forceManyBody<GraphNode>().strength(-300))
-      .force('center', forceCenter(DESKTOP_WIDTH / 2, DESKTOP_HEIGHT / 2))
-      .force('collide', forceCollide<GraphNode>(50))
-      .alphaDecay(0.04)
-
-    simRef.current = simulation
-
-    const drag = d3drag<SVGGElement, GraphNode>()
-      .on('start', (event, d) => {
-        if (!event.active) simulation.alphaTarget(0.3).restart()
-        d.fx = d.x
-        d.fy = d.y
-      })
-      .on('drag', (event, d) => {
-        d.fx = event.x
-        d.fy = event.y
-      })
-      .on('end', (event, d) => {
-        if (!event.active) simulation.alphaTarget(0)
-        d.fx = null
-        d.fy = null
-      })
-
-    nodeGroups.call(drag)
-
-    simulation.on('tick', updatePositions)
-
-    return () => { simulation.stop() }
+    return () => {
+      cleanupHandlers.forEach((cleanup) => cleanup())
+      simulation.stop()
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile])
 
