@@ -49,8 +49,8 @@ export default function ArchitecturePage() {
             Phase 4 — Foundry IQ + Fabric IQ Native Integration
           </h2>
           <p className="text-xs text-fg-muted">
-            Once Fabric IQ becomes a native Knowledge Source type within Foundry IQ (Private Preview),
-            the entire aggregation pipeline collapses into a direct Ontology binding.
+            Fabric IQ is now available as a native Knowledge Source type within Foundry IQ
+            in public preview, collapsing the aggregation pipeline into a direct Ontology binding.
           </p>
         </div>
         <div className="rounded-2xl border border-glass-border bg-bg-elevated/50 backdrop-blur-sm p-6 md:p-10">

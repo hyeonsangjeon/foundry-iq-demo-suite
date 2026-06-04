@@ -21,7 +21,8 @@ const FIELD_ANALYSIS_HREF =
   'https://github.com/hyeonsangjeon/foundry-iq-demo-suite/blob/main/README.md#field-analysis'
 const DEMO_PACK_HREF =
   'https://github.com/hyeonsangjeon/foundry-iq-demo-suite/tree/main/docs/handson-0423/demo-pack'
-const ENROLLMENT_HREF = 'https://aka.ms/FoundryIQ-FabricIQsource'
+const PUBLIC_PREVIEW_GUIDE_HREF =
+  'https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-fabric-ontology'
 
 export function FederationFlowSection({ locale }: FederationFlowSectionProps) {
   const text = t.fabricIqKs[locale].federationFlow
@@ -71,7 +72,7 @@ export function FederationFlowSection({ locale }: FederationFlowSectionProps) {
             title={text.enrollmentTitle}
             subtitle={text.enrollmentSubtitle}
             ctaLabel={text.enrollmentCta}
-            href={ENROLLMENT_HREF}
+            href={PUBLIC_PREVIEW_GUIDE_HREF}
             icon={<Rocket20Regular className="w-5 h-5" />}
             delay={0.2}
           />
