@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { tokenManager } from '@/lib/token-manager'
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -7,6 +8,11 @@ export const revalidate = 0
 const ENDPOINT = process.env.AZURE_SEARCH_ENDPOINT
 const API_KEY = process.env.AZURE_SEARCH_API_KEY
 const API_VERSION = process.env.AZURE_SEARCH_API_VERSION
+// When true, authenticate to Azure AI Search with an Entra ID (RBAC) bearer
+// token from the service principal instead of the admin api-key. Requires the
+// SP to hold a data-plane role (e.g. "Search Index Data Reader") on the
+// Search service. Falls back to api-key when false/unset.
+const USE_RBAC = process.env.AZURE_SEARCH_USE_RBAC === 'true'
 
 interface RouteContext {
   params: Promise<{ id: string }> | { id: string }
@@ -31,14 +37,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
     console.log('📍 Knowledge Base ID:', knowledgeBaseId)
     console.log('🌐 Azure Search URL:', url)
     console.log('🔐 Has ACL Header:', !!aclHeader)
+    console.log('🪪 Auth mode:', USE_RBAC ? 'RBAC (Entra bearer)' : 'api-key')
     console.log('📦 Request Body:', JSON.stringify(body, null, 2))
     console.log('───────────────────────────────────────────────────────────')
+
+    // Build auth header: RBAC bearer token (service principal) or admin api-key.
+    const authHeaders: Record<string, string> = USE_RBAC
+      ? { Authorization: `Bearer ${await tokenManager.getSearchToken()}` }
+      : { 'api-key': API_KEY! }
 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'api-key': API_KEY!,
+        ...authHeaders,
         ...(aclHeader ? { 'x-ms-query-source-authorization': aclHeader } : {})
       },
       body: JSON.stringify(body)
