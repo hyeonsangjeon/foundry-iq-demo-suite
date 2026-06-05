@@ -3,8 +3,13 @@ import { ClientSecretCredential, DefaultAzureCredential, ManagedIdentityCredenti
 class TokenManager {
   private static instance: TokenManager
   private credential: ClientSecretCredential | DefaultAzureCredential | ManagedIdentityCredential | null = null
-  private cachedToken: { token: string; expiresOn: Date } | null = null
+  // Per-scope token cache. Different Azure data planes require different
+  // audiences (e.g. ai.azure.com vs search.azure.com), so we cache one
+  // token per scope instead of a single shared token.
+  private cachedTokens: Map<string, { token: string; expiresOn: Date }> = new Map()
   private readonly scope = 'https://ai.azure.com/.default'
+  // Azure AI Search data-plane scope (RBAC / Entra ID auth for retrieve, etc.)
+  private readonly searchScope = 'https://search.azure.com/.default'
 
   private constructor() {
     this.initializeCredential()
@@ -58,18 +63,19 @@ class TokenManager {
     return TokenManager.instance
   }
 
-  public async getToken(): Promise<string> {
-    // Check if we have a cached token that's still valid
-    if (this.cachedToken) {
+  public async getToken(scope: string = this.scope): Promise<string> {
+    // Check if we have a cached token for this scope that's still valid
+    const cached = this.cachedTokens.get(scope)
+    if (cached) {
       const now = new Date()
-      const expiresOn = new Date(this.cachedToken.expiresOn)
+      const expiresOn = new Date(cached.expiresOn)
 
       // Refresh token if it expires in less than 5 minutes
       const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000)
 
       if (expiresOn > fiveMinutesFromNow) {
-        console.log('Using cached token')
-        return this.cachedToken.token
+        console.log(`Using cached token for scope ${scope}`)
+        return cached.token
       }
     }
 
@@ -79,48 +85,56 @@ class TokenManager {
         throw new Error('Azure credential not initialized')
       }
 
-      console.log('Fetching new token from Azure AD...')
-      const tokenResponse = await this.credential.getToken(this.scope)
+      console.log(`Fetching new token from Azure AD for scope ${scope}...`)
+      const tokenResponse = await this.credential.getToken(scope)
 
       if (!tokenResponse) {
         throw new Error('Failed to get token from Azure AD')
       }
 
-      // Cache the token
-      this.cachedToken = {
+      // Cache the token for this scope
+      const entry = {
         token: tokenResponse.token,
         expiresOn: tokenResponse.expiresOnTimestamp
           ? new Date(tokenResponse.expiresOnTimestamp)
           : new Date(Date.now() + 60 * 60 * 1000) // Default to 1 hour if not provided
       }
+      this.cachedTokens.set(scope, entry)
 
-      console.log(`Token refreshed, expires at ${this.cachedToken.expiresOn.toISOString()}`)
-      return this.cachedToken.token
+      console.log(`Token refreshed for scope ${scope}, expires at ${entry.expiresOn.toISOString()}`)
+      return entry.token
     } catch (error) {
       console.error('Failed to get Azure AD token:', error)
 
       // If we still have a cached token (even if expired), return it as fallback
-      if (this.cachedToken) {
+      const stale = this.cachedTokens.get(scope)
+      if (stale) {
         console.warn('Using expired cached token as fallback')
-        return this.cachedToken.token
+        return stale.token
       }
 
       throw new Error(`Failed to get Azure AD token: ${error.message}`)
     }
   }
 
-  // Force refresh the token
-  public async refreshToken(): Promise<string> {
-    this.cachedToken = null
-    return this.getToken()
+  // Get a token scoped to the Azure AI Search data plane (RBAC / Entra ID auth).
+  public async getSearchToken(): Promise<string> {
+    return this.getToken(this.searchScope)
   }
 
-  // Check if token needs refresh
-  public needsRefresh(): boolean {
-    if (!this.cachedToken) return true
+  // Force refresh the token for a given scope
+  public async refreshToken(scope: string = this.scope): Promise<string> {
+    this.cachedTokens.delete(scope)
+    return this.getToken(scope)
+  }
+
+  // Check if token needs refresh for a given scope
+  public needsRefresh(scope: string = this.scope): boolean {
+    const cached = this.cachedTokens.get(scope)
+    if (!cached) return true
 
     const now = new Date()
-    const expiresOn = new Date(this.cachedToken.expiresOn)
+    const expiresOn = new Date(cached.expiresOn)
     const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000)
 
     return expiresOn <= fiveMinutesFromNow
