@@ -1,79 +1,37 @@
 {
   "queries": [
     {
-      "id": "q1-delayed-comp",
+      "id": "ont-airport-delays",
       "nl": {
-        "en": "How many delayed flights last week had compensation over $1,000?",
-        "ko": "지난주 보상금이 $1,000을 초과한 지연 항공편은 몇 건입니까?",
-        "ja": "先週、補償金が $1,000 を超えた遅延便は何件ですか?",
-        "zh": "上周补偿金额超过 $1,000 的延误航班有多少?",
-        "hi": "पिछले हफ़्ते $1,000 से ज़्यादा compensation वाली कितनी flights में देरी हुई?"
+        "en": "Which airport had the most flights delayed over 2 hours?",
+        "ko": "2시간 이상 지연된 항공편이 가장 많은 공항은?",
+        "ja": "2時間以上遅延した便が最も多い空港は?",
+        "zh": "延误超过 2 小时航班最多的机场是哪个?",
+        "hi": "2 घंटे से अधिक देरी वाली सबसे ज़्यादा flights किस airport पर थीं?"
       },
       "vpAnswer": {
         "primary": {
-          "value": "23",
-          "label": "flights",
-          "unit": "delayed with comp > $1k"
+          "value": "ORD",
+          "label": "Chicago O'Hare Intl · most >2h delays",
+          "unit": "8,134 flights"
         },
         "stats": [
           {
-            "label": "Total compensation paid",
-            "value": "$33,400"
+            "label": "Flights delayed >2h",
+            "value": "8,134"
           },
           {
-            "label": "Average per flight",
-            "value": "$1,452"
+            "label": "Rank",
+            "value": "#1 of all airports"
           },
           {
-            "label": "Top route",
-            "value": "SFO–JFK (4 flights)"
+            "label": "Dataset",
+            "value": "2015 full year"
           }
         ],
-        "source": "Fabric IQ ontology · live query · 4.3s"
+        "source": "Fabric IQ ontology · live query"
       },
-      "kql": "delayed_flights\n| where last_7_days(actual_arr)\n| join compensation on flight_id\n| where amount > 1000\n| summarize count=count(), total=sum(amount), avg=avg(amount), top_route=top(1, route)",
-      "trace": [
-        {
-          "stage": "modelQueryPlanning",
-          "ms": 320
-        },
-        {
-          "stage": "fabricIQ",
-          "ms": 3200
-        },
-        {
-          "stage": "modelAnswerSynthesis",
-          "ms": 780
-        }
-      ],
-      "elapsedMs": 4300,
-      "rawJson": "{\n  \"ref_id\": 0,\n  \"content\": \"23 flights total with compensation > $1,000 in the last 7 days. Top route: SFO-JFK.\",\n  \"rows\": [\n    { \"flight_id\": \"NW1042-20260504\", \"compensation\": 1450, \"route\": \"SFO-JFK\" },\n    { \"flight_id\": \"NW1287-20260505\", \"compensation\": 1820, \"route\": \"SFO-JFK\" }\n  ]\n}"
-    },
-    {
-      "id": "q2-top-routes",
-      "nl": {
-        "en": "Top 5 routes by delay last month",
-        "ko": "지난달 지연 시간 기준 상위 5개 노선",
-        "ja": "先月の遅延時間が最も多い上位 5 路線",
-        "zh": "上月延误时长 Top 5 航线",
-        "hi": "पिछले महीने delay के हिसाब से Top 5 routes"
-      },
-      "vpAnswer": {
-        "primary": {
-          "value": "5 routes",
-          "label": "ranked by total delay minutes",
-          "unit": "last 30 days"
-        },
-        "list": [
-          "SFO–JFK · 142 delays",
-          "LAX–ORD · 128 delays",
-          "ATL–DFW · 119 delays",
-          "SEA–DEN · 103 delays",
-          "JFK–MIA · 98 delays"
-        ],
-        "source": "Fabric IQ ontology · live query · 3.8s"
-      },
-      "kql": "flights | where last_30_days(actual_arr) | where delay_minutes > 15 | summarize count=count() by route | order by count desc | take 5",
+      "kql": "flights\n| where delay_minutes > 120\n| summarize delays=count() by origin_airport\n| order by delays desc\n| take 1",
       "trace": [
         {
           "stage": "modelQueryPlanning",
@@ -81,66 +39,105 @@
         },
         {
           "stage": "fabricIQ",
-          "ms": 2900
+          "ms": 2400
         },
         {
           "stage": "modelAnswerSynthesis",
-          "ms": 620
+          "ms": 560
         }
       ],
-      "elapsedMs": 3800,
-      "rawJson": "{\n  \"ref_id\": 0,\n  \"rows\": [\n    { \"route\": \"SFO-JFK\", \"count\": 142 },\n    { \"route\": \"LAX-ORD\", \"count\": 128 }\n  ]\n}"
+      "elapsedMs": 3240,
+      "rawJson": "{\n  \"ref_id\": 0,\n  \"content\": \"Chicago O'Hare International (ORD) had the most flights delayed over 2 hours: 8,134.\",\n  \"rows\": [\n    { \"origin_airport\": \"ORD\", \"airport_name\": \"Chicago O'Hare Intl\", \"delays_over_2h\": 8134 }\n  ]\n}"
     },
     {
-      "id": "q3-avg-comp-airline",
+      "id": "ont-jfk-airline-delays",
       "nl": {
-        "en": "Average compensation per airline this quarter",
-        "ko": "이번 분기 항공사별 평균 보상금",
-        "ja": "今四半期、航空会社別の平均補償金",
-        "zh": "本季度各航空公司的平均补偿金额",
-        "hi": "इस तिमाही में airline-वार average compensation"
+        "en": "Which airlines had the most flights delayed over 2 hours at JFK?",
+        "ko": "JFK에서 2시간 이상 지연된 항공편이 가장 많은 항공사는?",
+        "ja": "JFKで2時間以上遅延した便が最も多い航空会社は?",
+        "zh": "在 JFK 延误超过 2 小时航班最多的航空公司是哪些?",
+        "hi": "JFK पर 2 घंटे से अधिक देरी वाली सबसे ज़्यादा flights किन airlines की थीं?"
       },
       "vpAnswer": {
         "primary": {
-          "value": "$1,268",
-          "label": "average across 5 airlines",
-          "unit": "Q2 2026"
+          "value": "JetBlue Airways",
+          "label": "most >2h delays at JFK",
+          "unit": "1,098 flights"
         },
         "list": [
-          "Northwind Airlines · $1,840",
-          "Contoso Air · $1,510",
-          "Pacific Skies · $1,290",
-          "Blue Ridge Air · $980",
-          "Fabrikam Jet · $720"
+          "JetBlue Airways · 1,098 delays >2h",
+          "Delta Air Lines · 736 delays >2h"
         ],
-        "source": "Fabric IQ ontology · live query · 4.6s"
+        "source": "Fabric IQ ontology · live query"
       },
-      "kql": "compensation | join airlines on airline_id | where quarter='2026Q2' | summarize avg=avg(amount) by airline_name | order by avg desc",
+      "kql": "flights\n| where origin_airport == 'JFK'\n| where delay_minutes > 120\n| summarize delays=count() by airline_name\n| order by delays desc",
       "trace": [
         {
           "stage": "modelQueryPlanning",
-          "ms": 410
+          "ms": 300
         },
         {
           "stage": "fabricIQ",
-          "ms": 3500
+          "ms": 2500
         },
         {
           "stage": "modelAnswerSynthesis",
-          "ms": 690
+          "ms": 600
         }
       ],
-      "elapsedMs": 4600,
-      "rawJson": "{\n  \"ref_id\": 0,\n  \"rows\": [\n    { \"airline\": \"Northwind\", \"avg\": 1840 }\n  ]\n}"
+      "elapsedMs": 3400,
+      "rawJson": "{\n  \"ref_id\": 0,\n  \"content\": \"At JFK, JetBlue Airways had the most flights delayed over 2 hours (1,098), followed by Delta Air Lines (736).\",\n  \"rows\": [\n    { \"airline_name\": \"JetBlue Airways\", \"delays_over_2h\": 1098 },\n    { \"airline_name\": \"Delta Air Lines Inc.\", \"delays_over_2h\": 736 }\n  ]\n}"
     },
     {
-      "id": "q6-semantic-join-dot-compensation",
+      "id": "ont-list-airlines",
       "nl": {
-        "en": "How many flights were delayed over 2 hours at JFK last week, and what's our DOT compensation exposure?",
-        "ko": "지난주 JFK에서 2시간 이상 지연된 항공편은 몇 편이고, DOT 규정상 보상 노출은 얼마인가요?",
-        "ja": "先週JFKで2時間以上遅延した便は何便で、DOT規制上の補償エクスポージャーはいくらですか?",
-        "zh": "上周在 JFK 延误超过 2 小时的航班有多少,以及我们在 DOT 法规下的赔偿敞口是多少?",
-        "hi": "पिछले हफ़्ते JFK पर 2 घंटे से अधिक देरी से चलने वाली कितनी flights थीं, और DOT नियमों के तहत हमारा compensation exposure क्या है?"
+        "en": "List all airlines",
+        "ko": "모든 항공사 나열",
+        "ja": "すべての航空会社を一覧表示",
+        "zh": "列出所有航空公司",
+        "hi": "सभी airlines सूचीबद्ध करें"
+      },
+      "vpAnswer": {
+        "primary": {
+          "value": "5",
+          "label": "airlines",
+          "unit": "in the ontology"
+        },
+        "list": [
+          "Blue Ridge Air (AL000004)",
+          "Contoso Air (AL000005)",
+          "Fabrikam Jet (AL000002)",
+          "Northwind Airlines (AL000001)",
+          "Pacific Skies (AL000003)"
+        ],
+        "source": "Fabric IQ ontology · live query · ⭐ first 5/7/2026 trace"
+      },
+      "kql": "airlines | project airline_id, name | order by name asc",
+      "trace": [
+        {
+          "stage": "modelQueryPlanning",
+          "ms": 180
+        },
+        {
+          "stage": "fabricIQ",
+          "ms": 1200
+        },
+        {
+          "stage": "modelAnswerSynthesis",
+          "ms": 520
+        }
+      ],
+      "elapsedMs": 1900,
+      "rawJson": "{\n  \"ref_id\": 0,\n  \"content\": \"5 airlines in the ontology.\",\n  \"rows\": [\n    { \"airline_id\": \"AL000001\", \"name\": \"Northwind Airlines\" },\n    { \"airline_id\": \"AL000002\", \"name\": \"Fabrikam Jet\" },\n    { \"airline_id\": \"AL000003\", \"name\": \"Pacific Skies\" },\n    { \"airline_id\": \"AL000004\", \"name\": \"Blue Ridge Air\" },\n    { \"airline_id\": \"AL000005\", \"name\": \"Contoso Air\" }\n  ]\n}"
+    },
+    {
+      "id": "sj-jfk-dot-compensation",
+      "nl": {
+        "en": "How many flights were delayed over 2 hours at JFK, and what DOT compensation are passengers entitled to?",
+        "ko": "JFK에서 2시간 이상 지연된 항공편은 몇 편이고, 승객은 DOT 규정상 어떤 보상을 받나요?",
+        "ja": "JFKで2時間以上遅延した便は何便で、乗客はDOT規制上どのような補償を受けられますか?",
+        "zh": "在 JFK 延误超过 2 小时的航班有多少,乘客根据 DOT 法规可获得哪些赔偿?",
+        "hi": "JFK पर 2 घंटे से अधिक देरी वाली कितनी flights थीं, और DOT नियमों के तहत passengers को क्या compensation मिलता है?"
       },
       "vpAnswer": {
         "kind": "advisory",
@@ -169,86 +166,74 @@
       "rawJson": "{\n  \"response\": [\n    { \"role\": \"assistant\", \"content\": [{ \"type\": \"text\", \"text\": \"지난 7일간 JFK에서 2시간 이상 지연된 항공편은 총 18편 (출발 12편, 도착 6편). DOT 14 CFR Part 250 및 Aviation Consumer Protection 가이드에 따라 voucher 노출 약 $27,000, IDB 발생 시 추가 cash 노출 가능.\" }] }\n  ],\n  \"activity\": [\n    { \"type\": \"AzureSearchKnowledgeSourceQuery\", \"knowledgeSourceName\": \"airline-ontology-ks\", \"elapsedMs\": 842 },\n    { \"type\": \"AzureSearchKnowledgeSourceQuery\", \"knowledgeSourceName\": \"unified-airline-ks\", \"elapsedMs\": 467 },\n    { \"type\": \"ModelQueryPlanning\", \"elapsedMs\": 1213 },\n    { \"type\": \"ModelAnswerGeneration\", \"elapsedMs\": 2154 }\n  ],\n  \"references\": [\n    { \"type\": \"AzureSearchDoc\", \"knowledgeSourceName\": \"airline-ontology-ks\", \"id\": \"ontology:flight:delay-jfk-aggregate\", \"sourceData\": { \"summary\": \"JFK departures, last 7 days, delay_minutes > 120\", \"row_count\": 18 } },\n    { \"type\": \"AzureSearchDoc\", \"knowledgeSourceName\": \"unified-airline-ks\", \"id\": \"doc:dot-14cfr-part250-oversales\", \"sourceData\": { \"title\": \"DOT 14 CFR Part 250 — Oversales\", \"page\": 4, \"snippet\": \"Carriers shall provide cash or check compensation in the amount of $775 to passengers involuntarily denied boarding for delays of 1–2 hours on domestic flights, and $1,550 for delays exceeding 2 hours.\" } },\n    { \"type\": \"AzureSearchDoc\", \"knowledgeSourceName\": \"unified-airline-ks\", \"id\": \"doc:dot-aviation-consumer-protection-guide\", \"sourceData\": { \"title\": \"DOT Aviation Consumer Protection — Flight Delays & Cancellations\", \"page\": 12, \"snippet\": \"While DOT does not require airlines to provide passengers with money or other compensation for delays in arrival, airlines have customer service plans that may provide meal vouchers, hotel accommodations, or rebooking on the next available flight when delays are within the airline's control.\" } }\n  ]\n}"
     },
     {
-      "id": "q4-maint-aircraft",
+      "id": "sj-airline-refund",
       "nl": {
-        "en": "Aircraft with most maintenance events",
-        "ko": "정비 이벤트가 가장 많은 항공기",
-        "ja": "整備イベントが最も多い機体",
-        "zh": "维修事件最多的飞机",
-        "hi": "सबसे ज़्यादा maintenance events वाले aircraft"
+        "en": "Which airline had the most delayed flights, and what refund rights apply when those delays cause cancellations?",
+        "ko": "지연 항공편이 가장 많은 항공사는 어디이며, 그 지연이 결항으로 이어질 때 어떤 환불 권리가 적용되나요?",
+        "ja": "遅延便が最も多い航空会社はどこで、その遅延が欠航につながった場合どのような払い戻し権利が適用されますか?",
+        "zh": "延误航班最多的航空公司是哪家,当这些延误导致取消时适用哪些退款权利?",
+        "hi": "सबसे ज़्यादा delayed flights किस airline की थीं, और जब वे delays cancellation का कारण बनती हैं तो कौन से refund rights लागू होते हैं?"
       },
       "vpAnswer": {
-        "primary": {
-          "value": "3 aircraft",
-          "label": "with elevated maintenance frequency",
-          "unit": "this quarter"
+        "kind": "advisory",
+        "narrative": {
+          "en": "Southwest Airlines had the most flights delayed over 2 hours — 21,127 in the 2015 dataset — per the Fabric IQ operational ontology. Under DOT refund rules (14 CFR Part 259 and the 2024 DOT refund rule), when a flight is cancelled or significantly changed and the passenger declines rebooking, the airline must issue a prompt, automatic refund to the original form of payment, including the ticket price and ancillary fees. A 'significant change' includes departure/arrival shifts of 3+ hours domestically or 6+ hours internationally. Refunds are required even when the delay or cancellation is outside the airline's control.",
+          "ko": "Fabric IQ 운영 ontology 기준 2시간 이상 지연 항공편이 가장 많은 항공사는 Southwest Airlines로 2015년 데이터셋에서 21,127편입니다. DOT 환불 규정(14 CFR Part 259 및 2024년 DOT 환불 규칙)에 따르면, 항공편이 결항되거나 중대하게 변경되어 승객이 재예약을 거부하는 경우 항공사는 항공권 요금과 부가 수수료를 포함해 원결제 수단으로 신속·자동 환불해야 합니다. '중대한 변경'은 국내선 3시간 이상, 국제선 6시간 이상의 출발/도착 변동을 포함합니다. 환불은 지연·결항이 항공사 통제 밖이더라도 의무입니다.",
+          "ja": "Fabric IQ 運用 ontology によると、2時間以上遅延した便が最も多い航空会社は Southwest Airlines で、2015 年データセットで 21,127 便です。DOT 払い戻し規則(14 CFR Part 259 および 2024 年 DOT 払い戻し規則)に基づき、便が欠航または重大変更され乗客が再予約を辞退した場合、航空会社は航空券代金と付帯料金を含め元の支払い方法へ速やかに自動で払い戻す必要があります。「重大変更」には国内線で3時間以上、国際線で6時間以上の出発/到着の変動が含まれます。払い戻しは遅延・欠航が航空会社の管理外であっても義務です。",
+          "zh": "根据 Fabric IQ 运营 ontology,延误超过 2 小时航班最多的航空公司是 Southwest Airlines,在 2015 年数据集中为 21,127 班。依据 DOT 退款规则(14 CFR Part 259 及 2024 年 DOT 退款规则),当航班被取消或发生重大变更且乘客拒绝改签时,航空公司必须按原支付方式迅速、自动退款,包括票价与附加费用。'重大变更'包括国内航班出发/到达变动 3 小时以上、国际航班 6 小时以上。即使延误或取消超出航空公司控制范围,退款仍是强制性的。",
+          "hi": "Fabric IQ operational ontology के अनुसार 2 घंटे से अधिक देरी वाली सबसे ज़्यादा flights Southwest Airlines की थीं — 2015 dataset में 21,127। DOT refund नियमों (14 CFR Part 259 और 2024 DOT refund rule) के तहत, जब कोई flight cancel या significantly change होती है और passenger rebooking अस्वीकार करता है, तो airline को ticket price और ancillary fees सहित original payment method में तुरंत, automatic refund देना होता है। 'Significant change' में domestic पर 3+ घंटे और international पर 6+ घंटे का departure/arrival बदलाव शामिल है। Refund तब भी अनिवार्य है जब delay या cancellation airline के control से बाहर हो।"
         },
-        "list": [
-          "N12345 · Boeing 737-800 · 12 events",
-          "N67890 · Airbus A320 · 9 events",
-          "N24680 · Boeing 737-800 · 7 events"
+        "citations": [
+          { "label": "Ontology query", "detail": "Southwest Airlines · 21,127 flights delayed >2h · 2015", "source": "fabricIQ" },
+          { "label": "DOT 2024 Refund Rule", "detail": "Automatic refund on cancellation / significant change", "source": "searchIndex" },
+          { "label": "Significant change threshold", "detail": "3h domestic / 6h international departure-arrival shift", "source": "searchIndex" }
         ],
-        "source": "Fabric IQ ontology · live query · 3.4s"
+        "source": "Fabric IQ ontology + DOT regulation index · semantic JOIN"
       },
-      "kql": "aircraft | join maintenance on aircraft_id | where quarter='2026Q2' | summarize events=count() by aircraft_id, model | order by events desc | take 3",
+      "kql": "flights\n| where delay_minutes > 120\n| summarize delays=count() by airline_name\n| order by delays desc\n| take 1",
       "trace": [
-        {
-          "stage": "modelQueryPlanning",
-          "ms": 290
-        },
-        {
-          "stage": "fabricIQ",
-          "ms": 2600
-        },
-        {
-          "stage": "modelAnswerSynthesis",
-          "ms": 510
-        }
+        { "stage": "modelQueryPlanning", "ms": 1150 },
+        { "stage": "fabricIQ", "ms": 860 },
+        { "stage": "searchIndex", "ms": 480 },
+        { "stage": "modelAnswerSynthesis", "ms": 2080 }
       ],
-      "elapsedMs": 3400,
-      "rawJson": "{\n  \"ref_id\": 0,\n  \"rows\": [\n    { \"aircraft_id\": \"N12345\", \"events\": 12 }\n  ]\n}"
+      "elapsedMs": 4570,
+      "rawJson": "{\n  \"response\": [{ \"role\": \"assistant\", \"content\": [{ \"type\": \"text\", \"text\": \"Southwest Airlines had the most flights delayed over 2 hours (21,127 in 2015). DOT 2024 refund rule: automatic refund on cancellation or significant change (3h domestic / 6h international).\" }] }],\n  \"activity\": [\n    { \"type\": \"AzureSearchKnowledgeSourceQuery\", \"knowledgeSourceName\": \"unified-airline-source\", \"elapsedMs\": 860 },\n    { \"type\": \"ModelQueryPlanning\", \"elapsedMs\": 1150 },\n    { \"type\": \"ModelAnswerGeneration\", \"elapsedMs\": 2080 }\n  ],\n  \"references\": [\n    { \"type\": \"AzureSearchDoc\", \"id\": \"fabric:airline-delay-aggregate\", \"sourceData\": { \"summary\": \"Airline ranking · delay >2h\", \"airline\": \"Southwest Airlines\", \"row_count\": 21127 } },\n    { \"type\": \"AzureSearchDoc\", \"id\": \"doc:dot-2024-refund-rule\", \"sourceData\": { \"title\": \"DOT 2024 Refund Rule\", \"snippet\": \"Automatic refunds for cancelled or significantly changed flights when the passenger declines rebooking.\" } }\n  ]\n}"
     },
     {
-      "id": "q5-list-airlines",
+      "id": "sj-tarmac-rules",
       "nl": {
-        "en": "List all airlines",
-        "ko": "모든 항공사 나열",
-        "ja": "すべての航空会社を一覧表示",
-        "zh": "列出所有航空公司",
-        "hi": "सभी airlines सूचीबद्ध करें"
+        "en": "For the airport with the most long delays, what tarmac delay rules and passenger compensation does the DOT require?",
+        "ko": "장시간 지연이 가장 많은 공항에 대해, DOT는 어떤 활주로 지연(tarmac delay) 규정과 승객 보상을 요구하나요?",
+        "ja": "長時間の遅延が最も多い空港について、DOTはどのような駐機場遅延(tarmac delay)規則と乗客補償を求めていますか?",
+        "zh": "对于长时间延误最多的机场,DOT 要求哪些停机坪延误(tarmac delay)规则和乘客赔偿?",
+        "hi": "सबसे ज़्यादा लंबी देरी वाले airport के लिए, DOT किन tarmac delay नियमों और passenger compensation की मांग करता है?"
       },
       "vpAnswer": {
-        "primary": {
-          "value": "5",
-          "label": "airlines",
-          "unit": "in the ontology"
+        "kind": "advisory",
+        "narrative": {
+          "en": "Chicago O'Hare International (ORD) had the most long delays — 8,134 flights delayed over 2 hours in the 2015 dataset — per the Fabric IQ operational ontology. Under the DOT tarmac delay rule (14 CFR Part 259), airlines operating domestic flights may not allow an aircraft to remain on the tarmac for more than 3 hours (4 hours for international flights) without allowing passengers to deplane, barring safety/security or ATC exceptions. Airlines must also provide food and water within 2 hours and maintain operable lavatories and medical attention as needed. Violations can draw DOT fines of up to $27,500 per passenger.",
+          "ko": "Fabric IQ 운영 ontology 기준 장시간 지연이 가장 많은 공항은 Chicago O'Hare International(ORD)로 2015년 데이터셋에서 2시간 이상 지연 8,134편입니다. DOT 활주로 지연 규정(14 CFR Part 259)에 따라 국내선은 안전·보안 또는 ATC 예외를 제외하고 승객 하기 기회 없이 3시간(국제선 4시간)을 초과해 항공기를 활주로에 대기시킬 수 없습니다. 항공사는 2시간 이내에 음식과 물을 제공하고 사용 가능한 화장실과 필요 시 의료 지원을 유지해야 합니다. 위반 시 승객 1인당 최대 27,500 USD의 DOT 벌금이 부과될 수 있습니다.",
+          "ja": "Fabric IQ 運用 ontology によると、長時間遅延が最も多い空港は Chicago O'Hare International(ORD)で、2015 年データセットで2時間以上遅延 8,134 便です。DOT 駐機場遅延規則(14 CFR Part 259)に基づき、国内線は安全・保安または ATC の例外を除き、乗客を降機させずに3時間(国際線は4時間)を超えて機体を駐機場に留めることはできません。航空会社は2時間以内に食事と水を提供し、使用可能なトイレと必要に応じた医療対応を維持する必要があります。違反すると乗客1人あたり最大 27,500 USD の DOT 罰金が科される可能性があります。",
+          "zh": "根据 Fabric IQ 运营 ontology,长时间延误最多的机场是芝加哥奥黑尔国际机场(ORD),在 2015 年数据集中有 8,134 班航班延误超过 2 小时。依据 DOT 停机坪延误规则(14 CFR Part 259),除安全/安保或空管例外情形外,国内航班不得让飞机在停机坪停留超过 3 小时(国际航班 4 小时)而不允许乘客下机。航空公司还须在 2 小时内提供食物和饮水,并维持可用洗手间及必要的医疗援助。违规可被 DOT 处以每位乘客最高 27,500 美元的罚款。",
+          "hi": "Fabric IQ operational ontology के अनुसार सबसे ज़्यादा लंबी देरी वाला airport Chicago O'Hare International (ORD) था — 2015 dataset में 8,134 flights 2 घंटे से अधिक देरी से। DOT tarmac delay नियम (14 CFR Part 259) के तहत, safety/security या ATC अपवादों को छोड़कर, domestic flights चलाने वाली airlines विमान को passengers को deplane करने की अनुमति दिए बिना 3 घंटे (international flights के लिए 4 घंटे) से अधिक tarmac पर नहीं रख सकतीं। Airlines को 2 घंटे के भीतर food और water भी देना होता है और operable lavatories तथा ज़रूरत पड़ने पर medical attention बनाए रखनी होती है। उल्लंघन पर DOT प्रति passenger $27,500 तक जुर्माना लगा सकता है।"
         },
-        "list": [
-          "Blue Ridge Air (AL000004)",
-          "Contoso Air (AL000005)",
-          "Fabrikam Jet (AL000002)",
-          "Northwind Airlines (AL000001)",
-          "Pacific Skies (AL000003)"
+        "citations": [
+          { "label": "Ontology query", "detail": "ORD · 8,134 flights delayed >2h · 2015", "source": "fabricIQ" },
+          { "label": "DOT Tarmac Delay Rule", "detail": "3h domestic / 4h international deplaning limit", "source": "searchIndex" },
+          { "label": "Service requirements", "detail": "Food & water within 2h · fines up to $27,500/passenger", "source": "searchIndex" }
         ],
-        "source": "Fabric IQ ontology · live query · 1.9s · ⭐ first 5/7/2026 trace"
+        "source": "Fabric IQ ontology + DOT regulation index · semantic JOIN"
       },
-      "kql": "airlines | project airline_id, name | order by name asc",
+      "kql": "flights\n| where delay_minutes > 120\n| summarize delays=count() by origin_airport\n| order by delays desc\n| take 1",
       "trace": [
-        {
-          "stage": "modelQueryPlanning",
-          "ms": 180
-        },
-        {
-          "stage": "fabricIQ",
-          "ms": 1200
-        },
-        {
-          "stage": "modelAnswerSynthesis",
-          "ms": 520
-        }
+        { "stage": "modelQueryPlanning", "ms": 1120 },
+        { "stage": "fabricIQ", "ms": 840 },
+        { "stage": "searchIndex", "ms": 470 },
+        { "stage": "modelAnswerSynthesis", "ms": 2090 }
       ],
-      "elapsedMs": 1900,
-      "rawJson": "{\n  \"ref_id\": 0,\n  \"content\": \"5 airlines in the ontology.\",\n  \"rows\": [\n    { \"airline_id\": \"AL000001\", \"name\": \"Northwind Airlines\" },\n    { \"airline_id\": \"AL000002\", \"name\": \"Fabrikam Jet\" },\n    { \"airline_id\": \"AL000003\", \"name\": \"Pacific Skies\" },\n    { \"airline_id\": \"AL000004\", \"name\": \"Blue Ridge Air\" },\n    { \"airline_id\": \"AL000005\", \"name\": \"Contoso Air\" }\n  ]\n}"
+      "elapsedMs": 4520,
+      "rawJson": "{\n  \"response\": [{ \"role\": \"assistant\", \"content\": [{ \"type\": \"text\", \"text\": \"Chicago O'Hare (ORD) had the most flights delayed over 2 hours (8,134 in 2015). DOT tarmac delay rule: deplane within 3h domestic / 4h international; food & water within 2h.\" }] }],\n  \"activity\": [\n    { \"type\": \"AzureSearchKnowledgeSourceQuery\", \"knowledgeSourceName\": \"unified-airline-source\", \"elapsedMs\": 840 },\n    { \"type\": \"ModelQueryPlanning\", \"elapsedMs\": 1120 },\n    { \"type\": \"ModelAnswerGeneration\", \"elapsedMs\": 2090 }\n  ],\n  \"references\": [\n    { \"type\": \"AzureSearchDoc\", \"id\": \"fabric:airport-delay-aggregate\", \"sourceData\": { \"summary\": \"Airport ranking · delay >2h\", \"airport\": \"ORD\", \"row_count\": 8134 } },\n    { \"type\": \"AzureSearchDoc\", \"id\": \"doc:dot-tarmac-delay-rule\", \"sourceData\": { \"title\": \"DOT Tarmac Delay Rule (14 CFR Part 259)\", \"snippet\": \"Carriers must provide an opportunity to deplane after 3 hours (domestic) or 4 hours (international).\" } }\n  ]\n}"
     }
   ]
 }

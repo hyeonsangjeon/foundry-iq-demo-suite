@@ -21,8 +21,12 @@ type QueryInputProps = {
   loading: boolean
 }
 
-const SEMANTIC_JOIN_QUERY_ID = 'q6-semantic-join-dot-compensation'
-const FIRST_TRACE_QUERY_ID = 'q5-list-airlines'
+const SEMANTIC_JOIN_QUERY_IDS = new Set([
+  'sj-jfk-dot-compensation',
+  'sj-airline-refund',
+  'sj-tarmac-rules',
+])
+const FIRST_TRACE_QUERY_ID = 'ont-list-airlines'
 
 function formatCompactCount(value: number | null | undefined) {
   if (typeof value !== 'number') return '0'
@@ -143,7 +147,7 @@ export function QueryInput({ locale, onSuggestionClick, loading }: QueryInputPro
         </p>
         <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
           {sampleQueries.queries.map((query, index) => {
-            const isSemanticJoin = query.id === SEMANTIC_JOIN_QUERY_ID
+            const isSemanticJoin = SEMANTIC_JOIN_QUERY_IDS.has(query.id)
             const isFirstTrace = query.id === FIRST_TRACE_QUERY_ID
             const SourceIcon = isSemanticJoin ? Network : Database
 
