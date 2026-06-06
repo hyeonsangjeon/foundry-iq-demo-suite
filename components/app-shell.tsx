@@ -16,6 +16,7 @@ import {
   People20Regular,
   Home20Regular,
   DocumentMultiple20Regular,
+  BookOpen20Regular,
   ArrowJoin20Regular,
   BranchForkLink20Regular,
 } from '@fluentui/react-icons'
@@ -38,6 +39,7 @@ const navigation: NavItem[] = [
   { href: '/test', labelKey: 'foundryIQ', icon: Search20Regular },
   { href: '/knowledge', labelKey: 'knowledge', icon: Database20Regular },
   { href: '/sharepoint', labelKey: 'sharepoint', icon: DocumentMultiple20Regular },
+  { href: '/guides', labelKey: 'guides', icon: BookOpen20Regular },
   { href: '/semantic-join', labelKey: 'semanticJoin', icon: ArrowJoin20Regular },
   { href: '/fabric-iq-ks', labelKey: 'fabricIqKs', icon: BranchForkLink20Regular },
 ]
