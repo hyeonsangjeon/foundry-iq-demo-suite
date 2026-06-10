@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430" role="img" aria-labelledby="title desc">
+  <title id="title">Foundry IQ retrieval workflow</title>
+  <desc id="desc">A six-step workflow from a user question to routed knowledge sources, citations, and answer synthesis.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#08111f"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#38bdf8"/>
+    </marker>
+    <style>
+      .title { font: 700 30px Arial, sans-serif; fill: #f8fafc; }
+      .subtitle { font: 400 15px Arial, sans-serif; fill: #cbd5e1; }
+      .step { fill: #101c31; stroke: #334155; stroke-width: 1.2; rx: 18; }
+      .hot { fill: #0d2b42; stroke: #38bdf8; stroke-width: 1.5; rx: 18; }
+      .num { font: 700 15px Arial, sans-serif; fill: #67e8f9; }
+      .label { font: 700 17px Arial, sans-serif; fill: #f8fafc; }
+      .body { font: 400 12.5px Arial, sans-serif; fill: #cbd5e1; }
+      .line { stroke: #38bdf8; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #64748b; stroke-width: 1.4; fill: none; stroke-dasharray: 5 7; }
+    </style>
+  </defs>
+  <rect width="1200" height="430" fill="url(#bg)"/>
+  <text x="54" y="64" class="title">Runtime Workflow</text>
+  <text x="54" y="94" class="subtitle">The demo shows how one question becomes a grounded, cited response across indexed and live knowledge sources.</text>
+
+  <rect x="54" y="155" width="160" height="135" class="step"/>
+  <text x="78" y="190" class="num">01</text>
+  <text x="78" y="220" class="label">Ask</text>
+  <text x="78" y="248" class="body">User asks a business</text>
+  <text x="78" y="268" class="body">question in the app.</text>
+
+  <rect x="254" y="155" width="160" height="135" class="hot"/>
+  <text x="278" y="190" class="num">02</text>
+  <text x="278" y="220" class="label">Plan</text>
+  <text x="278" y="248" class="body">Azure AI Search</text>
+  <text x="278" y="268" class="body">builds a retrieval plan.</text>
+
+  <rect x="454" y="155" width="160" height="135" class="step"/>
+  <text x="478" y="190" class="num">03</text>
+  <text x="478" y="220" class="label">Route</text>
+  <text x="478" y="248" class="body">The KB chooses the</text>
+  <text x="478" y="268" class="body">right Knowledge Sources.</text>
+
+  <rect x="654" y="155" width="160" height="135" class="step"/>
+  <text x="678" y="190" class="num">04</text>
+  <text x="678" y="220" class="label">Retrieve</text>
+  <text x="678" y="248" class="body">Search indexes, Fabric IQ,</text>
+  <text x="678" y="268" class="body">SharePoint, or MCP return data.</text>
+
+  <rect x="854" y="155" width="160" height="135" class="hot"/>
+  <text x="878" y="190" class="num">05</text>
+  <text x="878" y="220" class="label">Synthesize</text>
+  <text x="878" y="248" class="body">Azure OpenAI produces</text>
+  <text x="878" y="268" class="body">a grounded answer.</text>
+
+  <rect x="1054" y="155" width="110" height="135" class="step"/>
+  <text x="1078" y="190" class="num">06</text>
+  <text x="1078" y="220" class="label">Trace</text>
+  <text x="1078" y="248" class="body">Show citations</text>
+  <text x="1078" y="268" class="body">and source data.</text>
+
+  <path d="M214 222 H252" class="line"/>
+  <path d="M414 222 H452" class="line"/>
+  <path d="M614 222 H652" class="line"/>
+  <path d="M814 222 H852" class="line"/>
+  <path d="M1014 222 H1052" class="line"/>
+
+  <path d="M534 308 C534 355 854 355 934 308" class="dash"/>
+  <text x="612" y="374" class="subtitle">Semantic JOIN: combine structured metrics with unstructured policy documents in one answer.</text>
+</svg>
