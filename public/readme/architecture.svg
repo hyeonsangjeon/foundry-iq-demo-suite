@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">Foundry IQ Demo Suite architecture</title>
+  <desc id="desc">A reference architecture showing Next.js, Azure AI Search knowledge bases, Azure OpenAI, and multiple knowledge sources.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0b1226"/>
+      <stop offset="52%" stop-color="#101b36"/>
+      <stop offset="100%" stop-color="#071827"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#020617" flood-opacity="0.45"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2 2 L10 6 L2 10 Z" fill="#67e8f9"/>
+    </marker>
+    <style>
+      .title { font: 700 32px Arial, sans-serif; fill: #f8fafc; }
+      .subtitle { font: 400 16px Arial, sans-serif; fill: #cbd5e1; }
+      .label { font: 700 17px Arial, sans-serif; fill: #f8fafc; }
+      .small { font: 400 13px Arial, sans-serif; fill: #cbd5e1; }
+      .tiny { font: 700 11px Arial, sans-serif; fill: #67e8f9; letter-spacing: 1.4px; }
+      .box { fill: #111c33; stroke: #334155; stroke-width: 1.3; rx: 18; filter: url(#shadow); }
+      .source { fill: #0f172a; stroke: #31516c; stroke-width: 1.1; rx: 14; }
+      .core { fill: #10243d; stroke: #38bdf8; stroke-width: 1.4; rx: 18; filter: url(#shadow); }
+      .line { stroke: #67e8f9; stroke-width: 2.2; fill: none; marker-end: url(#arrow); opacity: 0.9; }
+      .mutedline { stroke: #64748b; stroke-width: 1.5; fill: none; marker-end: url(#arrow); opacity: 0.7; }
+      .pill { fill: #082f49; stroke: #0ea5e9; stroke-width: 1; rx: 14; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="620" fill="url(#bg)"/>
+  <circle cx="1030" cy="120" r="230" fill="#0ea5e9" opacity="0.08"/>
+  <circle cx="170" cy="520" r="260" fill="#22d3ee" opacity="0.06"/>
+
+  <text x="60" y="70" class="title">Foundry IQ Demo Suite</text>
+  <text x="60" y="102" class="subtitle">A deployable reference app for agentic retrieval, Knowledge Sources, and multi-source reasoning.</text>
+
+  <rect x="60" y="165" width="260" height="150" class="box"/>
+  <text x="88" y="207" class="tiny">EXPERIENCE</text>
+  <text x="88" y="236" class="label">Next.js Demo Studio</text>
+  <text x="88" y="265" class="small">Playground, guides, live demos,</text>
+  <text x="88" y="286" class="small">citations, traces, and setup scripts</text>
+
+  <rect x="470" y="150" width="270" height="180" class="core"/>
+  <text x="500" y="194" class="tiny">ORCHESTRATION</text>
+  <text x="500" y="225" class="label">Azure AI Search</text>
+  <text x="500" y="250" class="small">Knowledge Bases + Retrieve API</text>
+  <text x="500" y="276" class="small">Agentic retrieval plans, routes,</text>
+  <text x="500" y="297" class="small">reranks, and returns references</text>
+
+  <rect x="890" y="165" width="250" height="150" class="box"/>
+  <text x="918" y="207" class="tiny">SYNTHESIS</text>
+  <text x="918" y="236" class="label">Azure OpenAI</text>
+  <text x="918" y="265" class="small">Answer synthesis over retrieved</text>
+  <text x="918" y="286" class="small">source data and citations</text>
+
+  <path d="M322 240 C370 240 410 240 468 240" class="line"/>
+  <path d="M742 240 C790 240 830 240 888 240" class="line"/>
+
+  <rect x="80" y="415" width="190" height="95" class="source"/>
+  <text x="104" y="452" class="label">Search Index</text>
+  <text x="104" y="478" class="small">Existing indexed data</text>
+
+  <rect x="310" y="415" width="190" height="95" class="source"/>
+  <text x="334" y="452" class="label">SharePoint</text>
+  <text x="334" y="478" class="small">Indexed collaboration docs</text>
+
+  <rect x="540" y="415" width="190" height="95" class="source"/>
+  <text x="564" y="452" class="label">Fabric IQ</text>
+  <text x="564" y="478" class="small">Live ontology queries</text>
+
+  <rect x="770" y="415" width="190" height="95" class="source"/>
+  <text x="794" y="452" class="label">MCP Server</text>
+  <text x="794" y="478" class="small">Remote tools at query time</text>
+
+  <rect x="1000" y="415" width="140" height="95" class="source"/>
+  <text x="1024" y="452" class="label">Blob/Web</text>
+  <text x="1024" y="478" class="small">PDF, JSON, HTML</text>
+
+  <path d="M175 414 C260 350 400 330 535 318" class="mutedline"/>
+  <path d="M405 414 C445 355 515 340 575 329" class="mutedline"/>
+  <path d="M635 414 C630 370 620 350 612 331" class="mutedline"/>
+  <path d="M865 414 C800 360 735 340 674 326" class="mutedline"/>
+  <path d="M1068 414 C930 350 780 330 680 318" class="mutedline"/>
+
+  <rect x="470" y="350" width="270" height="42" class="pill"/>
+  <text x="496" y="376" class="small">Knowledge Sources plug into one KB</text>
+
+  <text x="60" y="575" class="small">Built to show real Azure AI Search Knowledge Base workflows with working routes, guides, and smoke tests.</text>
+</svg>
