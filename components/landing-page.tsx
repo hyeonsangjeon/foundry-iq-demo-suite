@@ -17,6 +17,7 @@ import { getLocale, type Locale } from '@/lib/i18n'
 import { t } from '@/lib/i18n/translations'
 import { ModeToggle, type ViewMode } from '@/components/mode-toggle'
 import { FabricIqKsCard } from '@/components/fabric-iq-ks/fabric-iq-ks-card'
+import { McpKsCard } from '@/components/mcp-ks/mcp-ks-card'
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -463,6 +464,7 @@ export function LandingPage() {
         <SharePointDemoCard locale={locale} isExec={isExec} />
         <FabricIqDemoCard locale={locale} isExec={isExec} />
         <FabricIqKsCard locale={locale} />
+        <McpKsCard locale={locale} />
         <ComingSoonCards />
 
         {/* Architecture link */}

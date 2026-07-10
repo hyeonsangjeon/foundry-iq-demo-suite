@@ -71,7 +71,7 @@ export function ArchitectureDiagram() {
       <g>
         <rect x={40} y={100} width={600} height={44} rx={8} fill="rgba(255,255,255,0.04)" stroke="rgba(251,191,36,0.35)" strokeWidth={1} />
         <text x={340} y={122} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.85)" style={{ fontSize: 14, fontWeight: 500 }}>
-          Landing page — 3 demo cards
+          Landing page — core demo journeys
         </text>
       </g>
 

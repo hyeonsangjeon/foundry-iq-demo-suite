@@ -1,9 +1,9 @@
 'use client'
 
 /**
- * Architecture diagram V2 — Phase 4 TO-BE
+ * Architecture diagram V2 — Phase 4 public preview
  *
- * v1 (today, file indexing) vs v2 (coming, native Ontology KS) side-by-side.
+ * v1 (file indexing) vs v2 (public preview, native Ontology KS) side-by-side.
  * Same design system as architecture-diagram.tsx (dark-first glass morphism).
  *
  * Color coding:
@@ -23,10 +23,10 @@ export function ArchitectureDiagramV2() {
       role="img"
       aria-labelledby="arch-v2-title arch-v2-desc"
     >
-      <title id="arch-v2-title">Phase 4 architecture — v1 vs v2 side-by-side comparison</title>
+      <title id="arch-v2-title">Phase 4 architecture - indexed vs native ontology comparison</title>
       <desc id="arch-v2-desc">
         Two-column diagram comparing today&apos;s file-indexing pipeline (v1, LIVE) on the left
-        with the upcoming native Fabric IQ Knowledge Source integration (v2, PREVIEW) on the right.
+        with the public-preview native Fabric IQ Knowledge Source integration on the right.
         v2 removes Spark SQL aggregation, JSON snapshots, and the OneLake indexer in favor of
         a direct Ontology binding via Fabric Data Agent for real-time natural-language to SQL.
       </desc>
@@ -75,7 +75,7 @@ export function ArchitectureDiagramV2() {
       <g>
         <rect x={40} y={50} width={720} height={40} rx={8} fill="rgba(255,255,255,0.04)" stroke="rgba(251,191,36,0.35)" strokeWidth={1} />
         <text x={400} y={70} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.9)" style={{ fontSize: 15, fontWeight: 600 }}>
-          Phase 3 — Fabric + Foundry Integration Evolution
+          Phase 4 — Fabric + Foundry Integration Evolution
         </text>
       </g>
 
@@ -96,7 +96,7 @@ export function ArchitectureDiagramV2() {
       <g>
         <rect x={410} y={100} width={350} height={40} rx={8} fill="rgba(255,255,255,0.04)" stroke="rgba(240,112,112,0.5)" strokeWidth={1.5} />
         <text x={585} y={120} textAnchor="middle" dominantBaseline="central" fill="rgba(255,255,255,0.9)" style={{ fontSize: 14, fontWeight: 500 }}>
-          v2 — Coming (native Ontology)
+          v2 — Public preview (native Ontology)
         </text>
         <rect x={420} y={108} width={64} height={16} rx={8} fill="rgba(240,112,112,0.15)" stroke="rgba(240,112,112,0.6)" strokeWidth={0.8} />
         <text x={452} y={118} textAnchor="middle" dominantBaseline="central" fill="#f7a8a8" style={{ fontSize: 10, fontWeight: 600 }}>
