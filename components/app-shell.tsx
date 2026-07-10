@@ -19,6 +19,7 @@ import {
   BookOpen20Regular,
   ArrowJoin20Regular,
   BranchForkLink20Regular,
+  PlugConnected20Regular,
 } from '@fluentui/react-icons'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -41,6 +42,7 @@ const navigation: NavItem[] = [
   { href: '/sharepoint', labelKey: 'sharepoint', icon: DocumentMultiple20Regular },
   { href: '/guides', labelKey: 'guides', icon: BookOpen20Regular },
   { href: '/semantic-join', labelKey: 'semanticJoin', icon: ArrowJoin20Regular },
+  { href: '/mcp-ks', labelKey: 'mcpKs', icon: PlugConnected20Regular },
   { href: '/fabric-iq-ks', labelKey: 'fabricIqKs', icon: BranchForkLink20Regular },
 ]
 
@@ -204,7 +206,7 @@ function Header({ onMenuClick, showSidebar, locale }: HeaderProps) {
 
           <Tooltip content="View on GitHub">
             <a
-              href="https://github.com/hyeonsangjeon/private-foundry-iq-task"
+              href="https://github.com/hyeonsangjeon/foundry-iq-demo-suite"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 rounded-full px-2 sm:px-3 py-1.5 text-sm font-medium text-fg-muted transition-colors duration-fast hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-stroke-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas"

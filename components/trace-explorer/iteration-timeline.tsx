@@ -1,5 +1,10 @@
-import { TraceIteration } from '@/lib/trace/transform'
-import { getPhaseInfo, formatElapsedTime, formatTokenCount } from '@/lib/trace/transform'
+import {
+  TraceIteration,
+  formatElapsedTime,
+  formatTokenCount,
+  getActivityQuery,
+  getPhaseInfo,
+} from '@/lib/trace/transform'
 import { SourceKindIcon } from '@/components/source-kind-icon'
 import { cn } from '@/lib/utils'
 import { isRetrievalActivity } from '@/types/knowledge-retrieval'
@@ -53,13 +58,7 @@ export function IterationTimeline({ iterations, className }: IterationTimelinePr
                   {iteration.retrievalActivities.map((activity) => {
                     if (!isRetrievalActivity(activity)) return null
                     
-                    const query = 
-                      (activity as any).searchIndexArguments?.search ||
-                      (activity as any).azureBlobArguments?.search ||
-                      (activity as any).remoteSharePointArguments?.search ||
-                      (activity as any).webArguments?.search ||
-                      (activity as any).indexedOneLakeArguments?.search ||
-                      ''
+                    const query = getActivityQuery(activity) || ''
 
                     return (
                       <RetrievalCard

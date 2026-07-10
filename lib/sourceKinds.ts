@@ -4,7 +4,8 @@ export enum SourceKind {
   Web = 'web',
   IndexedOneLake = 'indexedOneLake',
   RemoteSharePoint = 'remoteSharePoint',
-  IndexedSharePoint = 'indexedSharePoint'
+  IndexedSharePoint = 'indexedSharePoint',
+  McpServer = 'mcpServer'
 }
 
 export const SOURCE_KIND_LABEL: Record<SourceKind, string> = {
@@ -13,7 +14,8 @@ export const SOURCE_KIND_LABEL: Record<SourceKind, string> = {
   [SourceKind.Web]: 'Web',
   [SourceKind.IndexedOneLake]: 'Microsoft OneLake',
   [SourceKind.RemoteSharePoint]: 'SharePoint (Remote)',
-  [SourceKind.IndexedSharePoint]: 'SharePoint (Indexed)'
+  [SourceKind.IndexedSharePoint]: 'SharePoint (Indexed)',
+  [SourceKind.McpServer]: 'MCP Server'
 }
 
 export const SOURCE_KIND_ICON_PATH: Record<SourceKind, string> = {
@@ -22,7 +24,8 @@ export const SOURCE_KIND_ICON_PATH: Record<SourceKind, string> = {
   [SourceKind.Web]: '/icons/web.svg',
   [SourceKind.IndexedOneLake]: '/icons/onelake-color.svg',
   [SourceKind.RemoteSharePoint]: '/icons/sharepoint.svg',
-  [SourceKind.IndexedSharePoint]: '/icons/sharepoint.svg'
+  [SourceKind.IndexedSharePoint]: '/icons/sharepoint.svg',
+  [SourceKind.McpServer]: '/icons/mcp.svg'
 }
 
 export type SourceDetail = { name: string; kind: SourceKind }
@@ -47,7 +50,8 @@ export function aggregateKinds(details: SourceDetail[] | undefined) {
     [SourceKind.Web]: 0,
     [SourceKind.IndexedOneLake]: 0,
     [SourceKind.RemoteSharePoint]: 0,
-    [SourceKind.IndexedSharePoint]: 0
+    [SourceKind.IndexedSharePoint]: 0,
+    [SourceKind.McpServer]: 0
   }
   if (!details) return counts
   for (const d of details) {
@@ -208,6 +212,8 @@ export function getRuntimeProperties(kind: string): PropertyConfig[] {
       // These kinds only have base properties
       return properties
     
+    case 'mcpserver':
+    case SourceKind.McpServer:
     case 'mcptool':
       // MCP tools have base properties + custom headers
       return properties

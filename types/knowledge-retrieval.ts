@@ -1,6 +1,6 @@
 /**
  * Azure AI Search Knowledge Retrieval API Response Contracts
- * API Version: 2025-11-01-preview
+ * API Versions: 2025-11-01-preview and 2026-05-01-preview
  * 
  * Complete TypeScript definitions for Knowledge Retrieval responses,
  * including all supported knowledge source types and their respective activity records.
@@ -116,6 +116,14 @@ export interface KnowledgeBaseIndexedOneLakeActivityRecord extends BaseKnowledge
   }
 }
 
+export interface KnowledgeBaseMcpServerActivityRecord extends BaseKnowledgeBaseRetrievalActivityRecord {
+  type: 'mcpServer'
+  mcpServerArguments: {
+    toolName: string
+    toolArguments: Record<string, unknown>
+  }
+}
+
 // ============================================================================
 // ACTIVITY RECORDS - MODEL & PROCESSING ACTIVITIES
 // ============================================================================
@@ -147,6 +155,7 @@ export type KnowledgeBaseActivityRecord =
   | KnowledgeBaseRemoteSharePointActivityRecord
   | KnowledgeBaseIndexedSharePointActivityRecord
   | KnowledgeBaseIndexedOneLakeActivityRecord
+  | KnowledgeBaseMcpServerActivityRecord
   | KnowledgeBaseModelQueryPlanningActivityRecord
   | KnowledgeBaseModelAnswerSynthesisActivityRecord
   | KnowledgeBaseAgenticReasoningActivityRecord
@@ -214,6 +223,13 @@ export interface KnowledgeBaseIndexedOneLakeReference extends BaseKnowledgeBaseR
   sourceData?: Record<string, any> | null
 }
 
+export interface KnowledgeBaseMcpServerReference extends BaseKnowledgeBaseReference {
+  type: 'mcpServer'
+  toolName?: string
+  title?: string
+  sourceData?: Record<string, any> | null
+}
+
 export type KnowledgeBaseReference =
   | KnowledgeBaseSearchIndexReference
   | KnowledgeBaseAzureBlobReference
@@ -221,6 +237,7 @@ export type KnowledgeBaseReference =
   | KnowledgeBaseRemoteSharePointReference
   | KnowledgeBaseIndexedSharePointReference
   | KnowledgeBaseIndexedOneLakeReference
+  | KnowledgeBaseMcpServerReference
 
 // ============================================================================
 // TYPE GUARDS
@@ -250,6 +267,10 @@ export function isIndexedOneLakeReference(ref: KnowledgeBaseReference): ref is K
   return ref.type === 'indexedOneLake'
 }
 
+export function isMcpServerReference(ref: KnowledgeBaseReference): ref is KnowledgeBaseMcpServerReference {
+  return ref.type === 'mcpServer'
+}
+
 // ============================================================================
 // UTILITY TYPES
 // ============================================================================
@@ -261,9 +282,10 @@ export type RetrievalActivityRecord =
   | KnowledgeBaseRemoteSharePointActivityRecord
   | KnowledgeBaseIndexedSharePointActivityRecord
   | KnowledgeBaseIndexedOneLakeActivityRecord
+  | KnowledgeBaseMcpServerActivityRecord
 
 export function isRetrievalActivity(activity: KnowledgeBaseActivityRecord): activity is RetrievalActivityRecord {
-  return ['searchIndex', 'azureBlob', 'web', 'remoteSharePoint', 'indexedSharePoint', 'indexedOneLake'].includes(activity.type)
+  return ['searchIndex', 'azureBlob', 'web', 'remoteSharePoint', 'indexedSharePoint', 'indexedOneLake', 'mcpServer'].includes(activity.type)
 }
 
 export function isModelActivity(activity: KnowledgeBaseActivityRecord): activity is 

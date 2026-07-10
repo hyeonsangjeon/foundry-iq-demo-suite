@@ -193,6 +193,7 @@ export function getSourceTypeLabel(type: string): string {
     remoteSharePoint: 'SharePoint (Remote)',
     indexedSharePoint: 'SharePoint (Indexed)',
     indexedOneLake: 'OneLake',
+    mcpServer: 'MCP Server',
     mcpTool: 'MCP Tool'
   }
   return labels[type] || 'Other'
@@ -237,6 +238,11 @@ export function getPhaseInfo(type: string): { label: string; tone: string; descr
       label: 'OneLake Search',
       tone: 'retrieval',
       description: 'Searches indexed OneLake content'
+    },
+    mcpServer: {
+      label: 'MCP Tool Call',
+      tone: 'retrieval',
+      description: 'Calls a remote MCP tool and reranks its live results'
     },
     agenticReasoning: {
       label: 'Result Assessment',
@@ -292,6 +298,8 @@ export function getActivityQuery(activity: KnowledgeBaseActivityRecord): string 
       return (activity as any).indexedSharePointArguments?.search || null
     case 'indexedOneLake':
       return (activity as any).indexedOneLakeArguments?.search || null
+    case 'mcpServer':
+      return (activity as any).mcpServerArguments?.toolArguments?.query || null
     default:
       return null
   }
