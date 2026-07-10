@@ -7,10 +7,11 @@ import { liveKnowledgeSourcesI18n } from '@/lib/i18n/live-knowledge-sources'
 import type { Locale } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
+const OFFICIAL_MANUAL = 'https://microsoft.github.io/azure-ai-search-foundry-iq-live-knowledge-sources/'
 const OFFICIAL_REPO = 'https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources'
-const MCP_GUIDE = `${OFFICIAL_REPO}/blob/main/docs/03-mcp-server-ks.md`
-const FABRIC_GUIDE = `${OFFICIAL_REPO}/blob/main/docs/04-fabric-ontology-ks.md`
-const COMBINED_GUIDE = `${OFFICIAL_REPO}/blob/main/docs/05-combined-kb-routing.md`
+const MCP_GUIDE = `${OFFICIAL_MANUAL}03-mcp-server-ks/`
+const FABRIC_GUIDE = `${OFFICIAL_MANUAL}04-fabric-ontology-ks/`
+const COMBINED_GUIDE = `${OFFICIAL_MANUAL}05-combined-kb-routing/`
 
 interface LiveKnowledgeSourcesReferenceProps {
   locale: Locale
@@ -39,7 +40,7 @@ export function LiveKnowledgeSourcesReference({
       <div className="grid lg:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
         <div className="p-5 sm:p-6">
           <div className="flex items-center gap-2 text-accent">
-            <Github className="h-4 w-4" aria-hidden="true" />
+            <BookOpen className="h-4 w-4" aria-hidden="true" />
             <p className="text-[11px] font-semibold uppercase">{copy.eyebrow}</p>
           </div>
           <h2
@@ -67,10 +68,11 @@ export function LiveKnowledgeSourcesReference({
       </div>
 
       <div className="flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-stroke-divider px-5 py-4 sm:px-6">
-        <ReferenceLink href={OFFICIAL_REPO} label={copy.officialRepo} icon={Github} primary />
+        <ReferenceLink href={OFFICIAL_MANUAL} label={copy.officialManual} icon={BookOpen} primary />
         <ReferenceLink href={focusedGuide.href} label={focusedGuide.label} icon={BookOpen} />
         <ReferenceLink href={secondaryGuide.href} label={secondaryGuide.label} icon={BookOpen} />
         <ReferenceLink href={COMBINED_GUIDE} label={copy.combinedGuide} icon={Route} />
+        <ReferenceLink href={OFFICIAL_REPO} label={copy.officialRepo} icon={Github} />
       </div>
     </section>
   )

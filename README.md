@@ -44,19 +44,19 @@ It is built to be shown live, forked locally, and reused as a practical referenc
 
 ## Live Knowledge Sources: Demo Here, Deploy from Microsoft
 
-This suite is the visual, localized demo companion for MCP Server and Fabric Ontology Knowledge Sources. For a runnable end-to-end environment, use the official Microsoft accelerator:
+This suite is the visual, localized demo companion for MCP Server and Fabric Ontology Knowledge Sources. For a runnable end-to-end environment, start with Microsoft's official execution manual:
 
-**[microsoft/azure-ai-search-foundry-iq-live-knowledge-sources](https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources)**
+**[Live Knowledge Sources Manual](https://microsoft.github.io/azure-ai-search-foundry-iq-live-knowledge-sources/)**
 
-The Microsoft repository owns the deployment path: one-command setup, notebooks, REST requests, offline responses, environment checks, cleanup scripts, and the latest public-preview constraints. It also demonstrates one Knowledge Base routing across both live source types while returning inspectable `activity`, `references`, and `sourceData`.
+The Microsoft manual and [source repository](https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources) own the deployment path: one-command setup, notebooks, REST requests, offline responses, environment checks, cleanup scripts, and the latest public-preview constraints. They also demonstrate one Knowledge Base routing across both live source types while returning inspectable `activity`, `references`, and `sourceData`.
 
 | What you want to run | Official path | Use it for |
 | --- | --- | --- |
-| Choose the right starting mode | [Choose a pattern](https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources/blob/main/docs/02-choose-a-pattern.md) | Pick `mcp-only`, `byo-fabric`, or `full` based on your tenant and existing Fabric assets. |
-| Microsoft Learn over MCP | [MCP Server Knowledge Source](https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources/blob/main/docs/03-mcp-server-ks.md) | Deploy an HTTPS MCP source with an explicit tool allowlist, output parsing, and retrieval-time grounding. |
-| Fabric IQ business semantics | [Fabric Ontology Knowledge Source](https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources/blob/main/docs/04-fabric-ontology-ks.md) | Connect a same-tenant Fabric workspace and ontology with end-user query-source authorization. |
-| One KB across MCP + Fabric | [Combined Knowledge Base routing](https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources/blob/main/docs/05-combined-kb-routing.md) | Route a question to fresh documentation, ontology-backed operational facts, or both. |
-| Preview readiness and caveats | [Public-preview limitations](https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources/blob/main/docs/13-public-preview-limitations.md) | Check runtime, identity, quota, region, and service limitations before a customer demo. |
+| Choose the right starting mode | [Choose a pattern](https://microsoft.github.io/azure-ai-search-foundry-iq-live-knowledge-sources/02-choose-a-pattern/) | Pick `mcp-only`, `byo-fabric`, or `full` based on your tenant and existing Fabric assets. |
+| Microsoft Learn over MCP | [MCP Server Knowledge Source](https://microsoft.github.io/azure-ai-search-foundry-iq-live-knowledge-sources/03-mcp-server-ks/) | Deploy an HTTPS MCP source with an explicit tool allowlist, output parsing, and retrieval-time grounding. |
+| Fabric IQ business semantics | [Fabric Ontology Knowledge Source](https://microsoft.github.io/azure-ai-search-foundry-iq-live-knowledge-sources/04-fabric-ontology-ks/) | Connect a same-tenant Fabric workspace and ontology with end-user query-source authorization. |
+| One KB across MCP + Fabric | [Combined Knowledge Base routing](https://microsoft.github.io/azure-ai-search-foundry-iq-live-knowledge-sources/05-combined-kb-routing/) | Route a question to fresh documentation, ontology-backed operational facts, or both. |
+| Preview readiness and caveats | [Public-preview limitations](https://microsoft.github.io/azure-ai-search-foundry-iq-live-knowledge-sources/13-public-preview-limitations/) | Check runtime, identity, quota, region, and service limitations before a customer demo. |
 
 Start with `mcp-only` for the fastest live deployment. Choose `byo-fabric` when the workspace and ontology already exist. Use `full` for a greenfield environment after checking quota, identity, and regional readiness. The official repo also includes a roughly 30-second offline replay path when Azure credentials are not available.
 
@@ -287,9 +287,11 @@ public/readme/             # README screenshots and diagrams
 
 ## Official Accelerator and Microsoft Docs
 
-- [Microsoft live Knowledge Sources accelerator](https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources)
-- [Accelerator notebooks](https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources/tree/main/notebooks)
-- [Accelerator REST samples](https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources/tree/main/samples/rest)
+- [Live Knowledge Sources execution manual](https://microsoft.github.io/azure-ai-search-foundry-iq-live-knowledge-sources/)
+- [Manual runbook](https://microsoft.github.io/azure-ai-search-foundry-iq-live-knowledge-sources/runbook/)
+- [Notebook samples](https://microsoft.github.io/azure-ai-search-foundry-iq-live-knowledge-sources/samples/notebooks/)
+- [REST samples](https://microsoft.github.io/azure-ai-search-foundry-iq-live-knowledge-sources/samples/rest/)
+- [Microsoft live Knowledge Sources source repository](https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources)
 - [Azure AI Search knowledge bases](https://learn.microsoft.com/rest/api/searchservice/knowledge-bases)
 - [Create a Fabric Ontology knowledge source](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-fabric-ontology)
 - [Create an MCP Server knowledge source](https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-mcp-server)

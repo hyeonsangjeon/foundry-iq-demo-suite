@@ -605,7 +605,7 @@ function Configuration({
           <h2 className="text-sm font-semibold text-fg-default">{copy.sourceMaterial}</h2>
           <div className="mt-4 space-y-3">
             <ResourceLink
-              href="https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources"
+              href="https://microsoft.github.io/azure-ai-search-foundry-iq-live-knowledge-sources/03-mcp-server-ks/"
               title={copy.resourceMcpTitle}
               meta={copy.resourceMcpMeta}
             />

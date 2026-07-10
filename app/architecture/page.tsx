@@ -105,10 +105,10 @@ export default function ArchitecturePage() {
             description="Business-semantic grounding"
           />
           <ArchitectureLink
-            href="https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources"
+            href="https://microsoft.github.io/azure-ai-search-foundry-iq-live-knowledge-sources/"
             icon={ArrowUpRight20Regular}
-            title="Microsoft accelerator"
-            description="Deploy, notebooks, and REST samples"
+            title="Official execution manual"
+            description="Runbook, deployment, and live paths"
             external
           />
         </div>
