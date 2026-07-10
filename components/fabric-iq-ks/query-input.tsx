@@ -19,6 +19,7 @@ type QueryInputProps = {
   locale: Locale
   onSuggestionClick: (queryId: string) => void
   loading: boolean
+  selectedQueryId?: string | null
 }
 
 const SEMANTIC_JOIN_QUERY_IDS = new Set([
@@ -38,7 +39,7 @@ function formatSeconds(ms: number) {
   return `${(ms / 1000).toFixed(1)}s`
 }
 
-export function QueryInput({ locale, onSuggestionClick, loading }: QueryInputProps) {
+export function QueryInput({ locale, onSuggestionClick, loading, selectedQueryId }: QueryInputProps) {
   const text = t.fabricIqKs[locale].democratization
   const flightCount = ontologyGraph.nodes.find((node) => node.id === 'Flight')?.count
   const airlineCount = ontologyGraph.nodes.find((node) => node.id === 'Airline')?.count
@@ -145,10 +146,11 @@ export function QueryInput({ locale, onSuggestionClick, loading }: QueryInputPro
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-fg-subtle">
           {text.suggestedHeading}
         </p>
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {sampleQueries.queries.map((query, index) => {
             const isSemanticJoin = SEMANTIC_JOIN_QUERY_IDS.has(query.id)
             const isFirstTrace = query.id === FIRST_TRACE_QUERY_ID
+            const isSelected = selectedQueryId === query.id
             const SourceIcon = isSemanticJoin ? Network : Database
 
             return (
@@ -156,10 +158,13 @@ export function QueryInput({ locale, onSuggestionClick, loading }: QueryInputPro
                 key={query.id}
                 type="button"
                 disabled={loading}
+                aria-pressed={isSelected}
                 onClick={() => onSuggestionClick(query.id)}
                 className={cn(
-                  'group flex min-h-[96px] flex-col justify-between rounded-xl border border-stroke-divider bg-bg-card p-3 text-left transition-all hover:border-cyan-400/50 hover:bg-bg-elevated hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60',
-                  isSemanticJoin && 'border-violet-500/30 bg-violet-500/5 hover:border-violet-400/60'
+                  'group flex min-h-[88px] flex-col justify-between rounded-lg border border-stroke-divider bg-bg-card p-4 text-left transition-all hover:border-cyan-400/50 hover:bg-bg-elevated hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-[96px] sm:p-3',
+                  isSemanticJoin && 'border-violet-500/30 bg-violet-500/5 hover:border-violet-400/60',
+                  isSelected && !isSemanticJoin && 'border-cyan-400/70 bg-cyan-500/10 ring-1 ring-inset ring-cyan-400/40',
+                  isSelected && isSemanticJoin && 'border-violet-400/70 bg-violet-500/10 ring-1 ring-inset ring-violet-400/40'
                 )}
               >
                 <span className="flex items-center justify-between gap-2">
@@ -179,7 +184,7 @@ export function QueryInput({ locale, onSuggestionClick, loading }: QueryInputPro
                   </span>
                 </span>
 
-                <span className="mt-2 line-clamp-3 text-xs font-semibold leading-snug text-fg-default">
+                <span className="mt-2 line-clamp-4 text-sm font-semibold leading-snug text-fg-default sm:line-clamp-3 sm:text-xs">
                   {query.nl[locale] ?? query.nl.en}
                 </span>
 

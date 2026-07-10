@@ -22,7 +22,7 @@ const FIELD_ANALYSIS_HREF =
 const DEMO_PACK_HREF =
   'https://github.com/hyeonsangjeon/foundry-iq-demo-suite/tree/main/docs/handson-0423/demo-pack'
 const PUBLIC_PREVIEW_GUIDE_HREF =
-  'https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-fabric-ontology'
+  'https://microsoft.github.io/azure-ai-search-foundry-iq-live-knowledge-sources/04-fabric-ontology-ks/'
 
 export function FederationFlowSection({ locale }: FederationFlowSectionProps) {
   const text = t.fabricIqKs[locale].federationFlow

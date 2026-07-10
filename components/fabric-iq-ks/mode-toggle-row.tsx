@@ -117,11 +117,11 @@ export function ModeToggleRow({
 
 function SegmentedControl({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-stroke-divider bg-bg-card p-2 shadow-xs">
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-stroke-divider bg-bg-card p-1.5 shadow-xs">
       <span className="pl-2 text-xs font-semibold uppercase tracking-[0.12em] text-fg-subtle">
         {label}
       </span>
-      <div className="flex rounded-xl bg-bg-subtle p-1">
+      <div className="flex rounded-md bg-bg-subtle p-0.5">
         {children}
       </div>
     </div>
@@ -158,6 +158,7 @@ function ToggleButton({
     <button
       type="button"
       aria-disabled={disabled || undefined}
+      aria-pressed={active}
       title={title}
       onClick={(e) => {
         if (disabled) {
@@ -168,9 +169,9 @@ function ToggleButton({
         onClick()
       }}
       className={cn(
-        'h-8 rounded-lg px-3 text-xs font-semibold transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas',
+        'h-8 rounded-md px-3 text-xs font-semibold transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas',
         active
-          ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-sm'
+          ? 'bg-emerald-500 text-white shadow-sm'
           : 'text-fg-muted hover:bg-bg-card hover:text-fg-default',
         disabled && 'cursor-not-allowed opacity-45 hover:bg-transparent hover:text-fg-muted'
       )}

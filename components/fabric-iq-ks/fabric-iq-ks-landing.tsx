@@ -18,7 +18,7 @@ export function FabricIqKsLanding() {
     <div className="relative min-h-screen text-fg-default">
       <FabricIqHero locale={locale} />
 
-      <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl px-4 pb-12 pt-5 sm:px-6 sm:pt-7 lg:px-8">
         <LiveKnowledgeSourcesReference locale={locale} focus="fabric" />
       </div>
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { ArrowUpRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 export interface CredibilityTileProps {
@@ -29,7 +30,7 @@ export function CredibilityTile({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.45, delay, ease: [0, 0, 0.2, 1] }}
-      className="group block rounded-2xl border border-stroke-divider bg-card shadow-sm p-5 md:p-6 transition-all hover:ring-2 hover:ring-emerald-500/40 hover:border-transparent hover:-translate-y-0.5"
+      className="group block rounded-lg border border-stroke-divider bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-500/40 hover:shadow-md md:p-6"
     >
       <div className="flex items-start gap-3">
         {icon ? (
@@ -41,8 +42,9 @@ export function CredibilityTile({
           <h3 className="font-semibold text-fg-default leading-tight">{title}</h3>
           <p className="text-sm text-fg-muted mt-1 leading-snug">{subtitle}</p>
           <div className="mt-4">
-            <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs md:text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-cyan-500 group-hover:from-emerald-400 group-hover:to-cyan-400 transition-colors shadow-sm">
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 group-hover:underline md:text-sm">
               {ctaLabel}
+              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
             </span>
           </div>
         </div>

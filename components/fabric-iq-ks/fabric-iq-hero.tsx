@@ -10,38 +10,38 @@ interface FabricIqHeroProps {
 
 export function FabricIqHero({ locale }: FabricIqHeroProps) {
   const text = t.fabricIqKs[locale].hero
+  const productTitle = t.fabricIqKs[locale].card.title
 
   return (
-    <section className="relative flex flex-col items-center justify-center pt-24 md:pt-28 pb-6 md:pb-8 px-6 max-w-4xl mx-auto text-center">
-      {/* Badge */}
+    <section className="relative mx-auto flex max-w-5xl flex-col items-center justify-center px-4 pb-4 pt-14 text-center sm:px-6 sm:pt-16 md:pb-6 md:pt-20">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0, ease: [0, 0, 0.2, 1] }}
-        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 text-[11px] font-semibold tracking-wide uppercase mb-6"
+        className="mb-5 flex flex-wrap items-center justify-center gap-2.5 text-[11px] font-semibold uppercase text-fg-muted"
       >
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-        <span className="bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-transparent">
+        <span>{productTitle}</span>
+        <span className="h-3 w-px bg-stroke-divider" aria-hidden="true" />
+        <span className="inline-flex items-center gap-1.5 text-emerald-400">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" aria-hidden="true" />
           {text.badge}
         </span>
       </motion.div>
 
-      {/* Title */}
       <motion.h1
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.15, ease: [0, 0, 0.2, 1] }}
-        className="text-4xl md:text-6xl font-bold tracking-tight mb-6 bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-transparent"
+        className="mb-4 max-w-4xl text-4xl font-bold leading-[1.08] tracking-normal text-fg-default md:text-5xl"
       >
         {text.title}
       </motion.h1>
 
-      {/* Subtitle */}
       <motion.p
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3, ease: [0, 0, 0.2, 1] }}
-        className="text-base md:text-lg text-fg-muted max-w-2xl mx-auto"
+        className="mx-auto max-w-2xl text-base leading-7 text-fg-muted md:text-lg"
       >
         {text.subtitle}
       </motion.p>

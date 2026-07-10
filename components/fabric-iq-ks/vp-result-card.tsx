@@ -54,17 +54,17 @@ export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = 
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: dimmed ? 0.7 : 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="mt-8 rounded-2xl border border-stroke-divider bg-bg-card p-8 shadow-lg md:p-10"
+      className="mt-8 rounded-lg border border-stroke-divider bg-bg-card p-5 shadow-sm sm:p-6 md:p-8"
     >
-      <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 text-sm font-semibold text-fg-muted">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
             <BriefcaseBusiness className="h-4 w-4" aria-hidden="true" />
           </span>
           {text.vpResultLabel} · {seconds}s
         </div>
         {showMultiSourceBadge && (
-          <span className="inline-flex items-center gap-1.5 self-start rounded-full bg-gradient-to-r from-violet-500/15 to-cyan-500/15 px-3 py-1.5 text-xs font-semibold text-fg-default ring-1 ring-inset ring-violet-500/30 sm:self-auto">
+          <span className="inline-flex items-center gap-1.5 self-start rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold text-fg-default sm:self-auto">
             <Link2 className="h-3.5 w-3.5 text-violet-500" aria-hidden="true" />
             {badgeLabel}
           </span>
@@ -72,14 +72,14 @@ export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = 
       </div>
 
       {isAdvisory ? (
-        <div className="rounded-2xl border border-stroke-divider bg-bg-elevated p-6">
+        <div className="border-y border-stroke-divider py-5 sm:py-6">
           <p className="text-base leading-relaxed text-fg-default md:text-lg">
             {narrative}
           </p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-stroke-divider bg-bg-elevated p-6">
-          <p className="text-6xl font-bold tracking-tight bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-transparent">
+        <div className="border-y border-stroke-divider py-5 sm:py-6">
+          <p className="text-5xl font-bold tracking-normal text-emerald-400 md:text-6xl">
             {data.primary.value}
           </p>
           <p className="mt-3 text-lg font-semibold text-fg-default">
@@ -93,10 +93,10 @@ export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = 
 
       {citations && citations.length > 0 && (
         <div className="mt-6">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-fg-subtle">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-normal text-fg-subtle">
             {text.citationsLabel}
           </p>
-          <ul className="space-y-2">
+          <ul className="divide-y divide-stroke-divider border-y border-stroke-divider">
             {citations.map((citation, index) => {
               const sourceKind = citationSourceOf(citation)
               const isFabric = sourceKind === 'fabricIQ'
@@ -116,7 +116,7 @@ export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = 
               return (
                 <li
                   key={`${citation.label}-${index}`}
-                  className="flex flex-col gap-1 rounded-xl border border-stroke-divider bg-bg-elevated p-4 text-sm sm:flex-row sm:items-baseline sm:gap-3"
+                  className="flex flex-col gap-1 py-3.5 text-sm sm:flex-row sm:items-baseline sm:gap-3"
                 >
                   {Icon && (
                     <span
@@ -136,10 +136,10 @@ export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = 
       )}
 
       {stats && (
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 divide-y divide-stroke-divider border-y border-stroke-divider md:grid-cols-3 md:divide-x md:divide-y-0">
           {stats.map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-stroke-divider bg-bg-elevated p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-fg-subtle">
+            <div key={stat.label} className="p-4">
+              <p className="text-xs font-semibold uppercase tracking-normal text-fg-subtle">
                 {stat.label}
               </p>
               <p className="mt-2 text-xl font-bold text-fg-default">
@@ -151,11 +151,11 @@ export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = 
       )}
 
       {list && (
-        <ol className="mt-6 space-y-3">
+        <ol className="mt-6 divide-y divide-stroke-divider border-y border-stroke-divider">
           {list.map((item, index) => (
             <li
               key={item}
-              className="flex gap-3 rounded-xl border border-stroke-divider bg-bg-elevated p-4 text-sm text-fg-default"
+              className="flex items-center gap-3 py-3.5 text-sm text-fg-default"
             >
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-xs font-bold text-emerald-500">
                 {index + 1}
@@ -166,7 +166,7 @@ export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = 
         </ol>
       )}
 
-      <div className="mt-6 flex items-start gap-2 rounded-xl border border-stroke-divider bg-bg-subtle p-4 text-sm text-fg-muted">
+      <div className="mt-6 flex items-start gap-2 border-t border-stroke-divider pt-4 text-sm text-fg-muted">
         <Database className="mt-0.5 h-4 w-4 shrink-0 text-cyan-500" aria-hidden="true" />
         <p>
           <span className="font-semibold text-fg-default">{text.sourceLabel}:</span> {data.source}
@@ -177,7 +177,7 @@ export function VpResultCard({ data, elapsedMs, locale, onRevealClick, dimmed = 
         type="button"
         variant="outline"
         onClick={onRevealClick}
-        className="mt-8 border-emerald-500/40 text-fg-default hover:border-transparent hover:bg-gradient-to-r hover:from-emerald-500 hover:to-cyan-500 hover:text-white"
+        className="mt-6 w-full justify-center border-emerald-500/40 text-fg-default hover:border-emerald-500 hover:bg-emerald-500 hover:text-white sm:w-auto"
       >
         {text.revealCta}
         <ChevronDown className="h-4 w-4" aria-hidden="true" />

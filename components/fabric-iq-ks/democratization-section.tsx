@@ -72,6 +72,7 @@ export function DemocratizationSection({ locale }: { locale: Locale }) {
         <QueryInput
           locale={locale}
           loading={result?.loading ?? false}
+          selectedQueryId={result?.query?.id ?? null}
           onSuggestionClick={(queryId) => runQuery({ queryId, mode, locale })}
         />
 

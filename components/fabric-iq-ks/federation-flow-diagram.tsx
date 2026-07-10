@@ -51,7 +51,7 @@ export function FederationFlowDiagram({ locale }: FederationFlowDiagramProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.4, delay: i * 0.15, ease: [0, 0, 0.2, 1] }}
-            className={`rounded-2xl border border-stroke-divider bg-card shadow-sm px-5 py-4 md:px-6 md:py-5 ${accentClasses[node.accent]}`}
+            className={`rounded-lg border border-stroke-divider bg-card px-5 py-4 shadow-sm md:px-6 md:py-5 ${accentClasses[node.accent]}`}
           >
             <div className="text-sm md:text-base font-semibold text-fg-default">
               {node.label}

@@ -28,18 +28,22 @@ export function OntologySection({ locale }: { locale: Locale }) {
   }, [selectedId])
 
   return (
-    <section className="pt-4 md:pt-6 pb-20 px-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 lg:gap-12 items-start">
-          <OntologyGraph
-            nodes={graphData.nodes as OntologyNode[]}
-            links={graphData.links}
-            selectedId={selectedId}
-            hoveredId={hoveredId}
-            onNodeSelect={setSelectedId}
-            onNodeHover={setHoveredId}
-          />
-          <OntologyNarration locale={locale} />
+    <section className="px-4 pb-16 pt-2 sm:px-6 md:pb-20 md:pt-4">
+      <div className="mx-auto max-w-7xl">
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_400px] lg:gap-12">
+          <div className="order-2 lg:order-1">
+            <OntologyGraph
+              nodes={graphData.nodes as OntologyNode[]}
+              links={graphData.links}
+              selectedId={selectedId}
+              hoveredId={hoveredId}
+              onNodeSelect={setSelectedId}
+              onNodeHover={setHoveredId}
+            />
+          </div>
+          <div className="order-1 lg:order-2">
+            <OntologyNarration locale={locale} />
+          </div>
         </div>
       </div>
       <OntologyEntityPanel
