@@ -9,7 +9,7 @@ const API_KEY = process.env.AZURE_SEARCH_API_KEY
 const API_VERSION = process.env.AZURE_SEARCH_API_VERSION
 
 interface RouteContext {
-  params: Promise<{ id: string }> | { id: string }
+  params: Promise<{ id: string }>
 }
 
 export async function GET(_request: NextRequest, context: RouteContext) {

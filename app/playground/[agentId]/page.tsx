@@ -1,22 +1,19 @@
 'use client'
 
-import { redirect } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
-interface PlaygroundPageProps {
-  params: {
-    agentId: string
-  }
-}
+export default function PlaygroundPage() {
+  const { agentId } = useParams<{ agentId: string }>()
+  const router = useRouter()
 
-export default function PlaygroundPage({ params }: PlaygroundPageProps) {
   useEffect(() => {
     // Store the selected agent ID in localStorage for the playground to pick up
-    if (params.agentId) {
-      localStorage.setItem('selectedAgentId', params.agentId)
+    if (agentId) {
+      localStorage.setItem('selectedAgentId', agentId)
     }
-  }, [params.agentId])
+    router.replace('/playground')
+  }, [agentId, router])
 
-  // Redirect to the main playground page
-  redirect('/playground')
+  return null
 }

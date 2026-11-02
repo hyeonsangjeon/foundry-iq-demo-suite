@@ -15,7 +15,7 @@ const API_VERSION = process.env.AZURE_SEARCH_API_VERSION
 const USE_RBAC = process.env.AZURE_SEARCH_USE_RBAC === 'true'
 
 interface RouteContext {
-  params: Promise<{ id: string }> | { id: string }
+  params: Promise<{ id: string }>
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
