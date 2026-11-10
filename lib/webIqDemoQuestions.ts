@@ -23,10 +23,17 @@ export const WEB_IQ_DEMO_QUESTIONS: readonly WebIqDemoQuestion[] = [
   },
 ];
 
+/** Derive answer language only from an exact preset; retrieved text cannot override it. */
+export function getWebIqQuestionLanguage(query: string): 'ko' | 'en' | null {
+  const normalized = query.trim().replace(/\s+/g, ' ');
+  for (const question of WEB_IQ_DEMO_QUESTIONS) {
+    if (question.ko === normalized) return 'ko';
+    if (question.en === normalized) return 'en';
+  }
+  return null;
+}
+
 /** Whitespace differences are allowed; the question itself must match a preset. */
 export function isAllowedWebIqQuestion(query: string): boolean {
-  const normalized = query.trim().replace(/\s+/g, ' ');
-  return WEB_IQ_DEMO_QUESTIONS.some(question =>
-    question.ko === normalized || question.en === normalized,
-  );
+  return getWebIqQuestionLanguage(query) !== null;
 }
