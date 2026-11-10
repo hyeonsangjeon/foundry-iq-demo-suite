@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { ChevronRight20Regular } from '@fluentui/react-icons'
 import { AnimatePresence, motion } from 'framer-motion'
 import { getLocale, type Locale } from '@/lib/i18n'
 import { ScenarioIntro } from '@/components/scenario/scenario-intro'
@@ -72,6 +74,15 @@ export default function ScenarioPage() {
             </button>
           )}
           {step === TOTAL_STEPS - 1 && <div className="w-16 sm:w-24" />}
+        </div>
+        <div className="mx-auto max-w-5xl px-4 pb-3">
+          <Link
+            href="/web-iq?view=executive"
+            className="inline-flex items-center gap-1.5 rounded-lg text-xs font-medium text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-focus"
+          >
+            {locale === 'ko' ? '제조·물류 사례: 어느 화물을 먼저 지킬까?' : 'Manufacturing: Which shipment needs priority?'}
+            <ChevronRight20Regular className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          </Link>
         </div>
       </div>
 

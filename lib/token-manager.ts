@@ -63,6 +63,11 @@ class TokenManager {
     return TokenManager.instance
   }
 
+  /** Whether initialization selected app-only client-secret authentication. */
+  public isServicePrincipalCredential(): boolean {
+    return this.credential instanceof ClientSecretCredential
+  }
+
   public async getToken(scope: string = this.scope): Promise<string> {
     // Check if we have a cached token for this scope that's still valid
     const cached = this.cachedTokens.get(scope)

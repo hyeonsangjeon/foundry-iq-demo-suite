@@ -24,6 +24,10 @@ import { TraceExplorer } from '@/components/trace-explorer'
 import { InsightPopup, INSIGHT_STEPS, getFoundryInsightSteps } from '@/components/insight-popup'
 import { ServiceHealthPanel } from '@/components/service-health-panel'
 import { DataExplorer } from '@/components/data-explorer'
+import type { KnowledgeBaseRetrievalResponse } from '@/types/knowledge-retrieval'
+import { buildKbRetrieveRequest, extractKbSourceContent, type KbWebAnswerResponse, type KbWebAnswerStatus } from '@/lib/kbWebAnswer'
+import { WEB_IQ_DEMO_QUESTIONS, isAllowedWebIqQuestion } from '@/lib/webIqDemoQuestions'
+import { useWebIqUsageLimit } from '@/components/web-iq/use-web-iq-usage-limit'
 import {
   Select,
   SelectContent,
@@ -113,6 +117,8 @@ type Message = {
   timestamp: Date
   references?: Reference[]
   activity?: Activity[]
+  webIq?: KbWebAnswerResponse
+  internalTraceResponse?: KnowledgeBaseRetrievalResponse
 }
 
 type Reference = {
@@ -129,12 +135,14 @@ type Reference = {
   searchSensitivityLabelInfo?: {
     displayName: string
     sensitivityLabelId: string
-    tooltip: string
-    priority: number
-    color: string
-    isEncrypted: boolean
+    tooltip?: string
+    priority?: number
+    color?: string
+    isEncrypted?: boolean
   }
   webUrl?: string
+  url?: string
+  title?: string
 }
 
 type Activity = {
@@ -165,6 +173,21 @@ interface KBPlaygroundViewProps {
   preselectedAgent?: string
 }
 
+const WEB_IQ_ERRORS_KO: Record<string, string> = {
+  'Provide a query of 3–1,000 characters and valid knowledge-base context.': '질문을 3~1,000자로 입력하고 지식 베이스의 근거를 확인해 주세요.',
+  'Combined Web IQ answers are not configured. Configure Web IQ and an Azure OpenAI answer deployment.': 'Web IQ와 Azure OpenAI 답변 모델의 연결 설정이 필요합니다. 설정을 마치거나 KB만 사용해 질문해 주세요.',
+  'Web IQ search failed; a combined answer was not generated.': 'Web IQ 검색에 실패해 KB와 웹 근거를 함께 사용한 답변을 생성하지 못했습니다.',
+  'Web IQ returned an invalid response.': 'Web IQ 검색 응답을 처리하지 못했습니다. 다시 시도해 주세요.',
+  'Answer synthesis failed; no combined answer was returned.': 'KB와 웹 근거를 함께 사용한 답변을 생성하지 못했습니다. 다시 시도해 주세요.',
+  'The answer model returned an invalid response.': '답변 모델의 응답을 처리하지 못했습니다. 다시 시도해 주세요.',
+  'The combined answer reached the output limit before it was complete. Try a narrower question.': '답변이 완성되기 전에 출력 한도에 도달했습니다. 질문의 범위를 좁혀 다시 시도해 주세요.',
+  'The answer model filtered the response. Try rephrasing the question.': '답변 모델이 응답을 필터링했습니다. 질문을 다른 표현으로 바꿔 다시 시도해 주세요.',
+  'The answer model did not complete the response. Please try again.': '답변 모델이 응답을 끝까지 생성하지 못했습니다. 다시 시도해 주세요.',
+  'The answer could not be matched to the retrieved sources. Try a more specific question.': '답변의 인용을 검색된 출처와 연결하지 못했습니다. 질문을 더 구체적으로 입력해 주세요.',
+  'The combined query timed out or was cancelled.': 'KB와 웹을 함께 조회하는 요청의 시간이 초과됐거나 요청이 취소됐습니다.',
+  'The combined query could not be completed.': 'KB와 웹을 함께 조회하는 요청을 완료하지 못했습니다. 다시 시도해 주세요.',
+}
+
 export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   const [locale, setLocaleState] = useState<Locale>('en')
   useEffect(() => { setLocaleState(getLocale()) }, [])
@@ -175,6 +198,24 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [includeWebIq, setIncludeWebIq] = useState(false)
+  const webIqLanguage = locale === 'ko' ? 'ko' : 'en'
+  const webIqUsage = useWebIqUsageLimit(webIqLanguage)
+  const [webIqStatus, setWebIqStatus] = useState<KbWebAnswerStatus | null>(null)
+  const combinedController = useRef<AbortController | null>(null)
+  const requestGeneration = useRef(0)
+  useEffect(() => {
+    const controller = new AbortController()
+    fetch('/api/web-iq/answer', { signal: controller.signal, cache: 'no-store' })
+      .then(response => response.ok ? response.json() : null)
+      .then(status => { if (status && !controller.signal.aborted) setWebIqStatus(status) })
+      .catch(() => { /* A request-time check provides the actionable error. */ })
+    return () => {
+      controller.abort()
+      combinedController.current?.abort()
+      requestGeneration.current += 1
+    }
+  }, [])
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [viewCodeOpen, setViewCodeOpen] = useState(false)
   const [insightStepIndex, setInsightStepIndex] = useState<number | null>(null)
@@ -432,7 +473,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       ? runtimeSettings.knowledgeSourceParams
       : null
 
-    const baseParams = userOverrides || (selectedAgent?.knowledgeSources || []).map(ks => ({
+    const attachedParams = (selectedAgent?.knowledgeSources || []).map(ks => ({
       knowledgeSourceName: ks.name,
       kind: ks.kind,
       alwaysQuerySource: ks.alwaysQuerySource ?? undefined,
@@ -442,6 +483,9 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       maxSubQueries: ks.maxSubQueries ?? undefined,
       headers: ks.headers
     }))
+    const baseParams = includeWebIq
+      ? attachedParams.map(param => ({ ...param, ...userOverrides?.find(override => override.knowledgeSourceName === param.knowledgeSourceName) }))
+      : userOverrides || attachedParams
 
     if (!baseParams || baseParams.length === 0) {
       return undefined
@@ -460,8 +504,8 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         }
 
         if (param.alwaysQuerySource === true) cleanedParam.alwaysQuerySource = true
-        cleanedParam.includeReferences = param.includeReferences !== false
-        cleanedParam.includeReferenceSourceData = param.includeReferenceSourceData !== false
+        cleanedParam.includeReferences = includeWebIq || param.includeReferences !== false
+        cleanedParam.includeReferenceSourceData = includeWebIq || param.includeReferenceSourceData !== false
 
         if (typeof param.rerankerThreshold === 'number') cleanedParam.rerankerThreshold = param.rerankerThreshold
         if (typeof param.maxSubQueries === 'number') cleanedParam.maxSubQueries = param.maxSubQueries
@@ -473,6 +517,87 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         return cleanedParam
       })
       .filter(Boolean)
+  }
+
+  const checkCombinedReadiness = async (query: string, signal: AbortSignal) => {
+    if (!includeWebIq) return
+    webIqUsage.assertAvailable()
+    if (!isAllowedWebIqQuestion(query)) throw new Error(locale === 'ko' ? '화면에 있는 Web IQ 체험 질문을 선택해 주세요.' : 'Choose one of the available Web IQ demo questions.')
+    if (query.trim().length < 3 || query.trim().length > 1000) throw new Error(locale === 'ko' ? 'Web IQ 검색에 사용할 질문을 3~1,000자로 입력해 주세요.' : 'Web IQ queries must contain 3–1,000 characters.')
+    let status: KbWebAnswerStatus
+    try {
+      const response = await fetch('/api/web-iq/answer', { cache: 'no-store', signal })
+      status = await response.json()
+      const usageError = webIqUsage.responseError(response, status)
+      if (usageError) throw usageError
+      if (!response.ok) throw new Error('Configuration unavailable')
+      if (!status || typeof status.configured !== 'boolean') throw new Error('Invalid configuration')
+    } catch (error) {
+      if (signal.aborted) throw error
+      if (error instanceof Error && error.name === 'WebIqUsageLimitError') throw error
+      throw new Error(locale === 'ko' ? 'Web IQ 연결 설정을 확인하지 못했습니다. 다시 시도해 주세요.' : 'Could not check Web IQ configuration. Try again.')
+    }
+    if (signal.aborted) return
+    setWebIqStatus(status)
+    if (!status.configured) throw new Error(locale === 'ko' ? 'Web IQ와 Azure OpenAI 답변 모델의 연결 설정이 필요합니다. 설정을 마치거나 KB만 사용해 질문해 주세요.' : 'Combined Web IQ answers are not configured. Configure Web IQ and an Azure OpenAI answer deployment, or use the selected KB only.')
+  }
+
+  const addWebEvidence = async (query: string, response: KnowledgeBaseRetrievalResponse, signal: AbortSignal) => {
+    if (!includeWebIq) return { ...response, webIq: undefined, internalTraceResponse: undefined }
+    const internalReferences = (response.references || []).filter(reference => extractKbSourceContent(reference) !== null).slice(0, 20)
+    const internalAnswer = (response.response || []).flatMap(message => message.content)
+      .filter(content => content.type === 'text').map(content => content.text).join('\n').slice(0, 30000)
+    const sources = internalReferences.map((reference, index) => {
+      const source = reference.sourceData || {}
+      const record = reference as unknown as Record<string, unknown>
+      const title = record.title || source.title || source.filename || record.docKey || `${locale === 'ko' ? '지식 베이스 출처' : 'Knowledge base source'} ${index + 1}`
+      const content = extractKbSourceContent(reference)!
+      const url = record.url || record.webUrl || record.docUrl
+      return {
+        title: String(title).slice(0, 300),
+        content: String(content).slice(0, 6000),
+        ...(typeof url === 'string' && url.length <= 2048 ? { url } : {}),
+      }
+    })
+    const combined = await fetch('/api/web-iq/answer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: query.trim(), internalAnswer, sources }),
+      signal,
+    })
+    if (!combined.ok) {
+      const error: { error?: string } | null = await combined.json().catch(() => null)
+      const usageError = webIqUsage.responseError(combined, error)
+      if (usageError) throw usageError
+      const errorMessage = typeof error?.error === 'string' ? error.error : ''
+      if (locale === 'ko') {
+        const fallback = combined.status === 429
+          ? '요청이 일시적으로 제한됐습니다. 잠시 후 다시 시도해 주세요.'
+          : 'Web IQ를 포함한 답변을 완성하지 못했습니다. 다시 시도해 주세요.'
+        throw new Error(WEB_IQ_ERRORS_KO[errorMessage] || fallback)
+      }
+      throw new Error(errorMessage || 'The combined Web IQ answer could not be completed.')
+    }
+    const result: KbWebAnswerResponse = await combined.json()
+    const references = result.sources.map((source, index) => source.origin === 'internal'
+      ? { ...internalReferences[index], id: String(index), title: `KB · ${source.title}`, sourceData: { ...internalReferences[index]?.sourceData, title: `KB · ${source.title}` } }
+      : { type: 'web' as const, id: String(index), activitySource: -1, title: `Web · ${source.title}`, url: source.url || '', sourceData: { title: `Web · ${source.title}`, content: source.content } })
+    return {
+      response: [{ role: 'assistant' as const, content: [{ type: 'text' as const, text: result.answer }] }],
+      references,
+      activity: response.activity,
+      webIq: result,
+      internalTraceResponse: response,
+    }
+  }
+
+  const changeEvidenceMode = (enabled: boolean) => {
+    if (isLoading || enabled === includeWebIq) return
+    const lastQuestion = [...messages].reverse().find(message => message.role === 'user')?.content.find(content => content.type === 'text')
+    if (!input.trim() && lastQuestion?.type === 'text') setInput(lastQuestion.text)
+    setIncludeWebIq(enabled)
+    setMessages([])
+    setSourcesPanel({ isOpen: false, messageId: null, references: [], activity: [] })
   }
 
   const sendPrompt = async (prompt: string, starterId?: string | null) => {
@@ -489,8 +614,14 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
 
     setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
+    const generation = ++requestGeneration.current
+    combinedController.current?.abort()
+    const controller = new AbortController()
+    combinedController.current = controller
 
     try {
+      await checkCombinedReadiness(prompt, controller.signal)
+      if (generation !== requestGeneration.current || controller.signal.aborted) return
       const azureMessages = [
         ...messages.map((m) => ({
           role: m.role as 'user' | 'assistant' | 'system',
@@ -528,41 +659,11 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         apiParams.knowledgeSourceParams = knowledgeSourceParams
       }
 
-      // Determine if we should use intents instead of messages
-      // When reasoning effort is 'minimal', use intents format
-      const useIntentsFormat = runtimeSettings.reasoningEffort === 'minimal'
-      
-      let requestPayload: any
-      
-      if (useIntentsFormat) {
-        // For minimal reasoning effort, extract just the text from the last user message
-        // and format as intents
-        requestPayload = {
-          intents: [
-            {
-              type: 'semantic',
-              search: prompt
-            }
-          ],
-          ...apiParams
-        }
-        console.log('🔍 Using INTENTS format (minimal reasoning)')
-      } else {
-        // Standard messages format for medium/low/high reasoning
-        requestPayload = {
-          messages: azureMessages,
-          ...apiParams
-        }
-        console.log('🔍 Using MESSAGES format (standard reasoning)')
-      }
-
-      // Debug logging - SEND PROMPT
-      console.log('🔍 API Request Payload (sendPrompt):')
-      console.log('Knowledge Base:', selectedAgent.id)
-      console.log('Reasoning Effort:', runtimeSettings.reasoningEffort)
-      console.log('Payload:', JSON.stringify(requestPayload, null, 2))
-
-      const response = await retrieveFromKnowledgeBase(selectedAgent.id, useIntentsFormat ? null : azureMessages, useIntentsFormat ? requestPayload : apiParams)
+      const retrieveRequest = buildKbRetrieveRequest(prompt, azureMessages, apiParams)
+      const kbResponse = await retrieveFromKnowledgeBase(selectedAgent.id, retrieveRequest.messages, retrieveRequest.params)
+      if (generation !== requestGeneration.current) return
+      const response = await addWebEvidence(prompt, kbResponse, controller.signal)
+      if (generation !== requestGeneration.current) return
 
       // Debug: Log the full response to see references and activity
       console.log('🔍 API Response:', {
@@ -624,11 +725,14 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         content: contentItems,
         timestamp: new Date(),
         references: response.references || [],
-        activity: response.activity || []
+        activity: response.activity || [],
+        webIq: response.webIq,
+        internalTraceResponse: response.internalTraceResponse,
       }
 
       setMessages(prev => [...prev, assistantMessage])
     } catch (err) {
+      if (generation !== requestGeneration.current) return
       // Enhanced error logging - SEND PROMPT
       console.error('❌ API Error (sendPrompt):', err)
       if (err && typeof err === 'object') {
@@ -636,11 +740,11 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       }
       
       // Extract meaningful error message
-      let errorText = 'Error processing request. Please try again.'
+      let errorText = locale === 'ko' ? '요청을 처리하지 못했습니다. 다시 시도해 주세요.' : 'Error processing request. Please try again.'
       if (err instanceof Error) {
-        errorText = `❌ Error: ${err.message}`
+        errorText = `❌ ${locale === 'ko' ? '오류' : 'Error'}: ${err.message}`
       } else if (typeof err === 'string') {
-        errorText = `❌ Error: ${err}`
+        errorText = `❌ ${locale === 'ko' ? '오류' : 'Error'}: ${err}`
       }
       
       const errorMessage: Message = {
@@ -651,13 +755,18 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       }
       setMessages(prev => [...prev, errorMessage])
     } finally {
-      setIsLoading(false)
+      if (combinedController.current === controller) combinedController.current = null
+      if (generation === requestGeneration.current) setIsLoading(false)
     }
   }
 
   const handleAgentChange = (agentId: string) => {
     const agent = agents.find(a => a.id === agentId)
     if (agent) {
+      requestGeneration.current += 1
+      combinedController.current?.abort()
+      setIsLoading(false)
+      setIncludeWebIq(false)
       setSelectedAgent(agent)
       // Always start fresh - no history loading
       setMessages([])
@@ -680,6 +789,9 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   }
 
   const handleClearChat = () => {
+    requestGeneration.current += 1
+    combinedController.current?.abort()
+    setIsLoading(false)
     // Simply clear the messages array - no localStorage involvement
     setMessages([])
     // Also close sources panel when clearing chat
@@ -716,8 +828,14 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setIsLoading(true)
+    const generation = ++requestGeneration.current
+    combinedController.current?.abort()
+    const controller = new AbortController()
+    combinedController.current = controller
 
     try {
+      await checkCombinedReadiness(input, controller.signal)
+      if (generation !== requestGeneration.current || controller.signal.aborted) return
       const azureMessages = [
         ...messages.map((m) => ({
           role: m.role as 'user' | 'assistant' | 'system',
@@ -755,16 +873,11 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         apiParams.knowledgeSourceParams = knowledgeSourceParamsSubmit
       }
 
-      // Note: includeReferences and includeReferenceSourceData are set per-source in knowledgeSourceParams,
-      // not as top-level parameters in the retrieve API (API version 2025-11-01-preview)
-
-      // Debug logging - HANDLE SUBMIT
-      console.log('🔍 API Request Payload (handleSubmit):')
-      console.log('Knowledge Base:', selectedAgent.id)
-      console.log('Messages:', JSON.stringify(azureMessages, null, 2))
-      console.log('API Params:', JSON.stringify(apiParams, null, 2))
-
-      const response = await retrieveFromKnowledgeBase(selectedAgent.id, azureMessages, apiParams)
+      const retrieveRequest = buildKbRetrieveRequest(input, azureMessages, apiParams)
+      const kbResponse = await retrieveFromKnowledgeBase(selectedAgent.id, retrieveRequest.messages, retrieveRequest.params)
+      if (generation !== requestGeneration.current) return
+      const response = await addWebEvidence(input, kbResponse, controller.signal)
+      if (generation !== requestGeneration.current) return
 
       // Debug: Log the full response to see references and activity (handleSubmit)
       console.log('🔍 API Response (handleSubmit):', {
@@ -798,11 +911,14 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         content: contentItems,
         timestamp: new Date(),
         references: response.references || [],
-        activity: response.activity || []
+        activity: response.activity || [],
+        webIq: response.webIq,
+        internalTraceResponse: response.internalTraceResponse,
       }
 
       setMessages(prev => [...prev, assistantMessage])
     } catch (err) {
+      if (generation !== requestGeneration.current) return
       // Enhanced error logging - HANDLE SUBMIT
       console.error('❌ API Error (handleSubmit):', err)
       if (err && typeof err === 'object') {
@@ -810,11 +926,11 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       }
       
       // Extract meaningful error message
-      let errorText = 'Error processing request. Please try again.'
+      let errorText = locale === 'ko' ? '요청을 처리하지 못했습니다. 다시 시도해 주세요.' : 'Error processing request. Please try again.'
       if (err instanceof Error) {
-        errorText = `❌ Error: ${err.message}`
+        errorText = `❌ ${locale === 'ko' ? '오류' : 'Error'}: ${err.message}`
       } else if (typeof err === 'string') {
-        errorText = `❌ Error: ${err}`
+        errorText = `❌ ${locale === 'ko' ? '오류' : 'Error'}: ${err}`
       }
       
       const errorMessage: Message = {
@@ -825,7 +941,8 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       }
       setMessages(prev => [...prev, errorMessage])
     } finally {
-      setIsLoading(false)
+      if (combinedController.current === controller) combinedController.current = null
+      if (generation === requestGeneration.current) setIsLoading(false)
     }
   }
 
@@ -865,18 +982,18 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <div className="border-b border-stroke-divider p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 flex-1 min-w-0">
+        <div className="border-b border-stroke-divider p-4 sm:p-6">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex w-full min-w-0 flex-1 items-center gap-3 sm:gap-4">
               <AgentAvatar size={44} iconSize={22} variant="subtle" title={selectedAgent.name} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <h1 className="font-semibold text-xl truncate">{text.title}</h1>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <Select value={selectedAgent.id} onValueChange={handleAgentChange}>
-                      <SelectTrigger className="w-[280px]">
+                      <SelectTrigger className="w-full min-w-0 sm:w-[280px]">
                         <SelectValue placeholder={text.selectKB} />
                       </SelectTrigger>
                       <SelectContent>
@@ -893,7 +1010,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1 sm:gap-2">
               <Link
                 href="/architecture"
                 className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-[11px] text-fg-subtle hover:text-fg-muted transition-all"
@@ -986,7 +1103,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
               </p>
 
               {/* Dynamic Conversation Starters */}
-              {isGeneral ? (
+              {includeWebIq ? <p className="text-sm text-fg-muted">{locale === 'ko' ? '아래에서 Web IQ 체험 질문을 골라 주세요.' : 'Choose a Web IQ demo question below.'}</p> : isGeneral ? (
                 <div className="max-w-xl mx-auto mt-6">
                   <Card className="bg-bg-subtle border-dashed border-stroke-divider">
                     <CardContent className="p-6 text-left">
@@ -1043,6 +1160,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
               <MessageBubble
                 key={message.id}
                 message={message}
+                locale={locale}
                 agent={selectedAgent}
                 showCostEstimates={showCostEstimates}
                 onOpenSources={(refs, activity, query) => handleOpenSourcesPanel(message.id, refs, activity, query)}
@@ -1074,7 +1192,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
               <button
                 type="button"
                 onClick={() => {
-                  setMessages([])
+                  handleClearChat()
                   setInput('')
                 }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-fg-muted hover:text-fg-default border border-stroke-divider rounded-lg hover:bg-bg-subtle transition-colors"
@@ -1086,6 +1204,31 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
+            <fieldset className="space-y-2" disabled={isLoading}>
+              <legend className="mb-2 text-xs font-medium text-fg-muted">{locale === 'ko' ? '답변에 사용할 근거' : 'Answer evidence'}</legend>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" size="sm" variant={includeWebIq ? 'outline' : 'default'} aria-pressed={!includeWebIq} onClick={() => changeEvidenceMode(false)}>
+                  {selectedAgent.knowledgeSources?.some(source => source.kind === 'web') ? (locale === 'ko' ? '선택한 KB만' : 'Selected KB only') : (locale === 'ko' ? '내부 지식만' : 'Internal only')}
+                </Button>
+                <Button type="button" size="sm" variant={includeWebIq ? 'default' : 'outline'} aria-pressed={includeWebIq} onClick={() => changeEvidenceMode(true)}>
+                  {locale === 'ko' ? '내부 지식 + Web IQ' : 'Internal + Web IQ'}
+                </Button>
+              </div>
+              {includeWebIq && <p className="text-xs text-fg-muted" role="status">
+                {webIqStatus?.configured === false
+                  ? (locale === 'ko' ? 'Web IQ와 답변 모델 연결이 필요합니다. 설정 전에는 웹 답변을 생성하지 않습니다.' : 'Web IQ and the answer model need configuration before combined answers can run.')
+                  : (locale === 'ko' ? '같은 질문으로 공개 웹을 검색하고, KB와 웹 근거를 구분해 답변합니다.' : 'Search the public web with this question, then answer with KB and web sources identified separately.')}
+              </p>}
+              {runtimeSettings.reasoningEffort === 'minimal' && <p className="text-xs text-fg-muted">{locale === 'ko' ? 'Minimal 검색은 의미 기반 intents로 원문 근거를 반환합니다.' : 'Minimal retrieval uses semantic intents and returns source passages.'}</p>}
+            </fieldset>
+            {includeWebIq && <fieldset className="space-y-2" disabled={isLoading}>
+              <legend className="text-xs font-medium text-fg-muted">{locale === 'ko' ? '체험 질문 선택' : 'Choose a demo question'}</legend>
+              <div className="flex flex-wrap gap-2">
+                {WEB_IQ_DEMO_QUESTIONS.map(question => <Button key={question.id} type="button" size="sm" variant={input === question[webIqLanguage] ? 'default' : 'outline'} className="h-auto whitespace-normal text-left" aria-pressed={input === question[webIqLanguage]} onClick={() => setInput(question[webIqLanguage])}>{question[webIqLanguage]}</Button>)}
+              </div>
+              <p className="text-xs text-fg-muted">{locale === 'ko' ? '예시 질문으로 실제 웹 근거를 확인합니다. Web IQ 체험은 IP당 최근 2분간 100회, 모든 방문자 합계 하루 $5까지 이용할 수 있습니다.' : 'Try a curated question with real web evidence. Web IQ allows 100 requests per IP per rolling 2 minutes, within a shared $5 daily allowance.'}</p>
+            </fieldset>}
+            {includeWebIq && webIqUsage.message && <p role="status" className="text-sm text-fg-muted">{webIqUsage.message}</p>}
             <div className="relative">
               <Textarea
                 ref={textareaRef}
@@ -1095,24 +1238,25 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
                 placeholder={text.queryPlaceholder}
                 className="min-h-[60px] max-h-[200px] resize-none pr-24"
                 disabled={isLoading}
+                readOnly={includeWebIq}
               />
               <div className="absolute bottom-3 right-3 flex gap-1">
                 <VoiceInput
                   onTranscript={handleVoiceInput}
-                  disabled={isLoading}
+                  disabled={isLoading || includeWebIq}
                 />
                 <Button
                   type="submit"
                   size="icon"
                   className="h-8 w-8"
-                  disabled={!input.trim() || isLoading}
+                  disabled={!input.trim() || isLoading || (includeWebIq && (webIqUsage.remainingSeconds > 0 || !isAllowedWebIqQuestion(input)))}
                 >
                   <Send20Regular className="h-4 w-4" />
                 </Button>
               </div>
             </div>
             <p className="text-xs text-fg-muted">
-              Press Enter to send, Shift+Enter for new line. Click mic for voice input.
+              {includeWebIq ? (locale === 'ko' ? '질문을 선택한 다음 보내기 버튼을 누르세요.' : 'Select a question, then press Send.') : 'Press Enter to send, Shift+Enter for new line. Click mic for voice input.'}
             </p>
           </form>
         </div>
@@ -1240,8 +1384,9 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   )
 }
 
-function MessageBubble({ message, agent, showCostEstimates, onOpenSources }: {
+function MessageBubble({ message, locale, agent, showCostEstimates, onOpenSources }: {
   message: Message
+  locale: Locale
   agent?: KnowledgeAgent
   showCostEstimates?: boolean
   onOpenSources?: (refs: Reference[], activity: Activity[], query?: string) => void
@@ -1308,7 +1453,7 @@ function MessageBubble({ message, agent, showCostEstimates, onOpenSources }: {
               }
               const firstText = message.content.find(c => c.type === 'text')
               return (
-                <p key={index} className="whitespace-pre-wrap break-words">
+                <div key={index} className="whitespace-pre-wrap break-words">
                   <InlineCitationsText
                     text={content.text}
                     references={message.references as any}
@@ -1316,12 +1461,35 @@ function MessageBubble({ message, agent, showCostEstimates, onOpenSources }: {
                     messageId={message.id}
                     onActivate={() => onOpenSources?.(regularRefs, message.activity || [], firstText?.type === 'text' ? firstText.text : undefined)}
                   />
-                </p>
+                </div>
               )
             })}
           </div>
 
           {/* Perplexity-style Sources Button - Opens Drawer */}
+          {!isUser && message.webIq && (
+            <div className="mt-4 space-y-3 rounded-lg border border-stroke-divider bg-bg-subtle p-3">
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="rounded-md border border-stroke-divider px-2 py-1">{locale === 'ko' ? 'KB 출처' : 'KB sources'} · {message.webIq.sources.filter(source => source.origin === 'internal').length}</span>
+                <span className="rounded-md border border-accent/30 px-2 py-1 text-accent">{locale === 'ko' ? 'Web IQ 출처' : 'Web IQ sources'} · {message.webIq.sources.filter(source => source.origin === 'web').length}</span>
+              </div>
+              <p className="text-xs text-fg-muted">{message.webIq.webSearch.results.length === 0
+                ? (locale === 'ko' ? 'Web IQ에서 사용할 수 있는 웹 자료를 찾지 못했습니다. 이 답변에 추가된 웹 근거는 없습니다.' : 'Web IQ returned no usable pages. No web-source evidence was added to this answer.')
+                : (locale === 'ko' ? '인용의 KB·Web 표기로 각 근거가 지식 베이스와 웹 중 어디에서 왔는지 구분할 수 있습니다.' : 'KB and Web citation labels identify the origin of each source in this combined answer.')}</p>
+              {message.webIq.kbContextOnly && <p className="text-xs text-amber-600 dark:text-amber-400">{locale === 'ko' ? 'KB가 원문 근거 없이 답변 내용만 반환했습니다. 해당 내용은 출처로 확인되지 않아 KB 인용을 붙이지 않았습니다.' : 'The KB returned answer context without source passages. That context is unverified and has no KB citation in this answer.'}</p>}
+              <details className="text-xs text-fg-muted">
+                <summary className="cursor-pointer font-medium">{locale === 'ko' ? '답변 생성 과정' : 'App composition trace'}</summary>
+                <ol className="mt-2 list-decimal space-y-1 pl-5">
+                  <li>{locale === 'ko' ? '선택한 지식 베이스의 조회를 완료했습니다.' : 'Selected knowledge base retrieval completed.'}</li>
+                  <li>{locale === 'ko' ? 'Web IQ가 같은 질문으로 웹을 검색했습니다' : 'Web IQ searched the question'} · {message.webIq.trace.webSearchMs} ms · {message.webIq.webSearch.results.length}{locale === 'ko' ? '개 페이지' : ' pages'}.</li>
+                  <li>{locale === 'ko' ? 'Azure OpenAI가 제공된 근거를 모아 답변을 생성했습니다' : 'Azure OpenAI combined the supplied evidence'} · {message.webIq.trace.synthesisMs} ms.</li>
+                </ol>
+                <p className="mt-2 break-all">{locale === 'ko' ? '웹 검색어' : 'Web query'}: {message.webIq.webSearch.query}</p>
+                <p className="mt-1">{locale === 'ko' ? '조회 시각' : 'Retrieved'}: {message.webIq.webSearch.retrievedAt}</p>
+                {message.webIq.webSearch.traceId && <p className="mt-1 break-all">{locale === 'ko' ? 'Web IQ 추적 ID' : 'Web IQ trace'}: {message.webIq.webSearch.traceId}</p>}
+              </details>
+            </div>
+          )}
           {!isUser && regularRefs.length > 0 && (
             <div className="mt-4 pt-4 border-t border-stroke-divider">
               <SourcesCountButton
@@ -1357,7 +1525,7 @@ function MessageBubble({ message, agent, showCostEstimates, onOpenSources }: {
                   <ChevronRight20Regular className="h-4 w-4 text-fg-muted flex-shrink-0" />
                 )}
                 <span className="text-xs font-medium text-fg-muted">
-                  Retrieval Trace
+                  {message.webIq ? (locale === 'ko' ? 'KB 검색 과정' : 'KB Retrieval Trace') : 'Retrieval Trace'}
                 </span>
                 <span className="text-xs text-fg-subtle">·</span>
                 <span className="text-xs text-fg-subtle">
@@ -1382,7 +1550,7 @@ function MessageBubble({ message, agent, showCostEstimates, onOpenSources }: {
                   >
                     <div className="pt-4">
                       <TraceExplorer
-                        response={{
+                        response={message.internalTraceResponse || {
                           response: [{
                             role: 'assistant',
                             content: message.content.map(c =>

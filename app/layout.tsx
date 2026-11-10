@@ -20,6 +20,7 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: 'Knowledge Retrieval Studio',
+  icons: { icon: '/icons/foundryiq.svg' },
   description: 'Azure AI Search · Foundry IQ — Agentic Retrieval, SharePoint Indexing, MCP Agent Grounding',
 }
 

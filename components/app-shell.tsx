@@ -20,6 +20,7 @@ import {
   ArrowJoin20Regular,
   BranchForkLink20Regular,
   PlugConnected20Regular,
+  Globe20Regular,
 } from '@fluentui/react-icons'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -44,6 +45,7 @@ const navigation: NavItem[] = [
   { href: '/semantic-join', labelKey: 'semanticJoin', icon: ArrowJoin20Regular },
   { href: '/mcp-ks', labelKey: 'mcpKs', icon: PlugConnected20Regular },
   { href: '/fabric-iq-ks', labelKey: 'fabricIqKs', icon: BranchForkLink20Regular },
+  { href: '/web-iq', labelKey: 'webIq', icon: Globe20Regular },
 ]
 
 interface AppShellProps {
@@ -160,8 +162,8 @@ function Header({ onMenuClick, showSidebar, locale }: HeaderProps) {
   const navText = t.nav[locale]
   return (
   <header className="fixed top-0 left-0 right-0 z-30 border-b border-glass-border bg-glass-surface backdrop-blur-elevated shadow-sm">
-      <div className="flex h-16 items-center justify-between px-6">
-        <div className="flex items-center gap-3">
+      <div className="flex h-16 items-center justify-between px-3 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           {showSidebar && (
             <Button
               variant="ghost"
@@ -209,7 +211,7 @@ function Header({ onMenuClick, showSidebar, locale }: HeaderProps) {
               href="https://github.com/hyeonsangjeon/foundry-iq-demo-suite"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-full px-2 sm:px-3 py-1.5 text-sm font-medium text-fg-muted transition-colors duration-fast hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-stroke-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas"
+              className="hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-fg-muted transition-colors duration-fast hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-stroke-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas sm:flex"
             >
               <span className="hidden sm:inline">{navText.source}</span>
               <Image 

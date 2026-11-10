@@ -18,6 +18,7 @@ import { t } from '@/lib/i18n/translations'
 import { ModeToggle, type ViewMode } from '@/components/mode-toggle'
 import { FabricIqKsCard } from '@/components/fabric-iq-ks/fabric-iq-ks-card'
 import { McpKsCard } from '@/components/mcp-ks/mcp-ks-card'
+import { WebIqCard } from '@/components/web-iq/web-iq-card'
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -465,6 +466,7 @@ export function LandingPage() {
         <FabricIqDemoCard locale={locale} isExec={isExec} />
         <FabricIqKsCard locale={locale} />
         <McpKsCard locale={locale} />
+        <WebIqCard locale={locale} />
         <ComingSoonCards />
 
         {/* Architecture link */}
