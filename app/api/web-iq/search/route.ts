@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getWebIqRequestAuth, isWebIqConfigured } from '@/lib/webIqAuth';
-import { questionNotAllowed, reserveWebIqUsage, usageErrorResponse, WEB_IQ_CALL_MICRO_USD } from '@/lib/webIqUsage';
+import { getWebIqBotProtectionConfig, verifyWebIqBotCheck } from '@/lib/webIqBotCheck';
+import { reserveWebIqUsage, usageErrorResponse, WEB_IQ_CALL_MICRO_USD } from '@/lib/webIqUsage';
 import {
   parseWebIqSearchPayload,
   WEB_IQ_MAX_CONTENT_LENGTH,
@@ -15,13 +16,16 @@ export const revalidate = 0;
 export const maxDuration = 40;
 
 const searchRequestSchema = z.object({
-  query: z.string().trim().min(3).max(1000),
+  query: z.string().trim().min(3).max(500),
+  turnstileToken: z.unknown().optional(),
 });
 const responseHeaders = { 'Cache-Control': 'no-store' };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const botProtection = getWebIqBotProtectionConfig(request);
   return NextResponse.json(
-    { configured: isWebIqConfigured() },
+    { configured: isWebIqConfigured() && botProtection.configured,
+      botProtectionConfigured: botProtection.configured, turnstileSiteKey: botProtection.siteKey },
     { headers: responseHeaders },
   );
 }
@@ -40,7 +44,7 @@ export async function POST(request: NextRequest) {
   const parsedRequest = searchRequestSchema.safeParse(body);
   if (!parsedRequest.success) {
     return NextResponse.json(
-      { error: 'Enter a query between 3 and 1,000 characters.' },
+      { error: 'Enter a query between 3 and 500 characters.' },
       { status: 400, headers: responseHeaders },
     );
   }
@@ -52,9 +56,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { query } = parsedRequest.data;
-  const disallowed = questionNotAllowed(query);
-  if (disallowed) return disallowed;
+  const { query, turnstileToken } = parsedRequest.data;
+  const botError = await verifyWebIqBotCheck(request, turnstileToken, 'webiq_search');
+  if (botError) return botError;
   const controller = new AbortController();
   const onAbort = () => controller.abort();
   request.signal.addEventListener('abort', onAbort, { once: true });

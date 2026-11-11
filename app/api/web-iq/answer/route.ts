@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { normalizeKbWebAnswer, type KbWebAnswerResponse, type KbWebAnswerSource } from '@/lib/kbWebAnswer';
 import { tokenManager } from '@/lib/token-manager';
 import { getWebIqRequestAuth, isWebIqConfigured } from '@/lib/webIqAuth';
+import { getWebIqBotProtectionConfig, verifyWebIqBotCheck } from '@/lib/webIqBotCheck';
 import { getWebIqQuestionLanguage } from '@/lib/webIqDemoQuestions';
 import { parseWebIqSearchPayload, WEB_IQ_MAX_CONTENT_LENGTH, WEB_IQ_MAX_RESULTS } from '@/lib/webIqSearch';
 import { checkDemoUsage, settleDemoUsage } from '@/lib/demoUsageLedger';
@@ -16,6 +17,7 @@ export const maxDuration = 60;
 const headers = { 'Cache-Control': 'no-store' };
 const requestSchema = z.object({
   query: z.string().trim().min(3).max(1000),
+  turnstileToken: z.unknown().optional(),
   internalAnswer: z.string().max(30000),
   sources: z.array(z.object({
     title: z.string().min(1).max(300),
@@ -59,16 +61,22 @@ function awaitWithAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T>
 export async function GET(request: NextRequest) {
   const { webSearchConfigured, deployment, endpoint } = configuration();
   const synthesisConfigured = Boolean(endpoint && deployment);
-  const configured = webSearchConfigured && synthesisConfigured;
-  if (!configured) return NextResponse.json({ configured, webSearchConfigured, synthesisConfigured }, { headers });
+  const botProtection = getWebIqBotProtectionConfig(request);
+  const botStatus = { botProtectionConfigured: botProtection.configured, turnstileSiteKey: botProtection.siteKey };
+  const configured = webSearchConfigured && synthesisConfigured && botProtection.configured;
+  if (!configured) return NextResponse.json({ configured, webSearchConfigured, synthesisConfigured, ...botStatus }, { headers });
   try {
     if (!answerPricingConfigured()) throw new Error('Answer pricing is not configured');
     await checkDemoUsage(demoClientIp(request), ANSWER_RESERVATION_MICRO_USD);
-    return NextResponse.json({ configured, webSearchConfigured, synthesisConfigured,
+    return NextResponse.json({ configured, webSearchConfigured, synthesisConfigured, ...botStatus,
       usageProtectionReady: true, budgetScope: 'web-iq',
     }, { headers });
   } catch (error) {
-    return usageErrorResponse(error);
+    const response = usageErrorResponse(error);
+    const usageError = await response.json();
+    return NextResponse.json({ ...usageError, configured, webSearchConfigured, synthesisConfigured, ...botStatus,
+      usageProtectionReady: false, budgetScope: 'web-iq',
+    }, { status: response.status, headers: response.headers });
   }
 }
 
@@ -91,6 +99,9 @@ export async function POST(request: NextRequest) {
   if (!webSearchConfigured || !deployment || !endpoint) {
     return NextResponse.json({ error: 'Combined Web IQ answers are not configured. Configure Web IQ and an Azure OpenAI answer deployment.' }, { status: 503, headers });
   }
+
+  const botError = await verifyWebIqBotCheck(request, parsed.data.turnstileToken, 'webiq_answer');
+  if (botError) return botError;
 
   const controller = new AbortController();
   const onAbort = () => controller.abort();

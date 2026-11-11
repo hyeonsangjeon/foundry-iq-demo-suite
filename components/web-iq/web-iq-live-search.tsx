@@ -7,7 +7,9 @@ import LoaderCircle from 'lucide-react/dist/esm/icons/loader-circle';
 import Search from 'lucide-react/dist/esm/icons/search';
 
 import { Button } from '@/components/ui/button';
-import { WEB_IQ_DEMO_QUESTIONS, isAllowedWebIqQuestion } from '@/lib/webIqDemoQuestions';
+import { Textarea } from '@/components/ui/textarea';
+import { WebIqBotCheck } from '@/components/web-iq/web-iq-bot-check';
+import { WEB_IQ_DEMO_QUESTIONS } from '@/lib/webIqDemoQuestions';
 import { WEB_IQ_SEARCH_DOCUMENTATION, type WebIqSearchResponse } from '@/lib/webIqSearch';
 import { cn } from '@/lib/utils';
 
@@ -27,12 +29,17 @@ const copy = {
     combinedHint: 'In Foundry IQ, choose a knowledge base, then select “Internal + Web IQ” before asking your question.',
     combinedLink: 'Ask with your KB and Web IQ',
     checking: 'Checking server settings…',
-    configured: 'Server authentication configured · click Search the web to run',
-    unconfigured: 'Configure Web IQ server authentication to search the web.',
+    configured: 'Live search is ready · verify below, then search',
+    unconfigured: 'Live search is unavailable until server authentication and bot protection are configured.',
     statusError: 'Could not check server settings.',
     retry: 'Check again',
     label: 'Choose a question to try',
-    queryHint: 'Only your selected question is sent to Web IQ. The example shipment records are not sent.',
+    customToggle: 'Ask your own question',
+    customLabel: 'Your question',
+    customPlaceholder: 'For example, what road restrictions has Incheon Port announced recently?',
+    customHint: 'Enter 3–500 characters. Use public information and leave out confidential details.',
+    characters: 'characters',
+    queryHint: 'Only the selected or entered question is sent to Web IQ. The example shipment records are not sent.',
     limits: 'Live search allows up to 100 requests per IP in the last 2 minutes and has a daily allowance shared by all visitors. The example scenario remains available.',
     submit: 'Search the web',
     searching: 'Searching…',
@@ -45,7 +52,10 @@ const copy = {
     dailyLimit: 'Today’s live-search demo allowance has been used. Please return after midnight Korea time.',
     guardUnavailable: 'We could not check the search allowance. Please try again shortly. You can still explore the example scenario.',
     availableIn: 'Search available in',
-    invalid: 'Choose one of the available demo questions.',
+    invalid: 'Choose a sample question or enter a question of 3–500 characters.',
+    botRequired: 'Complete the verification before searching.',
+    botFailed: 'Verification was not accepted. Please verify again and retry.',
+    botUnavailable: 'Verification is temporarily unavailable. Please try again shortly.',
     empty: 'No usable results for this query.',
     results: 'Web results',
     searched: 'Query',
@@ -69,12 +79,17 @@ const copy = {
     combinedHint: 'Foundry IQ에서 지식 베이스를 고른 뒤, ‘내부 지식 + Web IQ’를 선택하고 질문하세요.',
     combinedLink: '내 지식 베이스와 웹을 함께 조회하기',
     checking: '서버 설정 확인 중…',
-    configured: '서버 인증 설정됨 · 웹 검색을 눌러 실행',
-    unconfigured: '실제 웹 검색을 쓰려면 서버에 Web IQ 인증을 설정하세요.',
+    configured: '실제 검색 준비 완료 · 아래 확인을 마친 뒤 검색하세요',
+    unconfigured: '서버 인증과 봇 방지 설정을 마치면 실제 웹 검색을 이용할 수 있습니다.',
     statusError: '서버 설정을 확인하지 못했습니다.',
     retry: '다시 확인',
     label: '검색해 볼 질문을 선택하세요',
-    queryHint: '선택한 질문만 Web IQ로 전달합니다. 예시 화물 자료는 전송하지 않습니다.',
+    customToggle: '직접 질문하기',
+    customLabel: '궁금한 내용을 입력하세요',
+    customPlaceholder: '예: 인천항에서 최근 발표한 도로 통제 공지가 있나요?',
+    customHint: '3~500자로 입력하세요. 공개 자료에 관한 질문을 적고, 기밀 정보는 넣지 마세요.',
+    characters: '자',
+    queryHint: '선택하거나 입력한 질문만 Web IQ로 전달합니다. 예시 화물 자료는 전송하지 않습니다.',
     limits: '실제 검색은 같은 IP에서 최근 2분간 최대 100회까지 이용할 수 있으며, 모든 방문자가 하루 체험 한도를 함께 사용합니다. 예시 시나리오는 계속 이용할 수 있습니다.',
     submit: '웹 검색',
     searching: '검색 중…',
@@ -87,7 +102,10 @@ const copy = {
     dailyLimit: '오늘의 실제 검색 체험 한도를 모두 사용했습니다. 한국시간 자정 이후 다시 이용해 주세요.',
     guardUnavailable: '검색 이용 한도를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요. 예시 시나리오는 계속 이용할 수 있습니다.',
     availableIn: '다시 검색할 수 있을 때까지',
-    invalid: '제공된 체험 질문 중 하나를 선택해 주세요.',
+    invalid: '예시 질문을 고르거나 질문을 3~500자로 입력해 주세요.',
+    botRequired: '검색 전에 아래 확인을 마쳐 주세요.',
+    botFailed: '확인이 승인되지 않았습니다. 다시 확인한 뒤 검색해 주세요.',
+    botUnavailable: '지금은 확인 서비스를 이용할 수 없습니다. 잠시 후 다시 시도해 주세요.',
     empty: '사용할 수 있는 검색 결과가 없습니다.',
     results: '웹 검색 결과',
     searched: '검색어',
@@ -155,6 +173,11 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
   const text = copy[language];
   const id = React.useId();
   const [questionId, setQuestionId] = React.useState(WEB_IQ_DEMO_QUESTIONS[0].id);
+  const [customMode, setCustomMode] = React.useState(false);
+  const [customQuery, setCustomQuery] = React.useState('');
+  const [turnstileSiteKey, setTurnstileSiteKey] = React.useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
+  const [botResetKey, setBotResetKey] = React.useState(0);
   const [configuration, setConfiguration] = React.useState<ConfigurationState>('checking');
   const [statusAttempt, setStatusAttempt] = React.useState(0);
   const [result, setResult] = React.useState<WebIqSearchResponse | null>(null);
@@ -164,9 +187,10 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
   const [usageNotice, setUsageNotice] = React.useState<UsageNotice | null>(null);
   const [now, setNow] = React.useState(0);
   const activeRequest = React.useRef<AbortController | null>(null);
+  const customInput = React.useRef<HTMLTextAreaElement>(null);
   const selectedQuestion = WEB_IQ_DEMO_QUESTIONS.find(question => question.id === questionId) || WEB_IQ_DEMO_QUESTIONS[0];
-  const normalizedQuery = selectedQuestion[language];
-  const validQuery = isAllowedWebIqQuestion(normalizedQuery);
+  const normalizedQuery = (customMode ? customQuery : selectedQuestion[language]).trim();
+  const validQuery = normalizedQuery.length >= 3 && normalizedQuery.length <= 500;
   const visibleResult = result?.query === normalizedQuery ? result : null;
   const remainingSeconds = usageNotice?.retryAt ? Math.max(0, Math.ceil((usageNotice.retryAt - now) / 1000)) : 0;
   const usageMessage = usageNotice?.code === 'DAILY_BUDGET_EXHAUSTED' ? text.dailyLimit
@@ -189,6 +213,8 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
   React.useEffect(() => {
     const controller = new AbortController();
     setConfiguration('checking');
+    setTurnstileSiteKey(null);
+    setTurnstileToken(null);
     const timeout = window.setTimeout(() => {
       controller.abort();
       setConfiguration('error');
@@ -202,7 +228,12 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
         if (!payload || typeof payload !== 'object' || !('configured' in payload)
           || typeof payload.configured !== 'boolean') throw new Error('Invalid configuration');
         if (!controller.signal.aborted) {
-          setConfiguration(payload.configured ? 'configured' : 'unconfigured');
+          const siteKey = 'turnstileSiteKey' in payload && typeof payload.turnstileSiteKey === 'string'
+            ? payload.turnstileSiteKey.trim() : null;
+          const botConfigured = 'botProtectionConfigured' in payload && payload.botProtectionConfigured === true;
+          const configured = payload.configured && botConfigured && Boolean(siteKey);
+          setTurnstileSiteKey(configured ? siteKey : null);
+          setConfiguration(configured ? 'configured' : 'unconfigured');
         }
       } catch {
         if (!controller.signal.aborted) setConfiguration('error');
@@ -220,6 +251,17 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
 
   React.useEffect(() => () => activeRequest.current?.abort(), []);
 
+  React.useEffect(() => {
+    if (customMode) customInput.current?.focus();
+  }, [customMode]);
+
+  function clearPreviousSearch() {
+    setResult(null);
+    setError(null);
+    setCancelled(false);
+    if (usageNotice?.code === 'QUESTION_NOT_ALLOWED') setUsageNotice(null);
+  }
+
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (loading || configuration !== 'configured' || (usageNotice?.retryAt && usageNotice.retryAt > Date.now())) return;
@@ -227,7 +269,13 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
       setError(text.invalid);
       return;
     }
+    if (!turnstileToken) {
+      setError(text.botRequired);
+      return;
+    }
 
+    const submissionToken = turnstileToken;
+    setTurnstileToken(null);
     activeRequest.current?.abort();
     const controller = new AbortController();
     activeRequest.current = controller;
@@ -248,13 +296,17 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
       const response = await fetch('/api/web-iq/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: normalizedQuery }),
+        body: JSON.stringify({ query: normalizedQuery, turnstileToken: submissionToken }),
         signal: controller.signal,
       });
       if (!response.ok) {
         const rawPayload: unknown = await response.json().catch(() => null);
         if (controller.signal.aborted || activeRequest.current !== controller) return;
         const payload = rawPayload && typeof rawPayload === 'object' ? rawPayload as Record<string, unknown> : {};
+        if (payload.code === 'BOT_CHECK_REQUIRED' || payload.code === 'BOT_CHECK_FAILED' || payload.code === 'BOT_CHECK_UNAVAILABLE') {
+          throw new Error(payload.code === 'BOT_CHECK_REQUIRED' ? text.botRequired
+            : payload.code === 'BOT_CHECK_FAILED' ? text.botFailed : text.botUnavailable);
+        }
         const code = isUsageCode(payload.code) ? payload.code : response.status === 429 ? 'RATE_LIMITED' : null;
         if (code) {
           setNow(Date.now());
@@ -280,6 +332,8 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
       if (activeRequest.current === controller) {
         activeRequest.current = null;
         setLoading(false);
+        setTurnstileToken(null);
+        setBotResetKey(value => value + 1);
       }
     }
   }
@@ -290,6 +344,8 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
     setLoading(false);
     setCancelled(true);
     setError(null);
+    setTurnstileToken(null);
+    setBotResetKey(value => value + 1);
   }
 
   const statusText = configuration === 'error' ? text.statusError : text[configuration];
@@ -334,23 +390,44 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
           <legend className="mb-3 text-sm font-medium text-fg-default">{text.label}</legend>
           <div className="grid gap-3 sm:grid-cols-3">
             {WEB_IQ_DEMO_QUESTIONS.map(question => (
-              <button key={question.id} type="button" aria-pressed={questionId === question.id}
-                className={cn('rounded-xl border p-4 text-left text-sm leading-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-wait disabled:opacity-60', questionId === question.id ? 'border-accent bg-accent/10 text-fg-default' : 'border-stroke-divider text-fg-muted hover:border-accent/50')}
+              <button key={question.id} type="button" aria-pressed={!customMode && questionId === question.id}
+                className={cn('rounded-xl border p-4 text-left text-sm leading-6 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-wait disabled:opacity-60', !customMode && questionId === question.id ? 'border-accent bg-accent/10 text-fg-default' : 'border-stroke-divider text-fg-muted hover:border-accent/50')}
                 onClick={() => {
-                  if (question.id === questionId) return;
+                  if (!customMode && question.id === questionId) return;
                   setQuestionId(question.id);
-                  setResult(null);
-                  setError(null);
-                  setCancelled(false);
-                  if (usageNotice?.code === 'QUESTION_NOT_ALLOWED') setUsageNotice(null);
+                  setCustomMode(false);
+                  clearPreviousSearch();
                 }}>
                 {question[language]}
               </button>
             ))}
           </div>
+          <Button type="button" variant={customMode ? 'secondary' : 'outline'} className="mt-3"
+            aria-expanded={customMode} aria-controls={`${id}-custom-question`}
+            onClick={() => {
+              setCustomMode(value => !value);
+              clearPreviousSearch();
+            }}>{text.customToggle}</Button>
+          <div id={`${id}-custom-question`} hidden={!customMode} className="mt-4 space-y-2">
+            <label htmlFor={`${id}-query`} className="block text-sm font-medium text-fg-default">{text.customLabel}</label>
+            <Textarea ref={customInput} id={`${id}-query`} value={customQuery} minLength={3} maxLength={500}
+              rows={3} disabled={!customMode || loading} placeholder={text.customPlaceholder} aria-describedby={`${id}-custom-hint ${id}-counter`}
+              onChange={(event) => {
+                setCustomQuery(event.target.value);
+                clearPreviousSearch();
+              }} />
+            <div className="flex flex-wrap items-start justify-between gap-2 text-xs text-fg-muted">
+              <p id={`${id}-custom-hint`} className="max-w-prose leading-5">{text.customHint}</p>
+              <span id={`${id}-counter`} className="shrink-0 tabular-nums">{customQuery.length} / 500 {text.characters}</span>
+            </div>
+          </div>
         </fieldset>
+        {configuration === 'configured' && turnstileSiteKey && (
+          <WebIqBotCheck siteKey={turnstileSiteKey} action="webiq_search" language={language}
+            onTokenChange={setTurnstileToken} resetKey={botResetKey} />
+        )}
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={configuration !== 'configured' || !validQuery || loading || remainingSeconds > 0}>
+          <Button type="submit" disabled={configuration !== 'configured' || !validQuery || !turnstileToken || loading || remainingSeconds > 0}>
             {loading ? <LoaderCircle className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" /> : <Search className="h-4 w-4" aria-hidden="true" />}
             {loading ? text.searching : text.submit}
           </Button>

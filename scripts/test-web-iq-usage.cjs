@@ -17,18 +17,24 @@ function compiled(filename) {
   return compiledModules.get(filename);
 }
 
+class OfflineRequest extends Request {
+  get nextUrl() { return new URL(this.url); }
+}
+
 class OfflineResponse extends Response {
   static json(value, init = {}) {
-    return new OfflineResponse(JSON.stringify(value), {
-      ...init,
-      headers: { 'Content-Type': 'application/json', ...init.headers },
-    });
+    const headers = new Headers(init.headers);
+    if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+    return new OfflineResponse(JSON.stringify(value), { ...init, headers });
   }
 }
 
 function harness(options = {}) {
   const env = {
     VERCEL: '1',
+    TURNSTILE_SITE_KEY: '0x4AAAAAAAOfflineSiteKey',
+    TURNSTILE_SECRET_KEY: '0x4AAAAAAAOfflineSecretKey',
+    TURNSTILE_ALLOWED_HOSTNAMES: 'public-demo.example',
     WEBIQ_ANSWER_PRICING_MODEL: 'gpt-4o-2024-11-20',
     WEBIQ_ANSWER_DEPLOYMENT: 'offline-answer',
     AZURE_OPENAI_ENDPOINT: 'https://offline-model.example',
@@ -60,6 +66,27 @@ function harness(options = {}) {
     },
   };
   const fetch = async (url, init = {}) => {
+    if (url === 'https://challenges.cloudflare.com/turnstile/v0/siteverify') {
+      events.push('bot-check');
+      const body = typeof init.body === 'string' && init.body.startsWith('{')
+        ? JSON.parse(init.body) : Object.fromEntries(new URLSearchParams(init.body));
+      requests.push({ destination: 'bot-check', body, init });
+      assert.equal(body.secret, env.TURNSTILE_SECRET_KEY);
+      assert.equal(init.method, 'POST');
+      assert.equal(init.redirect, 'error');
+      assert.equal(init.cache, 'no-store');
+      assert.ok(init.signal instanceof AbortSignal);
+      if (options.botThrows) throw new Error('Bot verification unavailable');
+      if (options.botMalformed) return new OfflineResponse('{', { status: 200 });
+      const payload = options.botPayload === undefined ? {
+        success: true,
+        hostname: 'public-demo.example',
+        action: body.response === 'offline-answer-token' ? 'webiq_answer' : 'webiq_search',
+        challenge_ts: new Date().toISOString(),
+        ...options.botClaims,
+      } : options.botPayload;
+      return OfflineResponse.json(payload, { status: options.botStatus || 200 });
+    }
     const destination = url === webUrl ? 'web' : url === 'https://offline-model.example/openai/v1/chat/completions' ? 'model' : null;
     assert.ok(destination, `Unapproved outbound URL: ${url}`);
     events.push(destination);
@@ -83,7 +110,7 @@ function harness(options = {}) {
     vm.runInNewContext(compiled(filename), {
       exports,
       require: name => {
-        if (name === 'next/server') return { NextResponse: OfflineResponse, NextRequest: Request };
+        if (name === 'next/server') return { NextResponse: OfflineResponse, NextRequest: OfflineRequest };
         if (name === '@/lib/token-manager') return { tokenManager };
         if (name === '@/lib/webIqAuth') return auth;
         if (name === '@/lib/demoUsageLedger' && ledger) return ledger;
@@ -91,7 +118,7 @@ function harness(options = {}) {
         if (name === 'zod' || name === 'node:net' || name === 'node:crypto') return require(name);
         throw new Error(`Unexpected import in offline test: ${name}`);
       },
-      process: { env }, URL, Response, Request, Headers, TextEncoder, TextDecoder,
+      process: { env }, URL, URLSearchParams, Response, Request: OfflineRequest, Headers, TextEncoder, TextDecoder,
       AbortController, AbortSignal, structuredClone, setTimeout, clearTimeout, fetch,
     }, { filename });
     return exports;
@@ -131,15 +158,15 @@ function harness(options = {}) {
   };
   function request(route, overrides = {}, headers = { 'x-vercel-forwarded-for': '192.0.2.1' }, signal) {
     const base = route === 'search' ? {} : { internalAnswer: 'Inventory is limited.', sources: [{ title: 'Inventory', content: 'Inventory is four days.' }] };
-    return new Request(`https://public-demo.example/api/web-iq/${route}`, {
+    return new OfflineRequest(`https://public-demo.example/api/web-iq/${route}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...headers },
-      body: JSON.stringify({ query: questions.WEB_IQ_DEMO_QUESTIONS[0].en, ...base, ...overrides }),
+      body: JSON.stringify({ query: questions.WEB_IQ_DEMO_QUESTIONS[0].en, turnstileToken: `offline-${route}-token`, ...base, ...overrides }),
       signal,
     });
   }
   function getRequest(route, headers = { 'x-vercel-forwarded-for': '192.0.2.1' }) {
-    return new Request(`https://public-demo.example/api/web-iq/${route}`, { headers });
+    return new OfflineRequest(`https://public-demo.example/api/web-iq/${route}`, { headers });
   }
   return { env, usage, questions, routes, request, getRequest, events, checks, reservations, settlements, requests, get spent() { return spent; } };
 }
@@ -171,13 +198,6 @@ for (const route of ['search', 'answer']) {
       }
     });
   }
-  test(`${route}: arbitrary question uses no authentication, reservation or paid API`, async () => {
-    const h = harness();
-    const response = await h.routes[route].POST(h.request(route, { query: 'Write an arbitrary story about a robot.' }));
-    assert.equal(response.status, 400);
-    assert.equal((await response.json()).code, 'QUESTION_NOT_ALLOWED');
-    assert.deepEqual(h.events, []);
-  });
   test(`${route}: forged generic forwarding headers cannot supply a trusted IP`, async () => {
     const h = harness();
     const response = await h.routes[route].POST(h.request(route, {}, { 'x-forwarded-for': '192.0.2.99', 'x-real-ip': '192.0.2.99' }));
@@ -191,9 +211,181 @@ for (const route of ['search', 'answer']) {
     const controller = new AbortController();
     controller.abort();
     const response = await h.routes[route].POST(h.request(route, {}, undefined, controller.signal));
-    assert.equal(response.status, 504);
+    assert.equal(response.status, 503);
+    assert.equal((await response.json()).code, 'BOT_CHECK_UNAVAILABLE');
+    assertNoAzureWork(h);
+  });
+}
+
+function assertNoAzureWork(h) {
+  assert.deepEqual(h.events.filter(event => event !== 'bot-check'), []);
+  assert.deepEqual(paidEvents(h), []);
+  assert.equal(h.reservations.length, 0);
+  assert.equal(h.spent, 0);
+}
+
+for (const route of ['search', 'answer']) {
+  test(`${route}: a missing bot token is rejected before authentication or paid work`, async () => {
+    const h = harness();
+    const response = await h.routes[route].POST(h.request(route, { turnstileToken: undefined }));
+    assert.equal(response.status, 403);
+    assert.equal((await response.json()).code, 'BOT_CHECK_REQUIRED');
+    assert.deepEqual(h.events, []);
+    assertNoAzureWork(h);
+  });
+  for (const [name, token] of [
+    ['boolean token', true],
+    ['object token', { success: true }],
+    ['token containing whitespace', 'offline token'],
+    ['oversized token', 'A'.repeat(2049)],
+  ]) {
+    test(`${route}: ${name} cannot initiate verification or Azure work`, async () => {
+      const h = harness();
+      const response = await h.routes[route].POST(h.request(route, { turnstileToken: token }));
+      assert.equal(response.status, 403);
+      assert.equal((await response.json()).code, 'BOT_CHECK_FAILED');
+      assert.equal(response.headers.get('Cache-Control'), 'no-store');
+      assert.deepEqual(h.events, []);
+      assertNoAzureWork(h);
+    });
+  }
+  test(`${route}: a rejected bot token cannot reserve or authenticate`, async () => {
+    const h = harness({ botPayload: { success: false, 'error-codes': ['invalid-input-response'] } });
+    const response = await h.routes[route].POST(h.request(route));
+    assert.equal(response.status, 403);
+    assert.equal((await response.json()).code, 'BOT_CHECK_FAILED');
+    assert.equal(h.events.filter(event => event === 'bot-check').length, 1);
+    assertNoAzureWork(h);
+  });
+  for (const [name, botClaims] of [
+    ['wrong hostname', { hostname: 'attacker.example' }],
+    ['lookalike hostname', { hostname: 'public-demo.example.attacker.example' }],
+    ['wrong action', { action: route === 'search' ? 'webiq_answer' : 'webiq_search' }],
+    ['expired challenge', { challenge_ts: new Date(Date.now() - 301000).toISOString() }],
+    ['future challenge', { challenge_ts: new Date(Date.now() + 60000).toISOString() }],
+    ['missing timestamp', { challenge_ts: undefined }],
+    ['invalid timestamp', { challenge_ts: 'not-a-timestamp' }],
+    ['missing action', { action: undefined }],
+  ]) {
+    test(`${route}: ${name} fails closed`, async () => {
+      const h = harness({ botClaims });
+      const response = await h.routes[route].POST(h.request(route));
+      assert.equal(response.status, 403);
+      assert.equal((await response.json()).code, 'BOT_CHECK_FAILED');
+      assertNoAzureWork(h);
+    });
+  }
+  for (const [name, options] of [
+    ['network failure', { botThrows: true }],
+    ['HTTP failure', { botStatus: 503 }],
+    ['malformed response', { botMalformed: true }],
+    ['non-object response', { botPayload: null }],
+    ['array response', { botPayload: [] }],
+    ['missing success claim', { botPayload: {} }],
+    ['string success claim', { botClaims: { success: 'true' } }],
+    ['numeric success claim', { botClaims: { success: 1 } }],
+    ['missing secret', { env: { TURNSTILE_SECRET_KEY: '' } }],
+    ['missing site key', { env: { TURNSTILE_SITE_KEY: '' } }],
+    ['missing allowed hostnames', { env: { TURNSTILE_ALLOWED_HOSTNAMES: '' } }],
+    ['wildcard hostname configuration', { env: { TURNSTILE_ALLOWED_HOSTNAMES: '*.example' } }],
+    ['test secret in deployment', { env: { TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA' } }],
+    ['test site key in deployment', { env: { TURNSTILE_SITE_KEY: '1x00000000000000000000AA' } }],
+    ['test secret in production Node', { env: { VERCEL: '', NODE_ENV: 'production', TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA' } }],
+    ['test site key in production Node', { env: { VERCEL: '', NODE_ENV: 'production', TURNSTILE_SITE_KEY: '1x00000000000000000000AA' } }],
+  ]) {
+    test(`${route}: ${name} cannot fall back to unprotected access`, async () => {
+      const h = harness(options);
+      const response = await h.routes[route].POST(h.request(route));
+      assert.equal(response.status, 503);
+      assert.equal((await response.json()).code, 'BOT_CHECK_UNAVAILABLE');
+      assertNoAzureWork(h);
+    });
+  }
+  test(`${route}: a request to an unlisted host cannot initiate verification or Azure work`, async () => {
+    const h = harness({ env: { TURNSTILE_ALLOWED_HOSTNAMES: 'other-demo.example' } });
+    const response = await h.routes[route].POST(h.request(route));
+    assert.equal(response.status, 403);
+    assert.equal((await response.json()).code, 'BOT_CHECK_FAILED');
+    assert.deepEqual(h.events, []);
+    assertNoAzureWork(h);
+  });
+  test(`${route}: hostname must match this request even if another hostname is allowed`, async () => {
+    const h = harness({ env: { TURNSTILE_ALLOWED_HOSTNAMES: 'public-demo.example,other-demo.example' }, botClaims: { hostname: 'other-demo.example' } });
+    const response = await h.routes[route].POST(h.request(route));
+    assert.equal(response.status, 403);
+    assert.equal((await response.json()).code, 'BOT_CHECK_FAILED');
+    assertNoAzureWork(h);
+  });
+  test(`${route}: expired or duplicate token rejection never reaches Azure`, async () => {
+    const h = harness({ botPayload: { success: false, 'error-codes': ['timeout-or-duplicate'] } });
+    const response = await h.routes[route].POST(h.request(route));
+    assert.equal(response.status, 403);
+    assertNoAzureWork(h);
+  });
+}
+
+test('answer: arbitrary question remains blocked before bot verification and paid work', async () => {
+  const h = harness();
+  const response = await h.routes.answer.POST(h.request('answer', { query: 'Write an arbitrary story about a robot.' }));
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).code, 'QUESTION_NOT_ALLOWED');
+  assert.deepEqual(h.events, []);
+});
+
+for (const query of ['Road closure notices for Busan port', 'A'.repeat(3), 'A'.repeat(500)]) {
+  test(`search: free-form question of ${query.length} characters succeeds only after bot verification`, async () => {
+    const h = harness();
+    const response = await h.routes.search.POST(h.request('search', { query }));
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).query, query);
+    assert.equal(h.requests.find(request => request.destination === 'web').body.query, query);
+    assert.ok(h.events.indexOf('bot-check') < h.events.indexOf('auth'));
+    assert.ok(h.events.indexOf('bot-check') < h.events.indexOf('reserve'));
+  });
+}
+
+for (const query of ['', '  ', 'ab', 'A'.repeat(501)]) {
+  test(`search: invalid free-form length ${query.length} is rejected without any outbound call`, async () => {
+    const h = harness();
+    const response = await h.routes.search.POST(h.request('search', { query }));
+    assert.equal(response.status, 400);
+    assert.deepEqual(h.events, []);
+    assertNoAzureWork(h);
+  });
+}
+
+for (const route of ['search', 'answer']) {
+  test(`${route} GET: public bot configuration does not expose its secret or verify a token`, async () => {
+    const h = harness();
+    const response = await h.routes[route].GET(h.getRequest(route));
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.configured, true);
+    assert.equal(body.botProtectionConfigured, true);
+    assert.equal(body.turnstileSiteKey, h.env.TURNSTILE_SITE_KEY);
+    assert.ok(!JSON.stringify(body).includes(h.env.TURNSTILE_SECRET_KEY));
+    assert.equal(h.events.filter(event => event === 'bot-check').length, 0);
     assert.deepEqual(paidEvents(h), []);
-    assert.equal(h.reservations.length, 0);
+  });
+  test(`${route} GET: missing bot configuration never reports paid search ready`, async () => {
+    const h = harness({ env: { TURNSTILE_SECRET_KEY: '' } });
+    const response = await h.routes[route].GET(h.getRequest(route));
+    const body = await response.json();
+    assert.equal(body.configured, false);
+    assert.equal(body.botProtectionConfigured, false);
+    assert.equal(body.turnstileSiteKey, null);
+    assertNoAzureWork(h);
+  });
+  test(`${route} GET: an unlisted request hostname is unavailable without exposing the widget key`, async () => {
+    const h = harness({ env: { TURNSTILE_ALLOWED_HOSTNAMES: 'other-demo.example' } });
+    const response = await h.routes[route].GET(h.getRequest(route));
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(body.configured, false);
+    assert.equal(body.botProtectionConfigured, false);
+    assert.equal(body.turnstileSiteKey, null);
+    assert.equal(response.headers.get('Cache-Control'), 'no-store');
+    assertNoAzureWork(h);
   });
 }
 
@@ -207,6 +399,8 @@ test('search: a successful request reserves exactly one Web IQ call', async () =
   assert.equal(h.spent, 7000);
   assert.deepEqual(paidEvents(h), ['web']);
   assert.equal(h.settlements.length, 0);
+  assert.ok(h.events.indexOf('bot-check') < h.events.indexOf('auth'));
+  assert.ok(h.events.indexOf('bot-check') < h.events.indexOf('reserve'));
   assert.ok(h.events.indexOf('reserve') < h.events.indexOf('web'));
 });
 
@@ -231,6 +425,8 @@ test('answer: verified model usage settles once at conservative budget rates', a
   assert.equal(h.settlements[0].amount, 10600);
   assert.equal(h.spent, 10600);
   assert.deepEqual(paidEvents(h), ['web', 'model']);
+  assert.ok(h.events.indexOf('bot-check') < h.events.indexOf('auth'));
+  assert.ok(h.events.indexOf('bot-check') < h.events.indexOf('reserve'));
   assert.ok(h.events.indexOf('reserve') < h.events.indexOf('web'));
   assert.ok(h.events.indexOf('model') < h.events.indexOf('settle'));
   const webRequest = h.requests.find(request => request.destination === 'web').body;
@@ -389,11 +585,27 @@ for (const denial of ['rate', 'daily', 'unavailable']) {
     const body = await response.json();
     assert.equal(response.status, denial === 'unavailable' ? 503 : 429);
     assert.equal(body.code, { rate: 'RATE_LIMITED', daily: 'DAILY_BUDGET_EXHAUSTED', unavailable: 'USAGE_GUARD_UNAVAILABLE' }[denial]);
+    assert.equal(body.configured, true);
+    assert.equal(body.webSearchConfigured, true);
+    assert.equal(body.synthesisConfigured, true);
+    assert.equal(body.botProtectionConfigured, true);
+    assert.equal(body.turnstileSiteKey, h.env.TURNSTILE_SITE_KEY);
+    assert.equal(body.usageProtectionReady, false);
+    assert.equal(body.budgetScope, 'web-iq');
+    assert.ok(!JSON.stringify(body).includes(h.env.TURNSTILE_SECRET_KEY));
+    assert.equal(response.headers.get('Cache-Control'), 'no-store');
     assert.deepEqual(h.events, ['check']);
     assert.equal(h.reservations.length, 0);
     assert.equal(h.spent, 0);
-    if (denial === 'rate') assert.equal(response.headers.get('Retry-After'), '9');
-    if (denial === 'daily') assert.equal(response.headers.get('Retry-After'), '3600');
+    if (denial === 'rate') {
+      assert.equal(response.headers.get('Retry-After'), '9');
+      assert.equal(body.retryAfterSeconds, 9);
+    }
+    if (denial === 'daily') {
+      assert.equal(response.headers.get('Retry-After'), '3600');
+      assert.equal(body.retryAfterSeconds, 3600);
+      assert.ok(Number.isFinite(Date.parse(body.resetsAt)));
+    }
   });
 }
 

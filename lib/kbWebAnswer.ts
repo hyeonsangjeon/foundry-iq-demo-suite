@@ -24,6 +24,8 @@ export interface KbWebAnswerStatus {
   configured: boolean;
   webSearchConfigured: boolean;
   synthesisConfigured: boolean;
+  botProtectionConfigured: boolean;
+  turnstileSiteKey: string | null;
 }
 
 /** Minimal retrieval has no LLM synthesis: use semantic intents and extractive output. */

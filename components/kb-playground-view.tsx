@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { getLocale, type Locale } from '@/lib/i18n'
 import { t } from '@/lib/i18n/translations'
@@ -28,6 +28,7 @@ import type { KnowledgeBaseRetrievalResponse } from '@/types/knowledge-retrieval
 import { buildKbRetrieveRequest, extractKbSourceContent, type KbWebAnswerResponse, type KbWebAnswerStatus } from '@/lib/kbWebAnswer'
 import { WEB_IQ_DEMO_QUESTIONS, isAllowedWebIqQuestion } from '@/lib/webIqDemoQuestions'
 import { useWebIqUsageLimit } from '@/components/web-iq/use-web-iq-usage-limit'
+import { WebIqBotCheck } from '@/components/web-iq/web-iq-bot-check'
 import {
   Select,
   SelectContent,
@@ -202,16 +203,52 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   const webIqLanguage = locale === 'ko' ? 'ko' : 'en'
   const webIqUsage = useWebIqUsageLimit(webIqLanguage)
   const [webIqStatus, setWebIqStatus] = useState<KbWebAnswerStatus | null>(null)
+  const [webIqStatusLoading, setWebIqStatusLoading] = useState(false)
+  const [webIqStatusFailed, setWebIqStatusFailed] = useState(false)
+  const webIqStatusController = useRef<AbortController | null>(null)
+  const [webIqBotToken, setWebIqBotToken] = useState<string | null>(null)
+  const [webIqBotResetKey, setWebIqBotResetKey] = useState(0)
+  const webIqBotTokenRef = useRef<string | null>(null)
+  const handleWebIqBotToken = useCallback((token: string | null) => {
+    webIqBotTokenRef.current = token
+    setWebIqBotToken(token)
+  }, [])
+  const resetWebIqBotCheck = useCallback(() => {
+    handleWebIqBotToken(null)
+    setWebIqBotResetKey(key => key + 1)
+  }, [handleWebIqBotToken])
   const combinedController = useRef<AbortController | null>(null)
   const requestGeneration = useRef(0)
-  useEffect(() => {
+  const refreshWebIqStatus = async () => {
+    webIqStatusController.current?.abort()
     const controller = new AbortController()
-    fetch('/api/web-iq/answer', { signal: controller.signal, cache: 'no-store' })
-      .then(response => response.ok ? response.json() : null)
-      .then(status => { if (status && !controller.signal.aborted) setWebIqStatus(status) })
-      .catch(() => { /* A request-time check provides the actionable error. */ })
+    webIqStatusController.current = controller
+    setWebIqStatusLoading(true)
+    setWebIqStatusFailed(false)
+    try {
+      const response = await fetch('/api/web-iq/answer', { signal: controller.signal, cache: 'no-store' })
+      const status = await response.json()
+      if (controller.signal.aborted) return
+      // Usage errors still carry widget configuration, so a temporary limit cannot trap the form.
+      const validStatus = status && typeof status.configured === 'boolean' && typeof status.botProtectionConfigured === 'boolean'
+        && (status.turnstileSiteKey === null || typeof status.turnstileSiteKey === 'string')
+      if (validStatus) setWebIqStatus(status)
+      webIqUsage.responseError(response, status)
+      setWebIqStatusFailed(!response.ok || !validStatus)
+    } catch {
+      if (!controller.signal.aborted) setWebIqStatusFailed(true)
+    } finally {
+      if (webIqStatusController.current === controller) {
+        webIqStatusController.current = null
+        setWebIqStatusLoading(false)
+      }
+    }
+  }
+  useEffect(() => {
+    void refreshWebIqStatus()
     return () => {
-      controller.abort()
+      webIqStatusController.current?.abort()
+      webIqStatusController.current = null
       combinedController.current?.abort()
       requestGeneration.current += 1
     }
@@ -520,10 +557,14 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   }
 
   const checkCombinedReadiness = async (query: string, signal: AbortSignal) => {
-    if (!includeWebIq) return
+    if (!includeWebIq) return null
     webIqUsage.assertAvailable()
     if (!isAllowedWebIqQuestion(query)) throw new Error(locale === 'ko' ? '화면에 있는 Web IQ 체험 질문을 선택해 주세요.' : 'Choose one of the available Web IQ demo questions.')
     if (query.trim().length < 3 || query.trim().length > 1000) throw new Error(locale === 'ko' ? 'Web IQ 검색에 사용할 질문을 3~1,000자로 입력해 주세요.' : 'Web IQ queries must contain 3–1,000 characters.')
+    const token = webIqBotTokenRef.current
+    if (!token) throw new Error(locale === 'ko' ? '사람 확인을 마친 다음 다시 보내 주세요.' : 'Complete the human verification, then send your question again.')
+    // Reserve one token for this run before any knowledge-base retrieval starts.
+    handleWebIqBotToken(null)
     let status: KbWebAnswerStatus
     try {
       const response = await fetch('/api/web-iq/answer', { cache: 'no-store', signal })
@@ -537,13 +578,16 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       if (error instanceof Error && error.name === 'WebIqUsageLimitError') throw error
       throw new Error(locale === 'ko' ? 'Web IQ 연결 설정을 확인하지 못했습니다. 다시 시도해 주세요.' : 'Could not check Web IQ configuration. Try again.')
     }
-    if (signal.aborted) return
+    if (signal.aborted) return null
     setWebIqStatus(status)
+    if (!status.botProtectionConfigured || !status.turnstileSiteKey) throw new Error(locale === 'ko' ? '사람 확인 기능을 준비 중입니다. 잠시 후 다시 시도하거나 KB만 사용해 주세요.' : 'Human verification is unavailable. Try again later or use the selected KB only.')
     if (!status.configured) throw new Error(locale === 'ko' ? 'Web IQ와 Azure OpenAI 답변 모델의 연결 설정이 필요합니다. 설정을 마치거나 KB만 사용해 질문해 주세요.' : 'Combined Web IQ answers are not configured. Configure Web IQ and an Azure OpenAI answer deployment, or use the selected KB only.')
+    return token
   }
 
-  const addWebEvidence = async (query: string, response: KnowledgeBaseRetrievalResponse, signal: AbortSignal) => {
+  const addWebEvidence = async (query: string, response: KnowledgeBaseRetrievalResponse, signal: AbortSignal, turnstileToken: string | null) => {
     if (!includeWebIq) return { ...response, webIq: undefined, internalTraceResponse: undefined }
+    if (!turnstileToken) throw new Error(locale === 'ko' ? '사람 확인을 마친 다음 다시 보내 주세요.' : 'Complete the human verification, then send your question again.')
     const internalReferences = (response.references || []).filter(reference => extractKbSourceContent(reference) !== null).slice(0, 20)
     const internalAnswer = (response.response || []).flatMap(message => message.content)
       .filter(content => content.type === 'text').map(content => content.text).join('\n').slice(0, 30000)
@@ -562,13 +606,19 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
     const combined = await fetch('/api/web-iq/answer', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: query.trim(), internalAnswer, sources }),
+      body: JSON.stringify({ query: query.trim(), internalAnswer, sources, turnstileToken }),
       signal,
     })
     if (!combined.ok) {
-      const error: { error?: string } | null = await combined.json().catch(() => null)
+      const error: { error?: string; code?: string } | null = await combined.json().catch(() => null)
       const usageError = webIqUsage.responseError(combined, error)
       if (usageError) throw usageError
+      if (error?.code === 'BOT_CHECK_REQUIRED' || error?.code === 'BOT_CHECK_FAILED') {
+        throw new Error(locale === 'ko' ? '사람 확인이 만료됐거나 완료되지 않았습니다. 다시 확인한 다음 질문을 보내 주세요.' : 'Human verification expired or could not be completed. Verify again, then resend your question.')
+      }
+      if (error?.code === 'BOT_CHECK_UNAVAILABLE') {
+        throw new Error(locale === 'ko' ? '사람 확인 기능을 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.' : 'Human verification is temporarily unavailable. Please try again later.')
+      }
       const errorMessage = typeof error?.error === 'string' ? error.error : ''
       if (locale === 'ko') {
         const fallback = combined.status === 429
@@ -595,6 +645,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
     if (isLoading || enabled === includeWebIq) return
     const lastQuestion = [...messages].reverse().find(message => message.role === 'user')?.content.find(content => content.type === 'text')
     if (!input.trim() && lastQuestion?.type === 'text') setInput(lastQuestion.text)
+    resetWebIqBotCheck()
     setIncludeWebIq(enabled)
     setMessages([])
     setSourcesPanel({ isOpen: false, messageId: null, references: [], activity: [] })
@@ -620,7 +671,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
     combinedController.current = controller
 
     try {
-      await checkCombinedReadiness(prompt, controller.signal)
+      const turnstileToken = await checkCombinedReadiness(prompt, controller.signal)
       if (generation !== requestGeneration.current || controller.signal.aborted) return
       const azureMessages = [
         ...messages.map((m) => ({
@@ -662,7 +713,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       const retrieveRequest = buildKbRetrieveRequest(prompt, azureMessages, apiParams)
       const kbResponse = await retrieveFromKnowledgeBase(selectedAgent.id, retrieveRequest.messages, retrieveRequest.params)
       if (generation !== requestGeneration.current) return
-      const response = await addWebEvidence(prompt, kbResponse, controller.signal)
+      const response = await addWebEvidence(prompt, kbResponse, controller.signal, turnstileToken)
       if (generation !== requestGeneration.current) return
 
       // Debug: Log the full response to see references and activity
@@ -756,7 +807,10 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       setMessages(prev => [...prev, errorMessage])
     } finally {
       if (combinedController.current === controller) combinedController.current = null
-      if (generation === requestGeneration.current) setIsLoading(false)
+      if (generation === requestGeneration.current) {
+        if (includeWebIq) resetWebIqBotCheck()
+        setIsLoading(false)
+      }
     }
   }
 
@@ -765,6 +819,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
     if (agent) {
       requestGeneration.current += 1
       combinedController.current?.abort()
+      resetWebIqBotCheck()
       setIsLoading(false)
       setIncludeWebIq(false)
       setSelectedAgent(agent)
@@ -791,6 +846,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   const handleClearChat = () => {
     requestGeneration.current += 1
     combinedController.current?.abort()
+    if (includeWebIq) resetWebIqBotCheck()
     setIsLoading(false)
     // Simply clear the messages array - no localStorage involvement
     setMessages([])
@@ -834,7 +890,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
     combinedController.current = controller
 
     try {
-      await checkCombinedReadiness(input, controller.signal)
+      const turnstileToken = await checkCombinedReadiness(input, controller.signal)
       if (generation !== requestGeneration.current || controller.signal.aborted) return
       const azureMessages = [
         ...messages.map((m) => ({
@@ -876,7 +932,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       const retrieveRequest = buildKbRetrieveRequest(input, azureMessages, apiParams)
       const kbResponse = await retrieveFromKnowledgeBase(selectedAgent.id, retrieveRequest.messages, retrieveRequest.params)
       if (generation !== requestGeneration.current) return
-      const response = await addWebEvidence(input, kbResponse, controller.signal)
+      const response = await addWebEvidence(input, kbResponse, controller.signal, turnstileToken)
       if (generation !== requestGeneration.current) return
 
       // Debug: Log the full response to see references and activity (handleSubmit)
@@ -942,7 +998,10 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       setMessages(prev => [...prev, errorMessage])
     } finally {
       if (combinedController.current === controller) combinedController.current = null
-      if (generation === requestGeneration.current) setIsLoading(false)
+      if (generation === requestGeneration.current) {
+        if (includeWebIq) resetWebIqBotCheck()
+        setIsLoading(false)
+      }
     }
   }
 
@@ -1215,10 +1274,25 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
                 </Button>
               </div>
               {includeWebIq && <p className="text-xs text-fg-muted" role="status">
-                {webIqStatus?.configured === false
+                {webIqStatusLoading
+                  ? (locale === 'ko' ? 'Web IQ 연결을 확인하고 있습니다.' : 'Checking the Web IQ connection.')
+                  : webIqStatusFailed && !webIqUsage.message
+                  ? (locale === 'ko' ? 'Web IQ 연결을 확인하지 못했습니다. 아래에서 다시 확인해 주세요.' : 'Could not check the Web IQ connection. Check again below.')
+                  : webIqStatus?.botProtectionConfigured === false
+                  ? (locale === 'ko' ? '사람 확인 기능을 준비 중입니다. 지금은 KB만 사용해 주세요.' : 'Human verification is unavailable. Use the selected KB only for now.')
+                  : webIqStatus?.configured === false
                   ? (locale === 'ko' ? 'Web IQ와 답변 모델 연결이 필요합니다. 설정 전에는 웹 답변을 생성하지 않습니다.' : 'Web IQ and the answer model need configuration before combined answers can run.')
                   : (locale === 'ko' ? '같은 질문으로 공개 웹을 검색하고, KB와 웹 근거를 구분해 답변합니다.' : 'Search the public web with this question, then answer with KB and web sources identified separately.')}
               </p>}
+              {includeWebIq && (webIqStatusFailed || !webIqStatus?.configured) && <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={webIqStatusLoading || webIqUsage.remainingSeconds > 0}
+                onClick={() => void refreshWebIqStatus()}
+              >
+                {webIqStatusLoading ? (locale === 'ko' ? '확인 중…' : 'Checking…') : (locale === 'ko' ? '연결 다시 확인' : 'Check again')}
+              </Button>}
               {runtimeSettings.reasoningEffort === 'minimal' && <p className="text-xs text-fg-muted">{locale === 'ko' ? 'Minimal 검색은 의미 기반 intents로 원문 근거를 반환합니다.' : 'Minimal retrieval uses semantic intents and returns source passages.'}</p>}
             </fieldset>
             {includeWebIq && <fieldset className="space-y-2" disabled={isLoading}>
@@ -1228,6 +1302,13 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
               </div>
               <p className="text-xs text-fg-muted">{locale === 'ko' ? '예시 질문으로 실제 웹 근거를 확인합니다. Web IQ 체험은 IP당 최근 2분간 100회, 모든 방문자 합계 하루 $5까지 이용할 수 있습니다.' : 'Try a curated question with real web evidence. Web IQ allows 100 requests per IP per rolling 2 minutes, within a shared $5 daily allowance.'}</p>
             </fieldset>}
+            {includeWebIq && webIqStatus?.botProtectionConfigured && webIqStatus.turnstileSiteKey && !isLoading && <WebIqBotCheck
+              siteKey={webIqStatus.turnstileSiteKey}
+              action="webiq_answer"
+              language={webIqLanguage}
+              onTokenChange={handleWebIqBotToken}
+              resetKey={webIqBotResetKey}
+            />}
             {includeWebIq && webIqUsage.message && <p role="status" className="text-sm text-fg-muted">{webIqUsage.message}</p>}
             <div className="relative">
               <Textarea
@@ -1249,14 +1330,14 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
                   type="submit"
                   size="icon"
                   className="h-8 w-8"
-                  disabled={!input.trim() || isLoading || (includeWebIq && (webIqUsage.remainingSeconds > 0 || !isAllowedWebIqQuestion(input)))}
+                  disabled={!input.trim() || isLoading || (includeWebIq && (!webIqStatus?.configured || !webIqBotToken || webIqUsage.remainingSeconds > 0 || !isAllowedWebIqQuestion(input)))}
                 >
                   <Send20Regular className="h-4 w-4" />
                 </Button>
               </div>
             </div>
             <p className="text-xs text-fg-muted">
-              {includeWebIq ? (locale === 'ko' ? '질문을 선택한 다음 보내기 버튼을 누르세요.' : 'Select a question, then press Send.') : 'Press Enter to send, Shift+Enter for new line. Click mic for voice input.'}
+              {includeWebIq ? (locale === 'ko' ? '질문을 선택하고 사람 확인을 마친 다음 보내기 버튼을 누르세요.' : 'Select a question, complete human verification, then press Send.') : 'Press Enter to send, Shift+Enter for new line. Click mic for voice input.'}
             </p>
           </form>
         </div>
