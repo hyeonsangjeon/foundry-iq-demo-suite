@@ -189,7 +189,7 @@ function Header({ onMenuClick, showSidebar, locale }: HeaderProps) {
         <div className="flex items-center gap-2 sm:gap-4">
           <LanguageToggle />
           <a
-            href="https://learn.microsoft.com/rest/api/searchservice/knowledge-bases?view=rest-searchservice-2025-11-01-preview"
+            href="https://learn.microsoft.com/rest/api/searchservice/search-service-api-versions"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium text-fg-muted transition-colors duration-fast hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-stroke-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas"

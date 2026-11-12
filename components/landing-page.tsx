@@ -369,7 +369,7 @@ function ComingSoonCards() {
                 </div>
                 <p className="text-xs text-fg-muted leading-relaxed mt-1">{demo.desc}</p>
                 {!demo.href && (
-                  <p className="text-[10px] text-fg-subtle mt-2 font-mono uppercase tracking-wide">Coming soon</p>
+                  <p className="text-[10px] text-fg-subtle mt-2 font-mono uppercase tracking-wide">Demo not implemented</p>
                 )}
                 {demo.href && (
                   <p className="text-xs text-accent mt-2">Preview data profile →</p>

@@ -60,6 +60,14 @@ export default function FabricIqOntologyGuidePage() {
         ]}
       />
 
+      <GuideCallout title="Preview requirements · checked November 12, 2026">
+        Fabric Ontology Knowledge Sources are in preview. Search and the Fabric workspace
+        must use the same Microsoft Entra tenant. Retrieval requires an end-user access token
+        for Fabric, in addition to authentication to Azure AI Search. This setup script uses
+        2026-05-01-preview; current Microsoft Learn examples use 2026-08-01-preview.
+        <a className="ml-1 text-accent hover:underline" href="https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-fabric-ontology" target="_blank" rel="noopener noreferrer">Read the current Microsoft Learn requirements ↗</a>
+      </GuideCallout>
+
       <GuideCallout title="Excluded scope">
         This guide does not create Fabric workspaces, load Lakehouse data, design ontologies,
         or configure Data Agent internals. It assumes those assets already exist and are accessible.
@@ -72,7 +80,7 @@ export default function FabricIqOntologyGuidePage() {
             { title: 'Fabric workspace exists', description: 'You have the workspace ID and the app/user has access.' },
             { title: 'Lakehouse or table data exists', description: 'The ontology is grounded on already prepared Fabric data.' },
             { title: 'Ontology exists', description: 'You have the ontology ID that the Knowledge Source will reference.' },
-            { title: 'Authorization path is decided', description: 'Use server credential, end-user token passthrough, or a tenant-approved pattern.' },
+            { title: 'Same tenant and end-user authorization', description: 'Search and Fabric must share an Entra tenant. Authenticate to Search and pass a Fabric end-user token at retrieval time.' },
           ]}
         />
       </GuideSection>
@@ -86,7 +94,7 @@ export default function FabricIqOntologyGuidePage() {
             { title: 'KS name', description: 'Unique Knowledge Source name.', meta: 'airline-ontology-ks' },
             { title: 'KB name', description: 'Knowledge Base that attaches the Fabric KS.', meta: 'airline-fabric-kb' },
             { title: 'model deployment', description: 'Azure OpenAI deployment used by the KB.', meta: 'gpt-4o' },
-            { title: 'authorization strategy', description: 'Document whether retrieval uses server auth or user auth.' },
+            { title: 'authorization strategy', description: 'Configure Search authentication and the Fabric end-user token separately.' },
           ]}
         />
       </GuideSection>
@@ -97,7 +105,7 @@ export default function FabricIqOntologyGuidePage() {
             'Confirm Search auth works. RBAC is preferred for production, API key mode is useful as a rollback path.',
             'Create the Fabric ontology Knowledge Source with the workspace ID and ontology ID.',
             'Create a Knowledge Base and attach the Fabric Knowledge Source.',
-            'Ask verification questions that are answerable by the ontology, not by raw document text.',
+            'Retrieve with a Fabric end-user token and ask questions answerable by the ontology. The generic retrieval command below also needs the required token passthrough; see the Microsoft Learn example.',
           ]}
         />
       </GuideSection>
@@ -121,7 +129,7 @@ export default function FabricIqOntologyGuidePage() {
             },
             {
               issue: 'Authorization failure',
-              fix: 'Decide whether the app uses server credentials or end-user authorization. Do not mix both paths without a clear tenant policy.',
+              fix: 'Check Search authentication separately from the Fabric end-user token. Confirm that Search and the Fabric workspace share the same Entra tenant and that the user can access the ontology.',
             },
             {
               issue: 'Question bypasses ontology semantics',

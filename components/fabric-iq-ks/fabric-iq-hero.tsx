@@ -22,8 +22,8 @@ export function FabricIqHero({ locale }: FabricIqHeroProps) {
       >
         <span>{productTitle}</span>
         <span className="h-3 w-px bg-stroke-divider" aria-hidden="true" />
-        <span className="inline-flex items-center gap-1.5 text-emerald-400">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" aria-hidden="true" />
+        <span className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />
           {text.badge}
         </span>
       </motion.div>

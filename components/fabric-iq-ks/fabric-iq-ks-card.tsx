@@ -51,8 +51,8 @@ export function FabricIqKsCard({ locale }: FabricIqKsCardProps) {
           <div className="flex flex-col md:flex-row md:items-start gap-6">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-4">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 tracking-wide uppercase">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[11px] font-medium text-amber-700 dark:text-amber-400 tracking-wide uppercase">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                   {text.badgeLabel}
                 </div>
                 <div className="text-[10px] font-mono text-fg-subtle uppercase tracking-wide">

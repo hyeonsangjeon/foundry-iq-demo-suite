@@ -60,6 +60,14 @@ export default function SearchIndexGuidePage() {
         ]}
       />
 
+      <GuideCallout title="GA retrieval and preview synthesis">
+        Search index Knowledge Sources and minimal, extractive retrieval are generally
+        available in the 2026-04-01 API. The model-based Knowledge Base recipe below uses
+        preview query planning and answer synthesis. Keep the configured demo API version
+        when running it; the current preview documentation uses 2026-08-01-preview.
+        <a className="ml-1 text-accent hover:underline" href="https://learn.microsoft.com/azure/search/search-agentic-retrieval-concept" target="_blank" rel="noopener noreferrer">Review feature availability ↗</a>
+      </GuideCallout>
+
       <GuideSection
         title="When to choose this path"
         description="Use this route for MVP demos, controlled enterprise datasets, and debugging retrieval quality before adding SharePoint, Fabric IQ, or MCP sources."

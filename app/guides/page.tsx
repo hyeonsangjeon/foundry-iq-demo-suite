@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { FeatureAvailability } from '@/components/feature-availability'
 import {
   ArrowRight,
   CheckCircle,
@@ -80,7 +81,7 @@ const guideCards = [
 const envRows = [
   ['AZURE_SEARCH_ENDPOINT', 'Required', 'Search service URL'],
   ['AZURE_SEARCH_API_KEY', 'Required for api-key mode', 'Keep for rollback even when RBAC is enabled'],
-  ['AZURE_SEARCH_API_VERSION', 'Required', 'Use 2025-11-01-preview or 2026-05-01-preview for preview KS types'],
+  ['AZURE_SEARCH_API_VERSION', 'Required', 'Match the configured demo request version. MCP/Fabric scripts use 2026-05-01-preview; latest documented preview: 2026-08-01-preview'],
   ['AZURE_SEARCH_USE_RBAC', 'Optional', 'true for Search RBAC, false for api-key mode'],
   ['AZURE_TENANT_ID / AZURE_CLIENT_ID / AZURE_CLIENT_SECRET', 'Required for RBAC', 'Service principal used for Search bearer token'],
   ['NEXT_PUBLIC_AZURE_OPENAI_ENDPOINT', 'Required for KB model config', 'Azure OpenAI resource endpoint'],
@@ -107,6 +108,8 @@ export default function GuidesPage() {
           from a terminal with domain-level inputs such as domain, KB name, index name, and ontology IDs.
         </p>
       </section>
+
+      <FeatureAvailability />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {guideCards.map((card) => {

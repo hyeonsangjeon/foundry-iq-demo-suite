@@ -54,6 +54,13 @@ export default function McpServerGuidePage() {
         ]}
       />
 
+      <GuideCallout title="Preview feature · demo API versus current documentation">
+        MCP Server Knowledge Sources remain in public preview as of November 12, 2026.
+        This demo and its setup script use 2026-05-01-preview. The latest Microsoft Learn
+        examples use 2026-08-01-preview; that does not change the version used by this demo.
+        <a className="ml-1 text-accent hover:underline" href="https://learn.microsoft.com/azure/search/agentic-knowledge-source-how-to-mcp-server" target="_blank" rel="noopener noreferrer">Read the current Microsoft Learn requirements ↗</a>
+      </GuideCallout>
+
       <GuideCallout title="Remote server requirement">
         Local stdio MCP servers cannot be attached directly. Use a reachable HTTPS MCP server
         or a managed connection pattern approved for the tenant.

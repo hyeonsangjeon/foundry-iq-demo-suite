@@ -37,10 +37,10 @@ export default function AgentsPage() {
               
               <div className="space-y-3">
                 <h3 className="text-2xl font-semibold text-fg-default">
-                  Coming Soon
+                  Not implemented in this demo
                 </h3>
                 <p className="text-fg-muted max-w-sm mx-auto">
-                  The Agents feature is currently under development. We're working on bringing you an enhanced experience for managing and interacting with your Foundry agents.
+                  Agent management is not connected on this page. This describes the demo implementation, not the availability of Microsoft Foundry Agent Service.
                 </p>
               </div>
 
@@ -52,7 +52,7 @@ export default function AgentsPage() {
               >
                 <div className="inline-flex items-center gap-2 text-sm text-fg-muted">
                   <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                  Check back soon for updates
+                  Use the Knowledge Base playground to try retrieval
                 </div>
               </motion.div>
             </CardContent>

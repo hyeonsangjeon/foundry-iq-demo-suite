@@ -18,6 +18,7 @@ import {
 
 import { getLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { FeatureAvailability } from '@/components/feature-availability';
 
 type Language = 'en' | 'ko';
 type Copy = { en: string; ko: string };
@@ -252,6 +253,8 @@ export default function ArchitecturePage() {
             </dl>
           </details>
         </section>
+
+        <FeatureAvailability />
 
         <section aria-labelledby="menus-heading" className="mt-12">
           <h2 id="menus-heading" className="text-2xl font-semibold">{pick('Where to try each part', '각 기능은 어디서 확인하나요?')}</h2>

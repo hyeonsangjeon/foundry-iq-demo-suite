@@ -36,6 +36,7 @@ import {
   MICROSOFT_LEARN_MCP_TOOL,
   type McpDemoResponse,
 } from '@/lib/mcpKnowledgeSource'
+import { SEARCH_LATEST_PREVIEW_API_VERSION } from '@/lib/featureAvailability'
 import { cn } from '@/lib/utils'
 
 type DemoMode = 'live' | 'sample'
@@ -228,7 +229,7 @@ export function McpKnowledgeSourceDemo() {
               <span className="rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
                 {copy.previewBadge}
               </span>
-              <span className="font-mono text-[10px] text-fg-subtle">{MCP_PREVIEW_API_VERSION}</span>
+              <span className="font-mono text-[10px] text-fg-subtle">{copy.previewApi}: {MCP_PREVIEW_API_VERSION}</span>
             </div>
             <h1 className="mt-2 text-2xl font-bold text-fg-default md:text-3xl">
               {copy.title}
@@ -236,6 +237,7 @@ export function McpKnowledgeSourceDemo() {
             <p className="mt-2 max-w-3xl text-sm leading-6 text-fg-muted">
               {copy.subtitle}
             </p>
+            <p className="mt-2 text-xs text-fg-subtle">{copy.statusChecked}</p>
           </div>
         </div>
 
@@ -598,6 +600,7 @@ function Configuration({
             <ConfigurationRow term={copy.inclusionMode} value="reranked" />
             <ConfigurationRow term={copy.outputParsing} value="auto" />
             <ConfigurationRow term={copy.previewApi} value={MCP_PREVIEW_API_VERSION} />
+            <ConfigurationRow term={copy.latestDocumentedApi} value={SEARCH_LATEST_PREVIEW_API_VERSION} />
           </dl>
         </div>
 

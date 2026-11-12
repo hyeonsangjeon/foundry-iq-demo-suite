@@ -82,6 +82,8 @@ export interface McpKnowledgeSourceCopy {
   inclusionMode: string
   outputParsing: string
   previewApi: string
+  latestDocumentedApi: string
+  statusChecked: string
   sourceMaterial: string
   resourceMcpTitle: string
   resourceMcpMeta: string
@@ -199,7 +201,9 @@ export const mcpKnowledgeSourceI18n: Record<Locale, McpKnowledgeSourceCopy> = {
     authenticationValue: 'None (public endpoint)',
     inclusionMode: 'Inclusion mode',
     outputParsing: 'Output parsing',
-    previewApi: 'Preview API',
+    previewApi: 'Demo API',
+    latestDocumentedApi: 'Latest documented preview API',
+    statusChecked: 'Preview status checked 2026-11-12',
     sourceMaterial: 'Source material',
     resourceMcpTitle: 'Official MCP setup manual',
     resourceMcpMeta: 'Deploy and validate the MCP Server Knowledge Source',
@@ -327,7 +331,9 @@ export const mcpKnowledgeSourceI18n: Record<Locale, McpKnowledgeSourceCopy> = {
     authenticationValue: '없음 (공개 엔드포인트)',
     inclusionMode: '포함 모드',
     outputParsing: '출력 파싱',
-    previewApi: '프리뷰 API',
+    previewApi: '데모 사용 API',
+    latestDocumentedApi: '공식 문서의 최신 프리뷰 API',
+    statusChecked: '프리뷰 상태 확인: 2026-11-12',
     sourceMaterial: '참고 자료',
     resourceMcpTitle: 'Microsoft 공식 MCP 설정 매뉴얼',
     resourceMcpMeta: 'MCP Server Knowledge Source 배포 및 검증',
@@ -440,7 +446,9 @@ export const mcpKnowledgeSourceI18n: Record<Locale, McpKnowledgeSourceCopy> = {
     authenticationValue: '无（公共端点）',
     inclusionMode: '包含模式',
     outputParsing: '输出解析',
-    previewApi: '预览 API',
+    previewApi: '演示使用的 API',
+    latestDocumentedApi: '官方文档最新预览 API',
+    statusChecked: '预览状态核查：2026-11-12',
     sourceMaterial: '参考资料',
     resourceMcpTitle: 'Microsoft 官方 MCP 设置手册',
     resourceMcpMeta: '部署并验证 MCP Server Knowledge Source',
@@ -551,7 +559,9 @@ export const mcpKnowledgeSourceI18n: Record<Locale, McpKnowledgeSourceCopy> = {
     authenticationValue: 'なし（公開エンドポイント）',
     inclusionMode: '包含モード',
     outputParsing: '出力解析',
-    previewApi: 'プレビュー API',
+    previewApi: 'デモ使用 API',
+    latestDocumentedApi: '公式文書の最新プレビュー API',
+    statusChecked: 'プレビュー状態確認：2026-11-12',
     sourceMaterial: '参考資料',
     resourceMcpTitle: 'Microsoft 公式 MCP セットアップマニュアル',
     resourceMcpMeta: 'MCP Server Knowledge Source の展開と検証',
@@ -662,7 +672,9 @@ export const mcpKnowledgeSourceI18n: Record<Locale, McpKnowledgeSourceCopy> = {
     authenticationValue: 'कोई नहीं (सार्वजनिक एंडपॉइंट)',
     inclusionMode: 'समावेशन मोड',
     outputParsing: 'आउटपुट पार्सिंग',
-    previewApi: 'पूर्वावलोकन API',
+    previewApi: 'डेमो में उपयोग किया गया API',
+    latestDocumentedApi: 'दस्तावेज़ों में नवीनतम preview API',
+    statusChecked: 'Preview स्थिति जाँची: 2026-11-12',
     sourceMaterial: 'स्रोत सामग्री',
     resourceMcpTitle: 'Microsoft आधिकारिक MCP सेटअप मैनुअल',
     resourceMcpMeta: 'MCP Server Knowledge Source तैनात और सत्यापित करें',

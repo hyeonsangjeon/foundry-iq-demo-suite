@@ -41,6 +41,14 @@ export default function SharePointGuidePage() {
         ]}
       />
 
+      <GuideCallout title="Demo source type and product availability">
+        This app indexes SharePoint documents and creates a searchIndex Knowledge Source.
+        That source type supports GA minimal, extractive retrieval; this demo also uses preview
+        answer synthesis. Native indexedSharePoint and remoteSharePoint Knowledge Sources
+        are separate preview features as of November 12, 2026.
+        <a className="ml-1 text-accent hover:underline" href="https://learn.microsoft.com/azure/search/agentic-knowledge-source-overview" target="_blank" rel="noopener noreferrer">Check the current source types ↗</a>
+      </GuideCallout>
+
       <GuideCallout title="Scope">
         This is not Remote SharePoint ACL passthrough. Treat it as an indexed SharePoint pipeline:
         Graph reads the site content, Azure AI Search indexes it, and the Knowledge Base retrieves from Search.

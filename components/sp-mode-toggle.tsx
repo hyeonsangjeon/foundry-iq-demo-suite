@@ -104,7 +104,7 @@ export function SPModeToggle({ isLiveMode, isLiveAvailable, onToggle }: SPModeTo
       {/* Tooltip */}
       {showTooltip && (
         <div className="absolute top-full right-0 mt-2 z-50 w-52 rounded-lg border border-glass-border bg-bg-elevated p-2.5 text-[11px] text-fg-muted shadow-lg animate-in fade-in slide-in-from-top-1 duration-150">
-          Coming soon — requires SharePoint tenant connection
+          Not connected in this demo — configure a SharePoint tenant to enable Live
         </div>
       )}
 

@@ -29,7 +29,6 @@ const copy = {
     combinedHint: 'In Foundry IQ, choose a knowledge base, then select “Internal + Web IQ” before asking your question.',
     combinedLink: 'Ask with your KB and Web IQ',
     checking: 'Checking server settings…',
-    configured: 'Live search is ready · verify below, then search',
     unconfigured: 'Live search is unavailable until server authentication and bot protection are configured.',
     statusError: 'Could not check server settings.',
     retry: 'Check again',
@@ -79,7 +78,6 @@ const copy = {
     combinedHint: 'Foundry IQ에서 지식 베이스를 고른 뒤, ‘내부 지식 + Web IQ’를 선택하고 질문하세요.',
     combinedLink: '내 지식 베이스와 웹을 함께 조회하기',
     checking: '서버 설정 확인 중…',
-    configured: '실제 검색 준비 완료 · 아래 확인을 마친 뒤 검색하세요',
     unconfigured: '서버 인증과 봇 방지 설정을 마치면 실제 웹 검색을 이용할 수 있습니다.',
     statusError: '서버 설정을 확인하지 못했습니다.',
     retry: '다시 확인',
@@ -348,7 +346,8 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
     setBotResetKey(value => value + 1);
   }
 
-  const statusText = configuration === 'error' ? text.statusError : text[configuration];
+  const statusText = configuration === 'configured' ? null
+    : configuration === 'error' ? text.statusError : text[configuration];
   const safeResults = visibleResult?.results.filter((item) => safeResultUrl(item.url)) ?? [];
 
   return (
@@ -378,12 +377,12 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
           ))}
         </ol>
       </div>
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-fg-muted" role="status">
+      {statusText && <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-fg-muted" role="status">
         <span>{statusText}</span>
         {(configuration === 'error' || configuration === 'unconfigured') && (
           <Button type="button" variant="ghost" size="sm" onClick={() => setStatusAttempt((value) => value + 1)}>{text.retry}</Button>
         )}
-      </div>
+      </div>}
 
       <form onSubmit={submit} className="mt-5 space-y-3" aria-busy={loading}>
         <fieldset disabled={loading} aria-describedby={`${id}-hint`}>

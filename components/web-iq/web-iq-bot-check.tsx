@@ -9,7 +9,7 @@ type TurnstileOptions = {
   action: 'webiq_search' | 'webiq_answer';
   language: 'en' | 'ko';
   size: 'flexible' | 'compact';
-  appearance: 'always';
+  appearance: 'interaction-only';
   retry: 'never';
   'refresh-expired': 'manual';
   'refresh-timeout': 'manual';
@@ -85,8 +85,8 @@ const copy = {
   en: {
     label: 'Quick verification before searching',
     loading: 'Loading verification…',
-    checking: 'Complete the verification below to search.',
-    verified: 'Verification complete. You can search now.',
+    checking: 'Checking your browser…',
+    verified: 'Ready to search',
     expired: 'Verification expired. Please verify again.',
     error: 'Verification could not finish. Please try again.',
     retry: 'Try verification again',
@@ -94,8 +94,8 @@ const copy = {
   ko: {
     label: '검색 전 간단한 확인',
     loading: '확인 화면을 불러오는 중…',
-    checking: '아래 확인을 마치면 검색할 수 있습니다.',
-    verified: '확인됐습니다. 이제 검색할 수 있습니다.',
+    checking: '브라우저를 확인하는 중…',
+    verified: '검색 준비 완료',
     expired: '확인 시간이 만료됐습니다. 다시 확인해 주세요.',
     error: '확인을 마치지 못했습니다. 다시 시도해 주세요.',
     retry: '다시 확인하기',
@@ -146,7 +146,7 @@ export function WebIqBotCheck({ siteKey, action, language, onTokenChange, resetK
         action,
         language,
         size,
-        appearance: 'always',
+        appearance: 'interaction-only',
         retry: 'never',
         'refresh-expired': 'manual',
         'refresh-timeout': 'manual',
@@ -184,10 +184,13 @@ export function WebIqBotCheck({ siteKey, action, language, onTokenChange, resetK
   }, [resetKey]);
 
   return (
-    <div className="min-w-0 space-y-2 rounded-xl border border-stroke-divider bg-bg-subtle p-3" aria-labelledby={`${id}-label`}>
-      <p id={`${id}-label`} className="text-xs font-medium text-fg-default">{text.label}</p>
-      <div ref={containerRef} className="min-h-[65px] w-full min-w-0" />
-      <p role={status === 'error' || status === 'expired' ? 'alert' : 'status'} className="text-xs leading-5 text-fg-muted">{text[status]}</p>
+    <div className="min-w-0 space-y-2" aria-labelledby={`${id}-label`}>
+      <p id={`${id}-label`} className="sr-only">{text.label}</p>
+      <div ref={containerRef} className="w-full min-w-0" />
+      <p role={status === 'error' || status === 'expired' ? 'alert' : 'status'} className="flex items-center gap-1.5 text-xs leading-5 text-fg-muted">
+        {status === 'verified' && <span aria-hidden="true">✓</span>}
+        {text[status]}
+      </p>
       {(status === 'error' || status === 'expired') && (
         <Button type="button" variant="outline" size="sm" onClick={() => setAttempt(value => value + 1)}>{text.retry}</Button>
       )}
