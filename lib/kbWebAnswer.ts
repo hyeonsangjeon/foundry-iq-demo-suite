@@ -42,6 +42,44 @@ export interface KbWebAnswerStatus {
   turnstileSiteKey: string | null;
 }
 
+export interface KbWebKnowledgeSourceMetadata {
+  name: string;
+  kind?: string;
+  alwaysQuerySource?: boolean | null;
+  includeReferences?: boolean | null;
+  includeReferenceSourceData?: boolean | null;
+  rerankerThreshold?: number | null;
+  maxSubQueries?: number | null;
+  headers?: Record<string, string>;
+}
+
+/** Request citable passages without guessing a source kind or changing its retrieval overrides. */
+export function buildKbWebKnowledgeSourceParams(
+  attachedSources: readonly KbWebKnowledgeSourceMetadata[] = [],
+  catalogSources: readonly Pick<KbWebKnowledgeSourceMetadata, 'name' | 'kind'>[] = [],
+) {
+  const knownKind = (kind: unknown): kind is string => typeof kind === 'string' && Boolean(kind.trim()) && kind !== 'unknown';
+  const kinds = new Map(catalogSources.filter(source => source && typeof source.name === 'string' && knownKind(source.kind))
+    .map(source => [source.name, source.kind!]));
+  const params = attachedSources.flatMap(source => {
+    if (!source || typeof source.name !== 'string' || !source.name.trim()) return [];
+    const kind = kinds.get(source.name) || source.kind;
+    // Missing metadata must keep the existing answer-only/extractive fallback, not invent searchIndex.
+    if (!knownKind(kind)) return [];
+    return [{
+      knowledgeSourceName: source.name,
+      kind,
+      includeReferences: true,
+      includeReferenceSourceData: true,
+      ...(typeof source.alwaysQuerySource === 'boolean' ? { alwaysQuerySource: source.alwaysQuerySource } : {}),
+      ...(typeof source.rerankerThreshold === 'number' && Number.isFinite(source.rerankerThreshold) ? { rerankerThreshold: source.rerankerThreshold } : {}),
+      // Legacy maxSubQueries is absent from the 2025-11-01-preview retrieve contract.
+      ...(source.headers ? { headers: { ...source.headers } } : {}),
+    }];
+  });
+  return params.length ? params : undefined;
+}
+
 /** Minimal retrieval has no LLM synthesis: use semantic intents and extractive output. */
 export function buildKbRetrieveRequest<T>(query: string, messages: T[], params: Record<string, unknown>) {
   const effort = params.retrievalReasoningEffort as { kind?: string } | undefined;

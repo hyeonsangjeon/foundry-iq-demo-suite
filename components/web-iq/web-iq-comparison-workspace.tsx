@@ -6,8 +6,8 @@ import { WebIqBotCheck } from '@/components/web-iq/web-iq-bot-check';
 import { WebIqAnswerComparison, comparisonErrorText } from '@/components/web-iq/web-iq-answer-comparison';
 import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
 import { useWebIqComparison } from '@/components/web-iq/use-web-iq-comparison';
-import { fetchKnowledgeBases } from '@/lib/api';
-import type { KbWebAnswerStatus } from '@/lib/kbWebAnswer';
+import { fetchKnowledgeBases, fetchKnowledgeSources } from '@/lib/api';
+import { buildKbWebKnowledgeSourceParams, type KbWebAnswerStatus } from '@/lib/kbWebAnswer';
 import { WEB_IQ_DEMO_QUESTIONS } from '@/lib/webIqDemoQuestions';
 import { checkWebIqAnswerReadiness, WebIqComparisonError, type ComparisonSelection } from '@/lib/webIqComparison';
 
@@ -17,6 +17,7 @@ export function WebIqComparisonWorkspace({ language, onWebSearch }: { language: 
   const ko = language === 'ko';
   const pick = (en: string, korean: string) => ko ? korean : en;
   const [kbs, setKbs] = useState<KbOption[]>([]);
+  const [knowledgeSources, setKnowledgeSources] = useState<Array<{ name: string; kind?: string }>>([]);
   const [kbId, setKbId] = useState('');
   const [presetId, setPresetId] = useState('nasa-earth-at-night');
   const [status, setStatus] = useState<KbWebAnswerStatus | null>(null);
@@ -48,7 +49,9 @@ export function WebIqComparisonWorkspace({ language, onWebSearch }: { language: 
   const kb = kbs.find(item => item.name === kbId);
   const question = WEB_IQ_DEMO_QUESTIONS.find(item => item.id === presetId)!;
   const selection: ComparisonSelection = { kbId, presetId, query: question[language], language,
-    settings: { includeActivity: true, outputMode: kb?.outputMode || 'answerSynthesis', retrievalReasoningEffort: kb?.retrievalReasoningEffort || { kind: 'low' } } };
+    settings: { includeActivity: true, outputMode: kb?.outputMode || 'answerSynthesis',
+      retrievalReasoningEffort: kb?.retrievalReasoningEffort || { kind: 'low' },
+      knowledgeSourceParams: buildKbWebKnowledgeSourceParams(kb?.knowledgeSources, knowledgeSources) } };
 
   const refresh = useCallback(async () => {
     readinessController.current?.abort();
@@ -63,12 +66,14 @@ export function WebIqComparisonWorkspace({ language, onWebSearch }: { language: 
         if (!response.ok) throw new WebIqComparisonError(body?.code || 'ANSWER_NOT_CONFIGURED', response.status);
         return body as KbWebAnswerStatus;
       }),
+      fetchKnowledgeSources(),
     ]);
     if (controller.signal.aborted) return;
     if (results[0].status === 'fulfilled') setKbs(results[0].value.value || []);
     else { setKbs([]); setError('KB_LIST_UNAVAILABLE'); }
     if (results[1].status === 'fulfilled') setStatus(results[1].value);
     else { setStatus(null); setError(results[1].reason instanceof WebIqComparisonError ? results[1].reason.code : 'ANSWER_NOT_CONFIGURED'); }
+    setKnowledgeSources(results[2].status === 'fulfilled' && Array.isArray(results[2].value.value) ? results[2].value.value : []);
     setChecking(false);
   }, []);
   useEffect(() => { void refresh(); return () => { readinessController.current?.abort(); preflight.current?.abort(); }; }, [refresh]);

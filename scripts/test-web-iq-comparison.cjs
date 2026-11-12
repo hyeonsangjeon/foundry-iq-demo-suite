@@ -66,6 +66,58 @@ function controller(options = {}) {
   return { instance, calls, changes, get latest() { return latest; }, setClock: value => { clock = value; } };
 }
 
+test('KB transport: Tech preserves valid retrieval overrides and requests passages without obsolete maxSubQueries', async () => {
+  const calls = [];
+  const transport = modules(async (url, init) => { calls.push({ url, init }); return Response.json(snapshot()); });
+  const { buildKbWebKnowledgeSourceParams, buildKbRetrieveRequest } = transport('lib/kbWebAnswer.ts');
+  const attached = [{ name: 'public-nasa', kind: 'azureBlob', includeReferences: false, includeReferenceSourceData: false,
+    alwaysQuerySource: false, rerankerThreshold: 0, maxSubQueries: 2, headers: { 'x-fixture': 'offline-only' } },
+  { name: 'attached-web', kind: 'web', alwaysQuerySource: true }];
+  const catalog = [{ name: 'public-nasa', kind: 'searchIndex' }, { name: 'not-attached', kind: 'azureBlob' }];
+  const before = JSON.stringify({ attached, catalog });
+  const request = buildKbRetrieveRequest(query, [{ role: 'user', content: [{ type: 'text', text: query }] }], {
+    includeActivity: true, outputMode: 'answerSynthesis', retrievalReasoningEffort: { kind: 'medium' },
+    knowledgeSourceParams: buildKbWebKnowledgeSourceParams(attached, catalog),
+  });
+  await transport('lib/api.ts').retrieveFromKnowledgeBase('nasa-earth-book', request.messages, request.params, new AbortController().signal);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, '/api/knowledge-bases/nasa-earth-book/retrieve');
+  const body = JSON.parse(calls[0].init.body);
+  assert.deepEqual(body.knowledgeSourceParams, [{ knowledgeSourceName: 'public-nasa', kind: 'searchIndex',
+    includeReferences: true, includeReferenceSourceData: true, alwaysQuerySource: false,
+    rerankerThreshold: 0, headers: { 'x-fixture': 'offline-only' } },
+  { knowledgeSourceName: 'attached-web', kind: 'web', includeReferences: true, includeReferenceSourceData: true, alwaysQuerySource: true }]);
+  assert.equal(body.outputMode, 'answerSynthesis');
+  assert.deepEqual(body.retrievalReasoningEffort, { kind: 'medium' });
+  assert.equal(body.includeActivity, true);
+  assert.equal(JSON.stringify({ attached, catalog }), before);
+});
+
+test('KB transport: missing catalog/kind never guesses searchIndex and preserves minimal and answer-only fallbacks', async () => {
+  const calls = [];
+  const original = snapshot({ references: [{ id: '0', type: 'searchIndex', activitySource: 0, docKey: 'metadata-only' }] });
+  const transport = modules(async (url, init) => { calls.push({ url, init }); return Response.json(original); });
+  const { buildKbWebKnowledgeSourceParams, buildKbRetrieveRequest, buildKbWebContext } = transport('lib/kbWebAnswer.ts');
+  const missing = [{ name: 'missing-kind' }, { name: 'unknown-kind', kind: 'unknown' }];
+  assert.equal(buildKbWebKnowledgeSourceParams(missing), undefined);
+  assert.deepEqual(plain(buildKbWebKnowledgeSourceParams([...missing, { name: 'known-attached', kind: 'azureBlob',
+    alwaysQuerySource: null, rerankerThreshold: null, maxSubQueries: null }])),
+    [{ knowledgeSourceName: 'known-attached', kind: 'azureBlob', includeReferences: true, includeReferenceSourceData: true }]);
+  const request = buildKbRetrieveRequest(query, [], { includeActivity: true, outputMode: 'answerSynthesis',
+    retrievalReasoningEffort: { kind: 'minimal' }, knowledgeSourceParams: buildKbWebKnowledgeSourceParams(missing) });
+  const result = await transport('lib/api.ts').retrieveFromKnowledgeBase('nasa-earth-book', request.messages, request.params, new AbortController().signal);
+  assert.equal(calls.length, 1);
+  const body = JSON.parse(calls[0].init.body);
+  assert.equal(Object.hasOwn(body, 'knowledgeSourceParams'), false);
+  assert.equal(Object.hasOwn(body, 'messages'), false);
+  assert.equal(body.outputMode, 'extractiveData');
+  assert.deepEqual(body.intents, [{ type: 'semantic', search: query }]);
+  const context = buildKbWebContext(result);
+  assert.equal(context.internalAnswer, original.response[0].content[0].text);
+  assert.equal(context.sources.length, 0);
+  assert.equal(context.usable, true);
+});
+
 test('normal: Tech controller retrieves KB once, publishes original immediately, and synthesizes once', async () => {
   const web = deferred();
   const original = snapshot(), before = JSON.stringify(original);
