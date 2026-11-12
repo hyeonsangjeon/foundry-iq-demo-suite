@@ -9,8 +9,10 @@ import Search from 'lucide-react/dist/esm/icons/search';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { WebIqBotCheck } from '@/components/web-iq/web-iq-bot-check';
+import { WebIqSourceDetail } from '@/components/web-iq/web-iq-source-detail';
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
 import { WEB_IQ_DEMO_QUESTIONS } from '@/lib/webIqDemoQuestions';
-import { WEB_IQ_SEARCH_DOCUMENTATION, type WebIqSearchResponse } from '@/lib/webIqSearch';
+import { WEB_IQ_SEARCH_DOCUMENTATION, type WebIqSearchResponse, type WebIqSearchResult } from '@/lib/webIqSearch';
 import { cn } from '@/lib/utils';
 
 const copy = {
@@ -57,6 +59,8 @@ const copy = {
     botUnavailable: 'Verification is temporarily unavailable. Please try again shortly.',
     empty: 'No usable results for this query.',
     results: 'Web results',
+    summary: 'Search summary',
+    inspect: 'Inspect relevant passage',
     searched: 'Query',
     retrieved: 'Retrieved',
     crawled: 'Crawled',
@@ -106,6 +110,8 @@ const copy = {
     botUnavailable: '지금은 확인 서비스를 이용할 수 없습니다. 잠시 후 다시 시도해 주세요.',
     empty: '사용할 수 있는 검색 결과가 없습니다.',
     results: '웹 검색 결과',
+    summary: '검색 요약',
+    inspect: '관련 본문 확인',
     searched: '검색어',
     retrieved: '조회 시각',
     crawled: '수집 시각',
@@ -179,6 +185,7 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
   const [configuration, setConfiguration] = React.useState<ConfigurationState>('checking');
   const [statusAttempt, setStatusAttempt] = React.useState(0);
   const [result, setResult] = React.useState<WebIqSearchResponse | null>(null);
+  const [selectedSource, setSelectedSource] = React.useState<WebIqSearchResult | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [cancelled, setCancelled] = React.useState(false);
@@ -255,6 +262,7 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
 
   function clearPreviousSearch() {
     setResult(null);
+    setSelectedSource(null);
     setError(null);
     setCancelled(false);
     if (usageNotice?.code === 'QUESTION_NOT_ALLOWED') setUsageNotice(null);
@@ -361,6 +369,7 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
           {text.docs}<ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
         </a>
       </div>
+      <div className="mt-3"><WebIqServiceLinks features={['web-search']} locale={language} /></div>
       <p className="mt-3 text-xs leading-5 text-fg-subtle">{text.boundary}</p>
       <div className="mt-5 rounded-xl bg-bg-subtle p-4">
         <h3 className="text-sm font-medium text-fg-default">{text.reviewTitle}</h3>
@@ -451,23 +460,27 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
             {visibleResult.traceId && <p className="break-all font-mono text-[11px] text-fg-subtle">traceId: {visibleResult.traceId}</p>}
           </div>
           {safeResults.length === 0 && <p className="text-sm text-fg-muted">{text.empty}</p>}
-          {safeResults.map((item) => (
+          {safeResults.map((item, index) => (
             <article key={item.url} className="rounded-xl border border-stroke-divider p-4">
+              <p className="mb-2 text-xs font-semibold text-accent">{item.sourceId || `W${index + 1}`} · {new URL(item.url).hostname}</p>
               <a href={safeResultUrl(item.url)!} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-full items-start gap-2 break-words text-sm font-semibold text-accent hover:underline">
                 {item.title}<ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               </a>
               <p className="mt-1 break-all text-[11px] text-fg-subtle">{item.url}</p>
-              <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-fg-muted">{item.content.length > 1500 ? `${item.content.slice(0, 1500)}…` : item.content}</p>
+              <h4 className="mt-3 text-xs font-medium text-fg-default">{text.summary}</h4>
+              <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-fg-muted">{item.content.length > 1500 ? `${item.content.slice(0, 1500)}…` : item.content}</p>
               {(item.crawledAt || item.lastUpdatedAt) && (
                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-fg-subtle">
                   {item.crawledAt && <span>{text.crawled}: {item.crawledAt}</span>}
                   {item.lastUpdatedAt && <span>{text.updated}: {item.lastUpdatedAt}</span>}
                 </div>
               )}
+              <Button type="button" variant="outline" className="mt-4 min-h-11" onClick={() => setSelectedSource(item)}>{text.inspect}</Button>
             </article>
           ))}
         </div>
       )}
+      {selectedSource && visibleResult && <WebIqSourceDetail key={`${visibleResult.retrievedAt}:${selectedSource.sourceId || selectedSource.url}`} source={selectedSource} query={visibleResult.query} language={language} onClose={() => setSelectedSource(null)} />}
       <div className="mt-6 flex flex-col gap-3 border-t border-stroke-divider pt-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-sm font-medium text-fg-default">{text.combinedTitle}</h3>

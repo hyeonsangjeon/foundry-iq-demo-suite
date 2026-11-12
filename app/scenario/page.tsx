@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -88,6 +90,7 @@ export default function ScenarioPage() {
 
       {/* Content */}
       <div className="py-8 pb-24">
+        <WebIqServiceLinks features={['kb-retrieval']} locale={locale} context="sample" className="mx-auto mb-6 max-w-5xl px-4" />
         <AnimatePresence mode="wait">
           <motion.div
             key={step}

@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import Link from 'next/link'
@@ -108,6 +110,7 @@ export function FabricIqKsCard({ locale }: FabricIqKsCardProps) {
           </div>
         </motion.div>
       </Link>
+      <WebIqServiceLinks features={['ontology']} locale={locale} context="documentation" className="mt-3" />
     </motion.div>
   )
 }

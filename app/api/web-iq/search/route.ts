@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { attachWebIqSourceTickets } from '@/lib/webIqSourceTicket';
 import { getWebIqRequestAuth, isWebIqConfigured } from '@/lib/webIqAuth';
 import { getWebIqBotProtectionConfig, verifyWebIqBotCheck } from '@/lib/webIqBotCheck';
 import { reserveWebIqUsage, usageErrorResponse, WEB_IQ_CALL_MICRO_USD } from '@/lib/webIqUsage';
@@ -120,6 +121,7 @@ export async function POST(request: NextRequest) {
 
     const result: WebIqSearchResponse = {
       ...parsedResponse,
+      results: attachWebIqSourceTickets(parsedResponse.results, query),
       retrievedAt: new Date().toISOString(),
       query,
     };

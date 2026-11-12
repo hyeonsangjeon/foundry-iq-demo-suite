@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import { useRef, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, useInView } from 'framer-motion'
@@ -165,6 +167,7 @@ function ActiveDemoCard({ locale, isExec }: { locale: Locale; isExec: boolean })
           </div>
         </motion.div>
       </Link>
+      <WebIqServiceLinks features={['kb-retrieval']} locale={locale} context="documentation" className="mt-3" />
     </motion.div>
   )
 }
@@ -252,6 +255,7 @@ function SharePointDemoCard({ locale, isExec }: { locale: Locale; isExec: boolea
           </div>
         </motion.div>
       </Link>
+      <WebIqServiceLinks features={['graph-files', 'sharepoint-indexer']} locale={locale} context="documentation" className="mt-3" />
     </motion.div>
   )
 }
@@ -339,6 +343,7 @@ function FabricIqDemoCard({ locale, isExec }: { locale: Locale; isExec: boolean 
           </div>
         </motion.div>
       </Link>
+      <WebIqServiceLinks features={['onelake', 'kb-retrieval']} locale={locale} context="documentation" className="mt-3" />
     </motion.div>
   )
 }

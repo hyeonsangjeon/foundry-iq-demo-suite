@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, Suspense } from 'react'
@@ -777,6 +779,7 @@ function AgentBuilderPageContent() {
           <div className="flex-1 p-4 space-y-4 overflow-auto">
             <div>
               <h3 className="text-sm font-semibold mb-2">Knowledge Bases</h3>
+              <WebIqServiceLinks features={['kb-retrieval']} context="documentation" className="mb-3" />
               <div className="space-y-2">
                 {/* Dropdown for adding knowledge bases */}
                 <div className="relative">
@@ -1036,6 +1039,7 @@ function AgentBuilderPageContent() {
           />
         </div>
 
+        <WebIqServiceLinks features={['agent-service']} context="placeholder" className="px-4 pb-3" />
         <nav className="flex-1 p-4">
           <div className="space-y-1">
             {SECTIONS.map((section) => {
@@ -1114,6 +1118,7 @@ function AgentBuilderPageContent() {
       {/* Main Content Area */}
       <div className="flex-1 overflow-auto">
         <div className="p-8">
+          {activeSection === 'knowledge' && <WebIqServiceLinks features={['kb-retrieval']} context="documentation" className="mb-4" />}
           {renderSectionContent()}
         </div>
       </div>

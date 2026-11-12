@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -148,6 +150,7 @@ export default function CreateKnowledgeBasePage() {
                         <div>
                           <h3 className="font-medium text-fg-default">{type.name}</h3>
                           <p className="text-sm text-fg-muted">{type.description}</p>
+                          <div onClick={event => event.stopPropagation()}><WebIqServiceLinks features={type.id === 'website' ? ['web-source'] : ['blob-source']} context="documentation" /></div>
                         </div>
                       </div>
                     </div>

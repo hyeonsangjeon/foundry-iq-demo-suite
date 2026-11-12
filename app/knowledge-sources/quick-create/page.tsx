@@ -1,5 +1,8 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+import { serviceFeaturesForSource } from '@/lib/webIqServiceReferences';
+
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, Suspense } from 'react'
@@ -272,6 +275,7 @@ function QuickCreateKnowledgeSourcePageContent() {
                       <Icon className="h-8 w-8 text-fg-accent" />
                       <h3 className="font-semibold">{info.title}</h3>
                       <p className="text-sm text-fg-muted">{info.description}</p>
+                      <div onClick={event => event.stopPropagation()}><WebIqServiceLinks features={serviceFeaturesForSource(type)} context="documentation" /></div>
                     </div>
                   </Card>
                 )
@@ -284,6 +288,7 @@ function QuickCreateKnowledgeSourcePageContent() {
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-semibold mb-2">Configure {SOURCE_TYPE_INFO[selectedType].title}</h2>
+              <WebIqServiceLinks features={serviceFeaturesForSource(selectedType)} context="documentation" />
               <p className="text-fg-muted">We've pre-filled smart defaults. Just add your connection details.</p>
             </div>
 

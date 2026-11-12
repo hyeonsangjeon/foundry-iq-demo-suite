@@ -89,12 +89,12 @@ export const WEB_IQ_SCENES: readonly WebIqScene[] = [
     image: '/web-iq/04_critical_shipment.png',
     duration: 15,
     title: {
-      en: 'Identify candidates for priority transport',
-      ko: '우선 운송 후보를 가립니다',
+      en: 'Which shipments use the affected road?',
+      ko: '통제 도로를 이용하는 화물을 가립니다',
     },
     narration: {
-      en: 'A has four days of stock and uses the closed road, so we propose priority transport. Check regular rerouting for B; keep C\'s current plan.',
-      ko: 'A는 재고가 4일분이고 이용할 도로가 통제돼, 우선 운송을 제안합니다. B는 일반 운송의 우회 가능성을 확인하고, C는 기존 계획을 유지합니다.',
+      en: 'A and B both use the closed port access road. C uses a different road, so this notice does not affect its route. We identify the affected shipments before choosing a response.',
+      ko: 'A와 B는 통제된 항만 연결 도로를 이용합니다. C는 다른 도로를 이용하므로 이 공지의 영향을 받지 않습니다. 대응을 정하기 전에 먼저 영향받는 화물을 가립니다.',
     },
   },
   {
@@ -106,8 +106,8 @@ export const WEB_IQ_SCENES: readonly WebIqScene[] = [
       ko: '예약 전 확인과 승인이 필요합니다',
     },
     narration: {
-      en: 'The owner reviews priority transport for A. The operations lead checks carrier availability, expected arrival time, and cost, then seeks approval. Nothing is booked before approval.',
-      ko: '오너는 A의 우선 운송안을 검토합니다. 운영 책임자는 운송 가능 여부와 도착 예정 시각, 비용을 확인한 뒤 승인을 받습니다. 승인 전에는 예약하지 않습니다.',
+      en: 'A and B are affected, but A has only four days of stock and B has 20. Propose the one priority slot for A, check regular rerouting for B, and keep C on its current plan. Check availability, arrival time and cost, then obtain owner approval before booking.',
+      ko: 'A와 B 모두 경로 통제의 영향을 받지만 재고는 A가 4일분, B가 20일분입니다. 우선 운송 한 자리는 A에 제안하고 B는 일반 운송의 우회를 확인하며 C는 기존 계획을 유지합니다. 예약 전 운송 가능 여부와 도착 시각, 비용을 확인하고 책임자 승인을 받아야 합니다.',
     },
   },
   {

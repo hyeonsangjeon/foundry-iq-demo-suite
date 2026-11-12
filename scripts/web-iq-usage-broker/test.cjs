@@ -122,7 +122,7 @@ test('both declared and chunked oversized bodies are rejected', async () => {
   assert.equal(calls.length, 0);
 });
 
-test('only valid IPs and the two Web IQ reservation amounts reach the core', async () => {
+test('only valid IPs and the three Web IQ reservation amounts reach the core', async () => {
   const { core, calls } = fakeCore();
   await withServer(core, async port => {
     for (const ip of ['hostname', '203.0.113.1, 1.2.3.4', ' 203.0.113.1', 'fe80::1%en0', null]) {
@@ -132,7 +132,7 @@ test('only valid IPs and the two Web IQ reservation amounts reach the core', asy
       assert.equal((await request(port, { value: { ip: '203.0.113.1', microUsd } })).status, 400);
     }
     assert.equal(calls.length, 0);
-    for (const [pathname, ip, microUsd] of [['/check', '203.0.113.1', 7_000], ['/reserve', '2001:db8::1', 421_000]]) {
+    for (const [pathname, ip, microUsd] of [['/check', '203.0.113.1', 7_000], ['/reserve', '2001:db8::1', 421_000], ['/reserve', '203.0.113.2', 1_000]]) {
       const result = await request(port, { pathname, value: { ip, microUsd } });
       assert.equal(result.status, 200);
       assert.equal(result.body.ok, true);
@@ -160,6 +160,8 @@ test('settlement requires its exact reservation envelope and bounded actual amou
     assert.equal(result.body.result.chargedMicroUsd, 10_600);
     assert.equal(result.body.result.settled, true);
     assert.equal(calls.length, 1);
+    const browseReservation = { ...reservation, reservedMicroUsd: 1_000, remainingMicroUsd: 4_999_000 };
+    assert.equal((await request(port, { pathname: '/settle', value: { reservation: browseReservation, actualMicroUsd: 1_000 } })).status, 200);
   });
 });
 
@@ -373,4 +375,45 @@ test('bundle contains only builtins and parses; build rejects an unignored desti
   new vm.Script(bundle);
   assert.throws(() => writeBundle('scripts/web-iq-usage-broker/generated.cjs'), /not git-ignored/);
   assert.throws(() => writeBundle('/tmp/broker.cjs'), /git-ignored directory/);
+});
+
+test('mixed Browse and legacy reservations remain atomic under concurrent reserve and settle', async () => {
+  let ledger = null;
+  let etag = 0;
+  let conflicts = 0;
+  const fetchImpl = async (url, options) => {
+    if (new URL(url).hostname === '127.0.0.1') {
+      return Response.json({ access_token: 'offline-token', expires_on: Math.floor(Date.now() / 1000) + 3_600 });
+    }
+    assert.equal(url, env.DEMO_USAGE_BLOB_URL);
+    if (options.method === 'PUT') {
+      const expected = ledger === null ? '*' : `"${etag}"`;
+      const condition = options.headers[ledger === null ? 'If-None-Match' : 'If-Match'];
+      if (condition !== expected) { conflicts++; return new Response(null, { status: 412 }); }
+      ledger = JSON.parse(options.body); etag++;
+      return new Response(null, { status: 201 });
+    }
+    const snapshot = ledger === null ? new Response(null, { status: 404, headers: { 'x-ms-error-code': 'BlobNotFound' } })
+      : Response.json(ledger, { headers: { ETag: `"${etag}"` } });
+    // Let concurrent requests observe the same version and exercise CAS conflict retries.
+    await new Promise(resolve => setTimeout(resolve, 5));
+    return snapshot;
+  };
+  await withServer(loadCore(), async port => {
+    const amounts = [1_000, 7_000, 421_000];
+    const held = await Promise.all(amounts.map(microUsd => request(port,
+      { pathname: '/reserve', value: { ip: '203.0.113.1', microUsd } })));
+    assert.ok(held.every(result => result.status === 200));
+    assert.equal(Object.values(ledger.days).at(-1).spentMicroUsd, 429_000);
+    const actual = [1_000, 7_000, 10_600];
+    const settled = await Promise.all(held.map((result, index) => request(port,
+      { pathname: '/settle', value: { reservation: result.body.result, actualMicroUsd: actual[index] } })));
+    assert.ok(settled.every(result => result.status === 200));
+    assert.equal(Object.values(ledger.days).at(-1).spentMicroUsd, 18_600);
+    const beforeDuplicate = etag;
+    assert.equal((await request(port, { pathname: '/settle', value: { reservation: held[0].body.result, actualMicroUsd: 1_000 } })).status, 200);
+    assert.equal(etag, beforeDuplicate);
+    assert.ok(conflicts > 0);
+    assert.equal(JSON.stringify(ledger).includes('203.0.113.1'), false);
+  }, { fetchImpl });
 });

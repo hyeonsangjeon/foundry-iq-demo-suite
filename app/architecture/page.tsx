@@ -19,6 +19,8 @@ import {
 import { getLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { FeatureAvailability } from '@/components/feature-availability';
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+import type { ServiceFeatureId } from '@/lib/webIqServiceReferences';
 
 type Language = 'en' | 'ko';
 type Copy = { en: string; ko: string };
@@ -131,19 +133,21 @@ export default function ArchitecturePage() {
               <div className="rounded-xl border border-stroke-divider bg-bg-canvas p-5 sm:p-6">
                 <p className="text-xs font-semibold text-accent">{pick('01 · Knowledge-base retrieval', '01 · 지식 베이스 조회')}</p>
                 <h3 className="mt-2 text-xl font-semibold">Foundry IQ</h3>
+                <WebIqServiceLinks features={['kb-retrieval']} locale={language} context="documentation" className="mt-3" />
                 <p className="mt-1 text-sm font-medium text-fg-muted">Azure AI Search · Knowledge Base</p>
                 <p className="mt-4 text-sm leading-6 text-fg-muted">{pick('The knowledge base finds relevant evidence in its connected sources and returns it with references.', '지식 베이스가 연결된 원본에서 질문에 필요한 자료를 찾아 출처와 함께 돌려줍니다.')}</p>
 
                 <div className="mt-5 space-y-3 border-t border-stroke-divider pt-5">
-                  <SourceRow icon={Database20Regular} title="Search Index · Azure Blob Storage" description={pick('Searchable documents and records', '검색할 수 있도록 준비된 문서와 기록')} />
-                  <SourceRow icon={DocumentMultiple20Regular} title="SharePoint · Microsoft OneLake" description={pick('Team documents and business data', '팀 문서와 업무 데이터')} />
-                  <SourceRow icon={PlugConnected20Regular} title="Microsoft Learn MCP" description={pick('Official documentation retrieved through an MCP Server source', 'MCP Server 원본으로 조회하는 공식 문서')} />
-                  <SourceRow icon={BranchForkLink20Regular} title="Fabric IQ · Ontology" description={pick('Business entities and relationships · setup guide', '업무 대상과 관계를 연결하는 온톨로지 · 구성 가이드')} href="/guides/fabric-iq-ontology" />
+                  <SourceRow icon={Database20Regular} features={['search-index', 'blob-source']} title="Search Index · Azure Blob Storage" description={pick('Searchable documents and records', '검색할 수 있도록 준비된 문서와 기록')} />
+                  <SourceRow icon={DocumentMultiple20Regular} features={['sharepoint-indexer', 'onelake']} title="SharePoint · Microsoft OneLake" description={pick('Team documents and business data', '팀 문서와 업무 데이터')} />
+                  <SourceRow icon={PlugConnected20Regular} features={['learn-mcp', 'search-mcp']} title="Microsoft Learn MCP" description={pick('Official documentation retrieved through an MCP Server source', 'MCP Server 원본으로 조회하는 공식 문서')} />
+                  <SourceRow icon={BranchForkLink20Regular} features={['ontology']} title="Fabric IQ · Ontology" description={pick('Business entities and relationships · setup guide', '업무 대상과 관계를 연결하는 온톨로지 · 구성 가이드')} href="/guides/fabric-iq-ontology" />
                 </div>
                 <p className="mt-4 text-xs leading-5 text-fg-subtle">{pick('Each KB uses the sources configured for it. These are connection options, not a claim that every source is active.', '실제 조회 대상은 선택한 지식 베이스의 설정에 따릅니다. 위 목록은 연결 가능한 경로이며, 모든 원본이 연결되어 있다는 뜻은 아닙니다.')}</p>
 
                 <div className="mt-5 rounded-lg border border-stroke-divider bg-bg-subtle p-4">
                   <p className="text-sm font-semibold">Azure OpenAI</p>
+                  <WebIqServiceLinks features={['answer-synthesis']} locale={language} context="documentation" className="mt-3" />
                   <p className="mt-1 text-xs leading-5 text-fg-muted">{pick('A model configured on the KB can plan the search and write the answer, according to its reasoning and output settings.', '지식 베이스에 설정된 모델이 검색 계획과 답변 생성을 돕습니다. 사용 범위는 추론 및 출력 설정에 따릅니다.')}</p>
                 </div>
               </div>
@@ -151,6 +155,7 @@ export default function ArchitecturePage() {
               <div className="flex flex-col rounded-xl border border-dashed border-accent/50 bg-accent/5 p-5 sm:p-6">
                 <p className="text-xs font-semibold text-accent">{pick('02 · Optional: add Web IQ to the KB results', '02 · 선택 시 추가: 지식 베이스 조회 결과에 Web IQ 더하기')}</p>
                 <h3 className="mt-2 text-xl font-semibold">Microsoft Web IQ</h3>
+                <WebIqServiceLinks features={['web-search']} locale={language} context="documentation" className="mt-3" />
                 <p className="mt-1 text-sm font-medium text-fg-muted">{pick('Search the public web', '공개 웹 검색')}</p>
                 <p className="mt-4 text-sm leading-6 text-fg-muted">{pick('The app makes a separate Web IQ request to find web pages relevant to the question.', '앱이 Web IQ를 별도로 호출해 질문과 관련된 웹 페이지를 찾습니다.')}</p>
                 <div className="mt-5 rounded-lg border border-stroke-divider bg-bg-canvas p-4">
@@ -159,6 +164,7 @@ export default function ArchitecturePage() {
                 <FlowArrow label={pick('KB evidence + KB answer, if returned + web results', '지식 베이스 원문 근거 + 답변(반환된 경우) + 웹 검색 결과')} />
                 <div className="rounded-lg border border-accent/30 bg-bg-canvas p-4">
                   <p className="text-sm font-semibold">Azure OpenAI</p>
+                  <WebIqServiceLinks features={['answer-synthesis']} locale={language} context="documentation" className="mt-3" />
                   <p className="mt-2 text-sm leading-6 text-fg-muted">{pick('The app asks the model to combine both results, distinguish internal and web findings, and cite the evidence.', '앱이 두 결과를 모델에 전달합니다. 모델은 내부 자료와 웹에서 확인한 내용을 구분하고, 근거를 인용해 답변을 정리합니다.')}</p>
                 </div>
                 <p className="mt-5 text-xs leading-5 text-fg-muted">{pick('This Web IQ path is connected by the app. It is separate from the knowledge base’s own knowledge-source settings.', '이 Web IQ 경로는 앱에서 연결합니다. 지식 베이스 자체의 지식 원본 설정과는 별도입니다.')}</p>
@@ -282,13 +288,14 @@ function FlowArrow({ label }: { label: string }) {
   return <div className="flex items-center justify-center gap-2 py-4 text-center text-xs leading-5 text-fg-muted"><ArrowDown20Regular className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" /><span>{label}</span></div>;
 }
 
-function SourceRow({ icon: Icon, title, description, href }: { icon: typeof Search20Regular; title: string; description: string; href?: string }) {
+function SourceRow({ icon: Icon, title, description, href, features }: { icon: typeof Search20Regular; title: string; description: string; href?: string; features?: ServiceFeatureId[] }) {
   return (
     <div className="flex items-start gap-3">
       <Icon className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden="true" />
       <div>
         {href ? <Link href={href} className="inline-flex items-center gap-1 text-sm font-medium hover:text-accent hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">{title}<ArrowRight20Regular className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /></Link> : <p className="text-sm font-medium">{title}</p>}
         <p className="mt-1 text-xs leading-5 text-fg-muted">{description}</p>
+        {features && <WebIqServiceLinks features={features} context="documentation" className="mt-2" />}
       </div>
     </div>
   );
@@ -300,12 +307,13 @@ function PageLink({ href, primary, children }: { href: string; primary?: boolean
 
 function MenuCard({ item, language }: { item: MenuItem; language: Language }) {
   const Icon = item.icon;
+  const menuFeatures: Record<string, ServiceFeatureId[]> = { '/test': ['kb-retrieval'], '/knowledge': ['kb-retrieval'], '/sharepoint': ['graph-files', 'sharepoint-indexer'], '/semantic-join': ['onelake', 'kb-retrieval'], '/mcp-ks': ['learn-mcp', 'search-mcp'], '/fabric-iq-ks': ['ontology'], '/web-iq': ['web-search'], '/guides': ['kb-retrieval'] };
   return (
-    <Link href={item.href} className="group rounded-xl border border-stroke-divider bg-bg-card p-5 transition-colors hover:border-accent/50 hover:bg-bg-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+    <div className="rounded-xl border border-stroke-divider bg-bg-card p-3"><Link href={item.href} className="group block rounded-xl border border-stroke-divider bg-bg-card p-5 transition-colors hover:border-accent/50 hover:bg-bg-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
       <div className="flex items-center gap-2 text-accent"><Icon className="h-5 w-5" aria-hidden="true" /><h3 className="text-sm font-semibold">{item.title[language]}</h3><ArrowRight20Regular className="ml-auto h-4 w-4" aria-hidden="true" /></div>
       <p className="mt-3 text-base font-medium">{item.description[language]}</p>
       <p className="mt-2 text-sm leading-6 text-fg-muted">{item.detail[language]}</p>
-    </Link>
+    </Link><WebIqServiceLinks features={menuFeatures[item.href] || ['kb-retrieval']} locale={language} context="documentation" className="mt-2" /></div>
   );
 }
 

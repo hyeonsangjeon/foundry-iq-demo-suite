@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -180,6 +182,8 @@ export function IndustryKnowledgeSelector() {
             {text.subtitle}
           </p>
         </motion.div>
+
+        <WebIqServiceLinks features={['kb-retrieval']} locale={locale} context="documentation" />
 
         {/* Knowledge Base Cards */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

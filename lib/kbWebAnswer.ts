@@ -1,5 +1,6 @@
 import type { WebIqSearchResponse } from '@/lib/webIqSearch';
-import type { KnowledgeBaseReference } from '@/types/knowledge-retrieval';
+import type { KnowledgeBaseReference, KnowledgeBaseRetrievalResponse } from '@/types/knowledge-retrieval';
+import type { WebIqTelemetry } from '@/lib/webIqTelemetry';
 
 export interface KbAnswerSource {
   title: string;
@@ -10,14 +11,27 @@ export interface KbAnswerSource {
 export interface KbWebAnswerSource extends KbAnswerSource {
   id: string;
   origin: 'internal' | 'web';
+  sourceId?: string;
+  sourceTicket?: string;
 }
 
 export interface KbWebAnswerResponse {
+  schemaVersion?: 'webiq.answer.v2';
   answer: string;
   sources: KbWebAnswerSource[];
   webSearch: WebIqSearchResponse;
   trace: { webSearchMs: number; synthesisMs: number };
   kbContextOnly?: boolean;
+  telemetry?: WebIqTelemetry;
+}
+
+export interface KbWebContext {
+  internalAnswer: string;
+  sources: KbAnswerSource[];
+  internalReferences: KnowledgeBaseReference[];
+  usable: boolean;
+  outputKind: 'answer' | 'extractive';
+  truncation: { internalAnswer: boolean; internalSourcesOmitted: number; internalSourcesTruncated: number; metadataOnlySources: number };
 }
 
 export interface KbWebAnswerStatus {
@@ -42,10 +56,14 @@ export function buildKbRetrieveRequest<T>(query: string, messages: T[], params: 
 
 /** Exclude empty and metadata-only references from citable synthesis evidence. */
 export function extractKbSourceContent(reference: KnowledgeBaseReference): string | null {
+  return extractFullKbSourceContent(reference)?.slice(0, 6000) ?? null;
+}
+
+function extractFullKbSourceContent(reference: KnowledgeBaseReference): string | null {
   const source = reference.sourceData;
   if (!source || typeof source !== 'object') return null;
   for (const key of ['content', 'text', 'snippet', 'chunk', 'body', 'description', 'Description']) {
-    if (typeof source[key] === 'string' && source[key].trim() && !['{}', '[]'].includes(source[key].trim())) return source[key].trim().slice(0, 6000);
+    if (typeof source[key] === 'string' && source[key].trim() && !['{}', '[]'].includes(source[key].trim())) return source[key].trim();
   }
   const metadataKeys = new Set(['title', 'name', 'filename', 'fileName', 'id', 'key', 'url', 'webUrl', 'docUrl', 'contentUrl', 'path', 'etag', '@odata.etag', '@search.score', '@search.rerankerScore']);
   const hasData = (value: unknown): boolean => {
@@ -56,7 +74,34 @@ export function extractKbSourceContent(reference: KnowledgeBaseReference): strin
     return Boolean(value && typeof value === 'object' && Object.values(value).some(hasData));
   };
   const data = Object.fromEntries(Object.entries(source).filter(([key, value]) => !metadataKeys.has(key) && hasData(value)));
-  return Object.keys(data).length > 0 ? JSON.stringify(data).slice(0, 6000) : null;
+  return Object.keys(data).length > 0 ? JSON.stringify(data) : null;
+}
+
+/** Shared, bounded adapter for Tech and the KB playground; never mutate the retrieval. */
+export function buildKbWebContext(response: KnowledgeBaseRetrievalResponse): KbWebContext {
+  const fullAnswer = (response.response || []).flatMap(message => message.content || [])
+    .filter(content => content.type === 'text').map(content => content.text).join('\n').trim();
+  const allReferences = response.references || [];
+  const citable = allReferences.map(reference => ({ reference, content: extractFullKbSourceContent(reference) }))
+    .filter((item): item is { reference: KnowledgeBaseReference; content: string } => item.content !== null);
+  const selected = citable.slice(0, 20);
+  const sources = selected.map(({ reference, content }, index) => {
+    const source = reference.sourceData || {};
+    const record = reference as unknown as Record<string, unknown>;
+    const title = record.title || source.title || source.filename || record.docKey || `Knowledge base source ${index + 1}`;
+    const url = record.url || record.webUrl || record.docUrl || source.url || source.webUrl || source.docUrl;
+    return { title: String(title).slice(0, 300), content: content.slice(0, 6000),
+      ...(typeof url === 'string' && url.length <= 2048 ? { url } : {}) };
+  });
+  return {
+    internalAnswer: fullAnswer.slice(0, 30000), sources,
+    internalReferences: structuredClone(selected.map(item => item.reference)),
+    usable: Boolean(fullAnswer || sources.length), outputKind: fullAnswer ? 'answer' : 'extractive',
+    truncation: { internalAnswer: fullAnswer.length > 30000,
+      internalSourcesOmitted: Math.max(0, citable.length - selected.length),
+      internalSourcesTruncated: selected.filter(item => item.content.length > 6000).length,
+      metadataOnlySources: allReferences.length - citable.length },
+  };
 }
 
 /** Only supplied source IDs become clickable citations; model-authored links are removed. */

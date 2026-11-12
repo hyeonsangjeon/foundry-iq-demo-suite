@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 export const dynamic = 'force-dynamic'
 
 import React, { Suspense, useEffect, useState } from 'react'
@@ -286,6 +288,8 @@ function KnowledgePageContent() {
           onClick: () => setShowCreate(v => !v)
         } : undefined}
       />
+
+      <WebIqServiceLinks features={['kb-retrieval']} locale={locale} context="documentation" />
 
       {isEditMode && showCreate && (
         <div className="mb-6">

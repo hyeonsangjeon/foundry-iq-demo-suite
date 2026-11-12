@@ -6,7 +6,7 @@ const { isIP } = require('node:net');
 
 const MAX_BODY_BYTES = 4 * 1024;
 const MAX_REQUEST_MS = 30_000;
-const ALLOWED_RESERVATIONS = new Set([7_000, 421_000]);
+const ALLOWED_RESERVATIONS = new Set([1_000, 7_000, 421_000]);
 const DAILY_LIMIT = 5_000_000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 

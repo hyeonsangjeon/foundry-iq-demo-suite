@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import { useParams, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { PageHeader } from '@/components/shared/page-header'
@@ -171,6 +173,7 @@ export default function EditKnowledgeBasePage() {
 
   return (
     <div className="flex flex-col flex-1 min-h-0 space-y-6">
+      <WebIqServiceLinks features={['kb-retrieval']} context="documentation" />
       <EditKnowledgeBaseForm
         knowledgeBase={kb}
         knowledgeSources={knowledgeSources}

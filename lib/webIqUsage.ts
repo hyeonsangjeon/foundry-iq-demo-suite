@@ -3,18 +3,21 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { DemoUsageError, reserveDemoUsage } from '@/lib/demoUsageLedger';
 import { isAllowedWebIqQuestion } from '@/lib/webIqDemoQuestions';
+import {
+  WEB_IQ_SEARCH_MICRO_USD, WEB_IQ_ANSWER_MAX_COMPLETION_TOKENS, WEB_IQ_ANSWER_INPUT_MICRO_USD_PER_TOKEN,
+  WEB_IQ_ANSWER_OUTPUT_MICRO_USD_PER_TOKEN, WEB_IQ_ANSWER_CONTEXT_TOKENS, WEB_IQ_ANSWER_RESERVATION_MICRO_USD,
+} from '@/lib/webIqPricing';
+import { verifiedAnswerUsage } from '@/lib/webIqTelemetry';
 
 // Microsoft Web IQ /web: $7 per 1,000 calls, verified 2026-11-10.
-export const WEB_IQ_CALL_MICRO_USD = 7_000;
-export const ANSWER_MAX_COMPLETION_TOKENS = 2_500;
+export const WEB_IQ_CALL_MICRO_USD = WEB_IQ_SEARCH_MICRO_USD;
+export const ANSWER_MAX_COMPLETION_TOKENS = WEB_IQ_ANSWER_MAX_COMPLETION_TOKENS;
 // gpt-4o 2024-11-20 GlobalStandard: verified retail $2.50/$10 per million,
 // with a 20% budget margin. Cache discounts are deliberately not assumed.
-export const ANSWER_INPUT_MICRO_USD_PER_TOKEN = 3;
-export const ANSWER_OUTPUT_MICRO_USD_PER_TOKEN = 12;
-export const ANSWER_CONTEXT_TOKENS = 128_000;
-export const ANSWER_RESERVATION_MICRO_USD = WEB_IQ_CALL_MICRO_USD
-  + ANSWER_CONTEXT_TOKENS * ANSWER_INPUT_MICRO_USD_PER_TOKEN
-  + ANSWER_MAX_COMPLETION_TOKENS * ANSWER_OUTPUT_MICRO_USD_PER_TOKEN;
+export const ANSWER_INPUT_MICRO_USD_PER_TOKEN = WEB_IQ_ANSWER_INPUT_MICRO_USD_PER_TOKEN;
+export const ANSWER_OUTPUT_MICRO_USD_PER_TOKEN = WEB_IQ_ANSWER_OUTPUT_MICRO_USD_PER_TOKEN;
+export const ANSWER_CONTEXT_TOKENS = WEB_IQ_ANSWER_CONTEXT_TOKENS;
+export const ANSWER_RESERVATION_MICRO_USD = WEB_IQ_ANSWER_RESERVATION_MICRO_USD;
 
 export function answerPricingConfigured(): boolean {
   // A deployment alias alone does not establish its model or price.
@@ -22,13 +25,9 @@ export function answerPricingConfigured(): boolean {
 }
 
 export function answerUsageMicroUsd(completion: unknown): number | null {
-  if (!completion || typeof completion !== 'object') return null;
-  const value = completion as { model?: string; usage?: { prompt_tokens?: number; completion_tokens?: number } };
-  const input = value.usage?.prompt_tokens;
-  const output = value.usage?.completion_tokens;
-  if (value.model !== 'gpt-4o-2024-11-20' || !Number.isSafeInteger(input) || !Number.isSafeInteger(output)
-    || input! < 0 || input! > ANSWER_CONTEXT_TOKENS || output! < 0 || output! > ANSWER_MAX_COMPLETION_TOKENS) return null;
-  return WEB_IQ_CALL_MICRO_USD + input! * ANSWER_INPUT_MICRO_USD_PER_TOKEN + output! * ANSWER_OUTPUT_MICRO_USD_PER_TOKEN;
+  const usage = verifiedAnswerUsage(completion);
+  if (usage.status !== 'verified') return null;
+  return WEB_IQ_CALL_MICRO_USD + usage.inputTokens! * ANSWER_INPUT_MICRO_USD_PER_TOKEN + usage.outputTokens! * ANSWER_OUTPUT_MICRO_USD_PER_TOKEN;
 }
 
 /** Trust only the hosting provider's overwritten IP header. Local mode is explicit. */

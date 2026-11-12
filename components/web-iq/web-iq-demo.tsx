@@ -11,6 +11,8 @@ import Play from 'lucide-react/dist/esm/icons/play';
 import RotateCcw from 'lucide-react/dist/esm/icons/rotate-ccw';
 import { Button } from '@/components/ui/button';
 import { WebIqLiveSearch } from '@/components/web-iq/web-iq-live-search';
+import { WebIqComparisonWorkspace } from '@/components/web-iq/web-iq-comparison-workspace';
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
 import { WebIqComparison } from '@/components/web-iq/web-iq-comparison';
 import { getLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -39,6 +41,7 @@ export function WebIqDemo() {
   const [selectedEvidence, setSelectedEvidence] = useState<string | null>(null);
   const [evidenceVisit, setEvidenceVisit] = useState(0);
   const view = params.get('view') === 'technical' ? 'technical' : 'executive';
+  const techMode = params.get('tech') === 'search' ? 'search' : params.get('tech') === 'scenario' ? 'scenario' : 'compare';
   const rawScene = Number(params.get('scene') || 0);
   const sceneIndex = Number.isInteger(rawScene) ? Math.max(0, Math.min(5, rawScene)) : 0;
   const includeWeb = params.get('sources') === 'web';
@@ -148,7 +151,8 @@ export function WebIqDemo() {
   function openEvidence(id: string) {
     setSelectedEvidence(id);
     setEvidenceVisit(value => value + 1);
-    selectView('technical');
+    setPlaying(false);
+    updateUrl({ view: 'technical', tech: 'scenario' });
   }
 
   const sourceButtons = (
@@ -196,7 +200,7 @@ export function WebIqDemo() {
       <header className="flex flex-col gap-4 border-b border-stroke-divider pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Web IQ</h1>
-          <p className="mt-1 text-sm text-fg-muted">{pick('Use internal stock records and web notices to assess whether priority transport is needed.', '내부 재고와 웹 공지를 함께 검토해 우선 운송이 필요한지 판단합니다.')}</p>
+          <p className="mt-1 text-sm text-fg-muted">{view === 'executive' ? pick('Use internal stock records and web notices to assess whether priority transport is needed.', '내부 재고와 웹 공지를 함께 검토해 우선 운송이 필요한지 판단합니다.') : pick('Compare the same KB result with an answer that adds public-web evidence.', '같은 KB 결과에 공개 웹 근거를 더해 두 답변을 비교합니다.')}</p>
         </div>
         <div role="group" aria-label={pick('Presentation view', '발표 화면')} className="flex w-fit gap-1 rounded-xl border border-stroke-divider bg-bg-subtle p-1">
           {(['executive', 'technical'] as const).map(mode => (
@@ -207,22 +211,25 @@ export function WebIqDemo() {
         </div>
       </header>
 
-      <section className="space-y-4" aria-labelledby="web-iq-question">
+      {view === 'executive' && <section className="space-y-4" aria-labelledby="web-iq-question">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-subtle">
           <span>{pick('Illustrative scenario · fictional data', '예시 시나리오 · 가상 데이터')}</span>
           <Link href="/test" className="text-accent hover:underline">{pick('Try your knowledge base', '내 지식 베이스로 질문하기')}</Link>
         </div>
         <h2 id="web-iq-question" className="max-w-4xl text-xl font-medium leading-relaxed sm:text-2xl">{WEB_IQ_QUESTION[language]}</h2>
         {sourceButtons}
-      </section>
+      </section>}
 
       {view === 'executive' ? (
         <>
           <section className="overflow-hidden rounded-2xl border border-stroke-divider bg-bg-card" aria-label={pick('Executive walkthrough', 'Executive 시나리오')}>
             <div className="grid lg:grid-cols-[1.35fr_1fr]">
               <div className="relative min-w-0 bg-bg-subtle">
-                <Image src={scene.image} alt={scene.title[language]} width={1672} height={941} priority={sceneIndex === 0}
-                  sizes="(min-width: 1024px) 60vw, 100vw" className="h-full min-h-56 w-full object-cover object-right" />
+                {sceneIndex === 3 && includeWeb && signal === 'closure' ? <div className="flex h-full min-h-56 flex-col justify-center gap-4 p-6 sm:p-8">
+                  <h3 className="text-lg font-semibold">{pick('Match the notice to each route', '공지와 화물별 경로를 맞춰 봅니다')}</h3>
+                  {WEB_IQ_SHIPMENTS.map(shipment => <div key={shipment.id} className="flex items-center gap-4 rounded-xl border border-stroke-divider bg-bg-card p-4"><strong className="text-xl">{shipment.id}</strong><div><p className="text-sm font-medium">{shipment.id === 'C' ? pick('Different route · not affected by this notice', '다른 경로 · 이 공지의 영향 없음') : pick('Port access road · affected', '항만 연결 도로 · 통제 영향 있음')}</p><p className="mt-1 break-all text-xs text-fg-muted">{shipment.route.join(', ')}</p></div></div>)}
+                </div> : <Image src={scene.image} alt={scene.title[language]} width={1672} height={941} priority={sceneIndex === 0}
+                  sizes="(min-width: 1024px) 60vw, 100vw" className="h-full min-h-56 w-full object-cover object-right" />}
               </div>
               <div className="flex flex-col justify-between gap-5 p-5 sm:p-7">
                 <div>
@@ -274,9 +281,10 @@ export function WebIqDemo() {
             </div>
           </div>
           {decisions}
+          <WebIqServiceLinks features={['kb-retrieval', 'web-search', 'answer-synthesis']} locale={language} context="sample" />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-fg-muted">{pick('The question and internal records stay the same. See whether the web notice changes the recommendation.', '질문과 내부 자료는 같습니다. 웹 공지가 우선 운송 판단을 바꾸는지 비교해 보세요.')}</p>
-            <Button variant="outline" onClick={() => selectView('technical')}>{pick('See the evidence in Tech', 'Tech에서 근거 확인')}<ArrowRight className="h-4 w-4" /></Button>
+            <Button variant="outline" onClick={() => { setPlaying(false); updateUrl({ view: 'technical', tech: 'compare' }); }}>{pick('Compare real KB answers', '실제 KB 답변 비교하기')}<ArrowRight className="h-4 w-4" /></Button>
           </div>
           <details className="rounded-xl border border-stroke-divider p-5 text-sm">
             <summary className="cursor-pointer font-medium">{pick('Speaker notes · Korean / English', '발표 대본 · 한국어 / 영어')}</summary>
@@ -286,6 +294,12 @@ export function WebIqDemo() {
         </>
       ) : (
         <>
+          <div role="group" aria-label={pick('Tech sections', 'Tech 화면')} className="flex flex-wrap gap-2 border-b border-stroke-divider pb-4">
+            {(['compare', 'search', 'scenario'] as const).map(mode => <Button key={mode} variant={techMode === mode ? 'secondary' : 'ghost'} className="min-h-11" aria-pressed={techMode === mode} onClick={() => updateUrl({ tech: mode })}>{mode === 'compare' ? pick('Compare answers', '답변 비교') : mode === 'search' ? pick('Web Search', '웹 검색') : pick('Fictional scenario evidence', '가상 사례 근거')}</Button>)}
+          </div>
+          {techMode === 'compare' ? <WebIqComparisonWorkspace language={language} onWebSearch={() => updateUrl({ tech: 'search' })} /> : techMode === 'search' ? <WebIqLiveSearch language={language} /> : <>
+          <p className="text-xs text-fg-muted">{pick('Illustrative scenario · fictional data', '예시 시나리오 · 가상 데이터')}</p>
+          {sourceButtons}
           <section className="flex flex-col gap-3 rounded-xl border border-stroke-divider bg-bg-subtle p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="font-semibold">{pick('Change the notice. Compare the recommendation.', '공지를 바꿔 판단을 비교해 보세요')}</h2>
@@ -325,7 +339,7 @@ export function WebIqDemo() {
             </ol>
             <details className="mt-6 border-t border-stroke-divider pt-4"><summary className="cursor-pointer text-sm text-fg-muted">{pick('View scenario data as JSON', '시나리오 데이터를 JSON으로 보기')}</summary><pre className="mt-3 max-h-96 overflow-auto rounded-lg bg-bg-subtle p-4 text-xs leading-6">{JSON.stringify({ includeWeb, signal, shipments: WEB_IQ_SHIPMENTS, evaluation: result }, null, 2)}</pre></details>
           </details>
-          <WebIqLiveSearch language={language} />
+          </>}
         </>
       )}
       <footer className="flex flex-wrap gap-x-6 gap-y-2 border-t border-stroke-divider pt-5 text-xs text-fg-muted">

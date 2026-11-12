@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
@@ -422,6 +424,7 @@ export default function WhatIsFoundryIQPage() {
                   <p className="text-[14.5px] leading-[1.7]" style={{ color: 'rgba(255,255,255,0.55)' }}>
                     {detail.text}
                   </p>
+                  <WebIqServiceLinks features={activeStep === 'synthesize' ? ['kb-retrieval', 'answer-synthesis'] : ['kb-retrieval']} locale={currentLang} context="documentation" className="mt-4" />
                 </motion.div>
               </AnimatePresence>
             </div>
@@ -577,6 +580,7 @@ export default function WhatIsFoundryIQPage() {
                   <p className="text-[12.5px] leading-[1.55]" style={{ color: 'rgba(255,255,255,0.55)' }}>
                     {t.iq2_desc}
                   </p>
+                  <WebIqServiceLinks features={['ontology', 'onelake']} locale={currentLang} context="documentation" className="mt-3" />
                   <span
                     className="inline-block mt-3 rounded-full text-[10px] font-semibold tracking-[0.1em] uppercase"
                     style={{
@@ -606,6 +610,7 @@ export default function WhatIsFoundryIQPage() {
                   <p className="text-[12.5px] leading-[1.55]" style={{ color: 'rgba(255,255,255,0.55)' }}>
                     {t.iq1_desc}
                   </p>
+                  <WebIqServiceLinks features={['kb-retrieval']} locale={currentLang} context="documentation" className="mt-3" />
                   <span
                     className="inline-block mt-3 rounded-full text-[10px] font-semibold tracking-[0.1em] uppercase"
                     style={{

@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import { PageHeader } from '@/components/shared/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { Bot20Regular } from '@fluentui/react-icons'
@@ -43,6 +45,8 @@ export default function AgentsPage() {
                   Agent management is not connected on this page. This describes the demo implementation, not the availability of Microsoft Foundry Agent Service.
                 </p>
               </div>
+
+              <WebIqServiceLinks features={['agent-service']} context="placeholder" />
 
               <motion.div
                 className="pt-4"

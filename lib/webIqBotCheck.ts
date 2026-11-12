@@ -5,7 +5,7 @@ const VERIFY_TIMEOUT_MS = 6_000;
 const TOKEN_LIFETIME_MS = 300_000;
 const headers = { 'Cache-Control': 'no-store' };
 
-export type WebIqBotAction = 'webiq_search' | 'webiq_answer';
+export type WebIqBotAction = 'webiq_search' | 'webiq_answer' | 'webiq_browse';
 
 function configuration() {
   const siteKey = process.env.TURNSTILE_SITE_KEY?.trim() || '';

@@ -1,3 +1,5 @@
+
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
 import { CopyableCodeBlock } from '@/components/guides/copyable-code-block'
 import {
   GuideCardGrid,
@@ -59,6 +61,8 @@ export default function SearchIndexGuidePage() {
           { href: '/playground', label: 'Try Playground' },
         ]}
       />
+
+      <WebIqServiceLinks features={['search-index']} context="documentation" className="grid gap-3 md:grid-cols-2" />
 
       <GuideCallout title="GA retrieval and preview synthesis">
         Search index Knowledge Sources and minimal, extractive retrieval are generally

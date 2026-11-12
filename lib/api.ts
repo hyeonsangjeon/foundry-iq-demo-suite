@@ -136,7 +136,8 @@ export async function deleteKnowledgeBase(knowledgeBaseId: string): Promise<any>
 export async function retrieveFromKnowledgeBase(
   knowledgeBaseId: string,
   messages: Message[] | null,
-  params: RetrieveParams = {}
+  params: RetrieveParams = {},
+  signal?: AbortSignal
 ): Promise<any> {
   let userAclToken = params.xMsUserToken
 
@@ -176,68 +177,17 @@ export async function retrieveFromKnowledgeBase(
   delete payload.xMsUserToken
   delete payload.globalHeaders // Don't send globalHeaders in body, only as HTTP headers
 
-  // 🔍 DEBUG: Log the complete request payload being sent
-  console.log('═══════════════════════════════════════════════════════════')
-  console.log('📤 [CLIENT] Sending request to Knowledge Base')
-  console.log('═══════════════════════════════════════════════════════════')
-  console.log('📍 Knowledge Base ID:', knowledgeBaseId)
-  console.log('🔐 Has User ACL Token:', !!userAclToken)
-  console.log('📦 Complete Payload:', JSON.stringify(payload, null, 2))
-  console.log('📋 Headers:', JSON.stringify(headers, null, 2))
-  console.log('───────────────────────────────────────────────────────────')
-
   const response = await fetch(`${KNOWLEDGE_BASES_BASE_PATH}/${knowledgeBaseId}/retrieve`, {
     method: 'POST',
     headers,
     body: JSON.stringify(payload),
+    signal,
   })
 
   if (!response.ok) {
-    let errorMessage = `Failed to retrieve from knowledge base (${response.status})`
-    let detailedError = ''
-    
-    console.log('❌ [CLIENT] Request failed with status:', response.status, response.statusText)
-    
-    try {
-      const errorData = await response.json()
-      console.error('❌ [CLIENT] API Error Response:', errorData)
-      
-      // Extract detailed error information
-      if (errorData.azureError) {
-        console.error('❌ Azure Error Details:', errorData.azureError)
-        if (typeof errorData.azureError === 'object') {
-          detailedError = errorData.azureError.error?.message || errorData.azureError.message || JSON.stringify(errorData.azureError)
-        } else {
-          detailedError = String(errorData.azureError)
-        }
-      }
-      if (errorData.details) {
-        console.error('❌ Error Details:', errorData.details)
-        detailedError = detailedError ? `${detailedError} | ${errorData.details}` : errorData.details
-      }
-      
-      errorMessage = errorData.error?.message || errorData.error || errorData.message || errorMessage
-      
-      // Append detailed error if available
-      if (detailedError) {
-        errorMessage = `${errorMessage}\n\nDetails: ${detailedError}`
-      }
-    } catch (parseError) {
-      console.error('❌ [CLIENT] Failed to parse error response:', parseError)
-      try {
-        const textError = await response.text()
-        console.error('❌ [CLIENT] Error response text:', textError)
-        errorMessage = `${errorMessage}\n\nRaw error: ${textError}`
-      } catch {
-        // Ignore
-      }
-    }
-    console.log('═══════════════════════════════════════════════════════════')
-    throw new Error(errorMessage)
+    // Keep provider payloads, ACL headers and internal content out of browser logs/UI.
+    throw new Error(`Knowledge base retrieval failed (${response.status})`)
   }
-
-  console.log('✅ [CLIENT] Request successful')
-  console.log('═══════════════════════════════════════════════════════════')
   return response.json()
 }
 

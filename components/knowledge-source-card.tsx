@@ -1,3 +1,6 @@
+
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+import { serviceFeaturesForSource } from '@/lib/webIqServiceReferences';
 import * as React from 'react'
 import { Open20Regular } from '@fluentui/react-icons'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -62,6 +65,7 @@ export function KnowledgeSourceCard({ source }: KnowledgeSourceCardProps) {
       </CardHeader>
       
       <CardContent className="space-y-3 pt-0">
+        <WebIqServiceLinks features={serviceFeaturesForSource(source.kind)} context="documentation" />
         <div className="flex items-center justify-between text-xs text-fg-subtle">
           <div className="flex flex-wrap items-center gap-3">
             {typeof source.docCount === 'number' && (

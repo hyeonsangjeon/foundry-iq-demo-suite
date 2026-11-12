@@ -119,7 +119,7 @@ function harness(options = {}) {
         throw new Error(`Unexpected import in offline test: ${name}`);
       },
       process: { env }, URL, URLSearchParams, Response, Request: OfflineRequest, Headers, TextEncoder, TextDecoder,
-      AbortController, AbortSignal, structuredClone, setTimeout, clearTimeout, fetch,
+      AbortController, AbortSignal, structuredClone, Buffer, setTimeout, clearTimeout, fetch,
     }, { filename });
     return exports;
   }
@@ -168,7 +168,7 @@ function harness(options = {}) {
   function getRequest(route, headers = { 'x-vercel-forwarded-for': '192.0.2.1' }) {
     return new OfflineRequest(`https://public-demo.example/api/web-iq/${route}`, { headers });
   }
-  return { env, usage, questions, routes, request, getRequest, events, checks, reservations, settlements, requests, get spent() { return spent; } };
+  return { env, usage, questions, routes, request, getRequest, events, checks, reservations, settlements, requests, load, get spent() { return spent; } };
 }
 
 const cases = [];
@@ -633,7 +633,9 @@ test('pricing: profile assertion and verified usage calculation match the budget
   assert.equal(h.usage.answerUsageMicroUsd({ model: 'gpt-4o-2024-11-20', usage: { prompt_tokens: 1000, completion_tokens: 50 } }), 10600);
 });
 
-(async () => {
+module.exports = { harness };
+
+if (require.main === module) (async () => {
   let failures = 0;
   for (const { name, run } of cases) {
     try {

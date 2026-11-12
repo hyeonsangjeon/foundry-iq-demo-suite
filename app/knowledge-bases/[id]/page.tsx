@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Play20Regular } from '@fluentui/react-icons'
@@ -154,6 +156,8 @@ export default function KnowledgeBaseDetailPage() {
           label: 'Back to knowledge bases'
         }}
       />
+
+      <WebIqServiceLinks features={['kb-retrieval']} context="documentation" />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>

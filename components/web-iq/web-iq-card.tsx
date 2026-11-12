@@ -1,3 +1,5 @@
+
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronRight20Regular } from '@fluentui/react-icons';
@@ -25,6 +27,7 @@ export function WebIqCard({ locale }: { locale: Locale }) {
               ? '같은 재고·운송 자료를 바탕으로, 웹 도로 공지가 우선 운송 판단을 바꾸는지 확인합니다.'
               : 'See whether a web road notice changes the priority transport recommendation when the internal stock and route records stay the same.'}
           </p>
+          <WebIqServiceLinks features={['web-search']} locale={locale} context="sample" className="mt-4" />
           <div className="mt-5 flex flex-wrap gap-3">
             <Link href="/web-iq?view=executive" className={cn(buttonVariants({ size: 'sm' }), 'gap-1.5')}>
               {isKorean ? 'Executive · 90초' : 'Executive · 90s'}

@@ -1,6 +1,13 @@
 import { tokenManager } from '@/lib/token-manager';
 import { WEB_IQ_SEARCH_ENDPOINT } from '@/lib/webIqSearch';
 
+export type WebIqEndpoint = 'web' | 'browse' | 'auto';
+const ENDPOINTS: Record<WebIqEndpoint, string> = {
+  web: WEB_IQ_SEARCH_ENDPOINT,
+  browse: 'https://api.microsoft.ai/v3/browse',
+  auto: 'https://api.microsoft.ai/v3/auto',
+};
+
 const WEB_IQ_SCOPE = 'https://api.microsoft.ai/.default';
 
 function authMethod(): string {
@@ -34,19 +41,20 @@ function awaitToken(promise: Promise<string>, signal: AbortSignal): Promise<stri
 }
 
 /** Server-side credentials for the selected Web IQ authentication method. */
-export async function getWebIqRequestAuth(signal: AbortSignal): Promise<{
+export async function getWebIqRequestAuth(signal: AbortSignal, endpoint: WebIqEndpoint = 'web'): Promise<{
   url: string;
   headers: Record<string, string>;
 }> {
+  if (!Object.prototype.hasOwnProperty.call(ENDPOINTS, endpoint)) throw new Error('Invalid Web IQ endpoint.');
   if (signal.aborted) throw new Error('Request aborted');
   if (!isWebIqConfigured()) throw new Error('Live Web IQ search is not configured.');
 
   if (authMethod() === 'api-key') {
     // API keys already select an AppID; an APPID query parameter is invalid for key auth.
-    return { url: WEB_IQ_SEARCH_ENDPOINT, headers: { 'x-apikey': process.env.WEBIQ_API_KEY!.trim() } };
+    return { url: ENDPOINTS[endpoint], headers: { 'x-apikey': process.env.WEBIQ_API_KEY!.trim() } };
   }
 
-  const url = new URL(WEB_IQ_SEARCH_ENDPOINT);
+  const url = new URL(ENDPOINTS[endpoint]);
   const appId = process.env.WEBIQ_APP_ID?.trim();
   if (appId) url.searchParams.set('APPID', appId);
   const token = await awaitToken(tokenManager.getToken(WEB_IQ_SCOPE), signal);

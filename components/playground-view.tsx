@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import * as React from 'react'
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
@@ -511,6 +513,7 @@ export function PlaygroundView() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <div className="border-b border-stroke-divider p-6">
+          <WebIqServiceLinks features={['kb-retrieval']} context="documentation" className="mb-3" />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <AgentAvatar size={44} iconSize={22} variant="subtle" title={selectedAgent.name} />

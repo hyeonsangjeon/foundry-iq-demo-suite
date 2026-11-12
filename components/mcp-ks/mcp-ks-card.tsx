@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import { useRef } from 'react'
 import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
@@ -107,6 +109,7 @@ export function McpKsCard({ locale }: McpKsCardProps) {
           </div>
         </motion.div>
       </Link>
+      <WebIqServiceLinks features={['learn-mcp', 'search-mcp']} locale={locale} context="documentation" className="mt-3" />
     </motion.div>
   )
 }

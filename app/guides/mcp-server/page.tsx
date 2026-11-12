@@ -1,3 +1,5 @@
+
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
 import { CopyableCodeBlock } from '@/components/guides/copyable-code-block'
 import {
   GuideCardGrid,
@@ -53,6 +55,8 @@ export default function McpServerGuidePage() {
           { href: '/playground', label: 'Try Playground' },
         ]}
       />
+
+      <WebIqServiceLinks features={['learn-mcp', 'search-mcp']} context="documentation" className="grid gap-3 md:grid-cols-2" />
 
       <GuideCallout title="Preview feature · demo API versus current documentation">
         MCP Server Knowledge Sources remain in public preview as of November 12, 2026.

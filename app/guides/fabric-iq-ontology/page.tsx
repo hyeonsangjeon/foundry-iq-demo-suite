@@ -1,3 +1,5 @@
+
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
 import { CopyableCodeBlock } from '@/components/guides/copyable-code-block'
 import {
   GuideCardGrid,
@@ -59,6 +61,8 @@ export default function FabricIqOntologyGuidePage() {
           { href: '/playground', label: 'Try Playground' },
         ]}
       />
+
+      <WebIqServiceLinks features={['ontology', 'kb-retrieval', 'onelake']} context="documentation" className="grid gap-3 md:grid-cols-2" />
 
       <GuideCallout title="Preview requirements · checked November 12, 2026">
         Fabric Ontology Knowledge Sources are in preview. Search and the Fabric workspace

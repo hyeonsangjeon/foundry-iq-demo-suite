@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import * as React from 'react'
 import Image from 'next/image'
 import BookOpen from 'lucide-react/dist/esm/icons/book-open'
@@ -238,6 +240,7 @@ export function McpKnowledgeSourceDemo() {
               {copy.subtitle}
             </p>
             <p className="mt-2 text-xs text-fg-subtle">{copy.statusChecked}</p>
+            <WebIqServiceLinks features={['learn-mcp', 'search-mcp']} locale={locale} context="documentation" className="mt-3 grid gap-3 md:grid-cols-2" />
           </div>
         </div>
 

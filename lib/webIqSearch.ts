@@ -4,6 +4,8 @@ export const WEB_IQ_MAX_RESULTS = 5;
 export const WEB_IQ_MAX_CONTENT_LENGTH = 3000;
 
 export interface WebIqSearchResult {
+  sourceId?: string;
+  sourceTicket?: string;
   title: string;
   url: string;
   content: string;

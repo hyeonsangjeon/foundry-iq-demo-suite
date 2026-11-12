@@ -25,9 +25,12 @@ import { InsightPopup, INSIGHT_STEPS, getFoundryInsightSteps } from '@/component
 import { ServiceHealthPanel } from '@/components/service-health-panel'
 import { DataExplorer } from '@/components/data-explorer'
 import type { KnowledgeBaseRetrievalResponse } from '@/types/knowledge-retrieval'
-import { buildKbRetrieveRequest, extractKbSourceContent, type KbWebAnswerResponse, type KbWebAnswerStatus } from '@/lib/kbWebAnswer'
+import { buildKbRetrieveRequest, buildKbWebContext, type KbWebAnswerResponse, type KbWebAnswerStatus } from '@/lib/kbWebAnswer'
 import { WEB_IQ_DEMO_QUESTIONS, isAllowedWebIqQuestion } from '@/lib/webIqDemoQuestions'
 import { useWebIqUsageLimit } from '@/components/web-iq/use-web-iq-usage-limit'
+import { WebIqAnswerComparison } from '@/components/web-iq/web-iq-answer-comparison'
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links'
+import { requestWebIqAnswer, WebIqComparisonError, type ComparisonRun } from '@/lib/webIqComparison'
 import { WebIqBotCheck } from '@/components/web-iq/web-iq-bot-check'
 import {
   Select,
@@ -174,20 +177,6 @@ interface KBPlaygroundViewProps {
   preselectedAgent?: string
 }
 
-const WEB_IQ_ERRORS_KO: Record<string, string> = {
-  'Provide a query of 3–1,000 characters and valid knowledge-base context.': '질문을 3~1,000자로 입력하고 지식 베이스의 근거를 확인해 주세요.',
-  'Combined Web IQ answers are not configured. Configure Web IQ and an Azure OpenAI answer deployment.': 'Web IQ와 Azure OpenAI 답변 모델의 연결 설정이 필요합니다. 설정을 마치거나 KB만 사용해 질문해 주세요.',
-  'Web IQ search failed; a combined answer was not generated.': 'Web IQ 검색에 실패해 KB와 웹 근거를 함께 사용한 답변을 생성하지 못했습니다.',
-  'Web IQ returned an invalid response.': 'Web IQ 검색 응답을 처리하지 못했습니다. 다시 시도해 주세요.',
-  'Answer synthesis failed; no combined answer was returned.': 'KB와 웹 근거를 함께 사용한 답변을 생성하지 못했습니다. 다시 시도해 주세요.',
-  'The answer model returned an invalid response.': '답변 모델의 응답을 처리하지 못했습니다. 다시 시도해 주세요.',
-  'The combined answer reached the output limit before it was complete. Try a narrower question.': '답변이 완성되기 전에 출력 한도에 도달했습니다. 질문의 범위를 좁혀 다시 시도해 주세요.',
-  'The answer model filtered the response. Try rephrasing the question.': '답변 모델이 응답을 필터링했습니다. 질문을 다른 표현으로 바꿔 다시 시도해 주세요.',
-  'The answer model did not complete the response. Please try again.': '답변 모델이 응답을 끝까지 생성하지 못했습니다. 다시 시도해 주세요.',
-  'The answer could not be matched to the retrieved sources. Try a more specific question.': '답변의 인용을 검색된 출처와 연결하지 못했습니다. 질문을 더 구체적으로 입력해 주세요.',
-  'The combined query timed out or was cancelled.': 'KB와 웹을 함께 조회하는 요청의 시간이 초과됐거나 요청이 취소됐습니다.',
-  'The combined query could not be completed.': 'KB와 웹을 함께 조회하는 요청을 완료하지 못했습니다. 다시 시도해 주세요.',
-}
 
 export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   const [locale, setLocaleState] = useState<Locale>('en')
@@ -200,6 +189,22 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [includeWebIq, setIncludeWebIq] = useState(false)
+  const [comparisonRun, setComparisonRun] = useState<ComparisonRun | null>(null)
+  const [webIqRetryUntil, setWebIqRetryUntil] = useState(0)
+  const [webIqRetryNow, setWebIqRetryNow] = useState(0)
+  const webIqRetrySeconds = Math.max(0, Math.ceil((webIqRetryUntil - webIqRetryNow) / 1000))
+  useEffect(() => {
+    if (!webIqRetryUntil) return
+    setWebIqRetryNow(Date.now())
+    const timer = window.setInterval(() => setWebIqRetryNow(Date.now()), 1000)
+    return () => window.clearInterval(timer)
+  }, [webIqRetryUntil])
+  const retainWebRetryDelay = (error: unknown) => {
+    if (error instanceof WebIqComparisonError && error.retryAfterSeconds) {
+      setWebIqRetryNow(Date.now())
+      setWebIqRetryUntil(Date.now() + error.retryAfterSeconds * 1000)
+    }
+  }
   const webIqLanguage = locale === 'ko' ? 'ko' : 'en'
   const webIqUsage = useWebIqUsageLimit(webIqLanguage)
   const [webIqStatus, setWebIqStatus] = useState<KbWebAnswerStatus | null>(null)
@@ -585,59 +590,55 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
     return token
   }
 
-  const addWebEvidence = async (query: string, response: KnowledgeBaseRetrievalResponse, signal: AbortSignal, turnstileToken: string | null) => {
+  const addWebEvidence = async (query: string, response: KnowledgeBaseRetrievalResponse, signal: AbortSignal, turnstileToken: string | null, kbRequestStarted: number, startedAt: string) => {
     if (!includeWebIq) return { ...response, webIq: undefined, internalTraceResponse: undefined }
-    if (!turnstileToken) throw new Error(locale === 'ko' ? '사람 확인을 마친 다음 다시 보내 주세요.' : 'Complete the human verification, then send your question again.')
-    const internalReferences = (response.references || []).filter(reference => extractKbSourceContent(reference) !== null).slice(0, 20)
-    const internalAnswer = (response.response || []).flatMap(message => message.content)
-      .filter(content => content.type === 'text').map(content => content.text).join('\n').slice(0, 30000)
-    const sources = internalReferences.map((reference, index) => {
-      const source = reference.sourceData || {}
-      const record = reference as unknown as Record<string, unknown>
-      const title = record.title || source.title || source.filename || record.docKey || `${locale === 'ko' ? '지식 베이스 출처' : 'Knowledge base source'} ${index + 1}`
-      const content = extractKbSourceContent(reference)!
-      const url = record.url || record.webUrl || record.docUrl
-      return {
-        title: String(title).slice(0, 300),
-        content: String(content).slice(0, 6000),
-        ...(typeof url === 'string' && url.length <= 2048 ? { url } : {}),
-      }
-    })
-    const combined = await fetch('/api/web-iq/answer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: query.trim(), internalAnswer, sources, turnstileToken }),
-      signal,
-    })
-    if (!combined.ok) {
-      const error: { error?: string; code?: string } | null = await combined.json().catch(() => null)
-      const usageError = webIqUsage.responseError(combined, error)
-      if (usageError) throw usageError
-      if (error?.code === 'BOT_CHECK_REQUIRED' || error?.code === 'BOT_CHECK_FAILED') {
-        throw new Error(locale === 'ko' ? '사람 확인이 만료됐거나 완료되지 않았습니다. 다시 확인한 다음 질문을 보내 주세요.' : 'Human verification expired or could not be completed. Verify again, then resend your question.')
-      }
-      if (error?.code === 'BOT_CHECK_UNAVAILABLE') {
-        throw new Error(locale === 'ko' ? '사람 확인 기능을 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.' : 'Human verification is temporarily unavailable. Please try again later.')
-      }
-      const errorMessage = typeof error?.error === 'string' ? error.error : ''
-      if (locale === 'ko') {
-        const fallback = combined.status === 429
-          ? '요청이 일시적으로 제한됐습니다. 잠시 후 다시 시도해 주세요.'
-          : 'Web IQ를 포함한 답변을 완성하지 못했습니다. 다시 시도해 주세요.'
-        throw new Error(WEB_IQ_ERRORS_KO[errorMessage] || fallback)
-      }
-      throw new Error(errorMessage || 'The combined Web IQ answer could not be completed.')
+    const snapshot = structuredClone(response)
+    const context = buildKbWebContext(snapshot)
+    const generation = requestGeneration.current
+    const run: ComparisonRun = {
+      runId: crypto.randomUUID(), attemptId: crypto.randomUUID(), startedAt, kbRequestWallMs: Math.round(performance.now() - kbRequestStarted),
+      selection: { kbId: selectedAgent!.id, presetId: WEB_IQ_DEMO_QUESTIONS.find(item => item[webIqLanguage] === query)?.id || '', query, language: webIqLanguage, settings: structuredClone(runtimeSettings) },
+      state: context.usable ? 'retrieving-web' : 'blocked_empty', internalTraceResponse: snapshot,
     }
-    const result: KbWebAnswerResponse = await combined.json()
+    // Publish the original immediately; later web failures cannot remove it.
+    setComparisonRun(run)
+    if (!context.usable) { setComparisonRun({ ...run, comparisonWallMs: Math.round(performance.now() - kbRequestStarted) }); return { ...snapshot, webIq: undefined, internalTraceResponse: snapshot } }
+    let result: KbWebAnswerResponse
+    try {
+      result = await requestWebIqAnswer(query, snapshot, turnstileToken || '', signal)
+      if (generation !== requestGeneration.current || signal.aborted) return { ...snapshot, webIq: undefined, internalTraceResponse: snapshot }
+      setComparisonRun({ ...run, state: 'complete', combined: result, comparisonWallMs: Math.round(performance.now() - kbRequestStarted) })
+    } catch (error) {
+      if (generation === requestGeneration.current) { retainWebRetryDelay(error); setComparisonRun({ ...run, comparisonWallMs: Math.round(performance.now() - kbRequestStarted), retryAfterSeconds: error instanceof WebIqComparisonError ? error.retryAfterSeconds : undefined, state: signal.aborted ? 'cancelled' : 'partial', errorCode: signal.aborted ? 'CANCELLED' : error instanceof WebIqComparisonError ? error.code : 'REQUEST_FAILED' }) }
+      return { ...snapshot, webIq: undefined, internalTraceResponse: snapshot }
+    }
     const references = result.sources.map((source, index) => source.origin === 'internal'
-      ? { ...internalReferences[index], id: String(index), title: `KB · ${source.title}`, sourceData: { ...internalReferences[index]?.sourceData, title: `KB · ${source.title}` } }
+      ? { ...context.internalReferences[Number(source.id.slice(1)) - 1], id: String(index), title: `KB · ${source.title}`, sourceData: { ...context.internalReferences[Number(source.id.slice(1)) - 1]?.sourceData, title: `KB · ${source.title}` } }
       : { type: 'web' as const, id: String(index), activitySource: -1, title: `Web · ${source.title}`, url: source.url || '', sourceData: { title: `Web · ${source.title}`, content: source.content } })
     return {
       response: [{ role: 'assistant' as const, content: [{ type: 'text' as const, text: result.answer }] }],
-      references,
-      activity: response.activity,
-      webIq: result,
-      internalTraceResponse: response,
+      references, activity: snapshot.activity, webIq: result, internalTraceResponse: snapshot,
+    }
+  }
+
+  const retryComparisonWeb = async () => {
+    if (!comparisonRun?.internalTraceResponse || isLoading || webIqRetrySeconds > 0 || !webIqBotTokenRef.current || comparisonRun.selection.kbId !== selectedAgent?.id || comparisonRun.selection.language !== webIqLanguage || JSON.stringify(comparisonRun.selection.settings) !== JSON.stringify(runtimeSettings)) return
+    const generation = requestGeneration.current
+    const controller = new AbortController()
+    combinedController.current = controller
+    const freshToken = webIqBotTokenRef.current
+    handleWebIqBotToken(null)
+    setIsLoading(true)
+    const run = { ...comparisonRun, attemptId: crypto.randomUUID(), state: 'retrieving-web' as const, errorCode: undefined }
+    setComparisonRun(run)
+    const attemptStarted = performance.now()
+    try {
+      const combined = await requestWebIqAnswer(run.selection.query, run.internalTraceResponse!, freshToken, controller.signal)
+      if (generation === requestGeneration.current && !controller.signal.aborted) setComparisonRun({ ...run, state: 'complete', combined, webAttemptWallMs: Math.round(performance.now() - attemptStarted) })
+    } catch (error) {
+      if (generation === requestGeneration.current) { retainWebRetryDelay(error); setComparisonRun({ ...run, webAttemptWallMs: Math.round(performance.now() - attemptStarted), retryAfterSeconds: error instanceof WebIqComparisonError ? error.retryAfterSeconds : undefined, state: controller.signal.aborted ? 'cancelled' : 'partial', errorCode: controller.signal.aborted ? 'CANCELLED' : error instanceof WebIqComparisonError ? error.code : 'REQUEST_FAILED' }) }
+    } finally {
+      if (generation === requestGeneration.current) { setIsLoading(false); resetWebIqBotCheck() }
     }
   }
 
@@ -647,6 +648,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
     if (!input.trim() && lastQuestion?.type === 'text') setInput(lastQuestion.text)
     resetWebIqBotCheck()
     setIncludeWebIq(enabled)
+    setComparisonRun(null)
     setMessages([])
     setSourcesPanel({ isOpen: false, messageId: null, references: [], activity: [] })
   }
@@ -665,6 +667,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
 
     setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
+    setComparisonRun(null)
     const generation = ++requestGeneration.current
     combinedController.current?.abort()
     const controller = new AbortController()
@@ -711,20 +714,13 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       }
 
       const retrieveRequest = buildKbRetrieveRequest(prompt, azureMessages, apiParams)
-      const kbResponse = await retrieveFromKnowledgeBase(selectedAgent.id, retrieveRequest.messages, retrieveRequest.params)
+      const kbRequestStarted = performance.now()
+      const runStartedAt = new Date().toISOString()
+      const kbResponse = await retrieveFromKnowledgeBase(selectedAgent.id, retrieveRequest.messages, retrieveRequest.params, controller.signal)
       if (generation !== requestGeneration.current) return
-      const response = await addWebEvidence(prompt, kbResponse, controller.signal, turnstileToken)
+      const response = await addWebEvidence(prompt, kbResponse, controller.signal, turnstileToken, kbRequestStarted, runStartedAt)
       if (generation !== requestGeneration.current) return
 
-      // Debug: Log the full response to see references and activity
-      console.log('🔍 API Response:', {
-        hasReferences: !!(response.references && response.references.length > 0),
-        referencesCount: response.references?.length || 0,
-        hasActivity: !!(response.activity && response.activity.length > 0),
-        activityCount: response.activity?.length || 0,
-        references: response.references,
-        activity: response.activity
-      })
 
       // Use the starterId passed directly as a parameter — avoids stale state reads
       const capturedStarterId = starterId ?? null
@@ -784,11 +780,6 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       setMessages(prev => [...prev, assistantMessage])
     } catch (err) {
       if (generation !== requestGeneration.current) return
-      // Enhanced error logging - SEND PROMPT
-      console.error('❌ API Error (sendPrompt):', err)
-      if (err && typeof err === 'object') {
-        console.error('Error details:', JSON.stringify(err, null, 2))
-      }
       
       // Extract meaningful error message
       let errorText = locale === 'ko' ? '요청을 처리하지 못했습니다. 다시 시도해 주세요.' : 'Error processing request. Please try again.'
@@ -823,6 +814,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       setIsLoading(false)
       setIncludeWebIq(false)
       setSelectedAgent(agent)
+      setComparisonRun(null)
       // Always start fresh - no history loading
       setMessages([])
 
@@ -844,6 +836,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
   }
 
   const handleClearChat = () => {
+    setComparisonRun(null)
     requestGeneration.current += 1
     combinedController.current?.abort()
     if (includeWebIq) resetWebIqBotCheck()
@@ -884,6 +877,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setIsLoading(true)
+    setComparisonRun(null)
     const generation = ++requestGeneration.current
     combinedController.current?.abort()
     const controller = new AbortController()
@@ -930,20 +924,13 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       }
 
       const retrieveRequest = buildKbRetrieveRequest(input, azureMessages, apiParams)
-      const kbResponse = await retrieveFromKnowledgeBase(selectedAgent.id, retrieveRequest.messages, retrieveRequest.params)
+      const kbRequestStarted = performance.now()
+      const runStartedAt = new Date().toISOString()
+      const kbResponse = await retrieveFromKnowledgeBase(selectedAgent.id, retrieveRequest.messages, retrieveRequest.params, controller.signal)
       if (generation !== requestGeneration.current) return
-      const response = await addWebEvidence(input, kbResponse, controller.signal, turnstileToken)
+      const response = await addWebEvidence(input, kbResponse, controller.signal, turnstileToken, kbRequestStarted, runStartedAt)
       if (generation !== requestGeneration.current) return
 
-      // Debug: Log the full response to see references and activity (handleSubmit)
-      console.log('🔍 API Response (handleSubmit):', {
-        hasReferences: !!(response.references && response.references.length > 0),
-        referencesCount: response.references?.length || 0,
-        hasActivity: !!(response.activity && response.activity.length > 0),
-        activityCount: response.activity?.length || 0,
-        references: response.references,
-        activity: response.activity
-      })
 
       let contentItems: MessageContent[] = []
       if (response.response && response.response.length > 0) {
@@ -975,11 +962,6 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
       setMessages(prev => [...prev, assistantMessage])
     } catch (err) {
       if (generation !== requestGeneration.current) return
-      // Enhanced error logging - HANDLE SUBMIT
-      console.error('❌ API Error (handleSubmit):', err)
-      if (err && typeof err === 'object') {
-        console.error('Error details:', JSON.stringify(err, null, 2))
-      }
       
       // Extract meaningful error message
       let errorText = locale === 'ko' ? '요청을 처리하지 못했습니다. 다시 시도해 주세요.' : 'Error processing request. Please try again.'
@@ -1147,6 +1129,8 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         <>
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {includeWebIq && !comparisonRun && <WebIqServiceLinks features={['kb-retrieval', 'web-search', 'answer-synthesis']} locale={webIqLanguage} />}
+            {includeWebIq && comparisonRun && <div className="min-w-0 space-y-3"><WebIqAnswerComparison key={comparisonRun.runId} run={comparisonRun} language={webIqLanguage} />{isLoading && <Button variant="outline" onClick={() => { combinedController.current?.abort(); setComparisonRun(value => value ? { ...value, state: 'cancelled', errorCode: 'CANCELLED' } : null); }}>{locale === 'ko' ? '웹 단계 취소' : 'Cancel web step'}</Button>}{['partial', 'cancelled'].includes(comparisonRun.state) && <Button variant="outline" disabled={isLoading || !webIqBotToken || webIqRetrySeconds > 0} onClick={() => void retryComparisonWeb()}>{locale === 'ko' ? '웹 단계 재시도 · 새 유료 요청' : 'Retry web step · new paid request'}</Button>}</div>}
           {/* Service Health Panel */}
           {healthOpen && (
             <ServiceHealthPanel className="mb-4" />
@@ -1245,7 +1229,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
         </div>
 
         {/* Input */}
-        <div className="border-t border-stroke-divider p-6">
+        <div className={cn('border-t border-stroke-divider p-6', includeWebIq && 'max-h-[50dvh] shrink-0 overflow-y-auto')}>
           {messages.length > 0 && (
             <div className="flex justify-end mb-2">
               <button
@@ -1298,7 +1282,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
             {includeWebIq && <fieldset className="space-y-2" disabled={isLoading}>
               <legend className="text-xs font-medium text-fg-muted">{locale === 'ko' ? '체험 질문 선택' : 'Choose a demo question'}</legend>
               <div className="flex flex-wrap gap-2">
-                {WEB_IQ_DEMO_QUESTIONS.map(question => <Button key={question.id} type="button" size="sm" variant={input === question[webIqLanguage] ? 'default' : 'outline'} className="h-auto whitespace-normal text-left" aria-pressed={input === question[webIqLanguage]} onClick={() => setInput(question[webIqLanguage])}>{question[webIqLanguage]}</Button>)}
+                {WEB_IQ_DEMO_QUESTIONS.map(question => <Button key={question.id} type="button" size="sm" variant={input === question[webIqLanguage] ? 'default' : 'outline'} className="h-auto whitespace-normal text-left" aria-pressed={input === question[webIqLanguage]} onClick={() => { setComparisonRun(null); setInput(question[webIqLanguage]) }}>{question[webIqLanguage]}</Button>)}
               </div>
               <p className="text-xs text-fg-muted">{locale === 'ko' ? '예시 질문으로 실제 웹 근거를 확인합니다. Web IQ 체험은 IP당 최근 2분간 100회, 모든 방문자 합계 하루 $5까지 이용할 수 있습니다.' : 'Try a curated question with real web evidence. Web IQ allows 100 requests per IP per rolling 2 minutes, within a shared $5 daily allowance.'}</p>
             </fieldset>}
@@ -1309,6 +1293,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
               onTokenChange={handleWebIqBotToken}
               resetKey={webIqBotResetKey}
             />}
+            {includeWebIq && webIqRetrySeconds > 0 && <p role="status" className="text-xs text-fg-muted">{locale === 'ko' ? '서버 재시도 대기 시간' : 'Server retry delay remaining'}: {webIqRetrySeconds}s</p>}
             {includeWebIq && webIqUsage.message && <p role="status" className="text-sm text-fg-muted">{webIqUsage.message}</p>}
             <div className="relative">
               <Textarea
@@ -1329,8 +1314,9 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
                 <Button
                   type="submit"
                   size="icon"
-                  className="h-8 w-8"
-                  disabled={!input.trim() || isLoading || (includeWebIq && (!webIqStatus?.configured || !webIqBotToken || webIqUsage.remainingSeconds > 0 || !isAllowedWebIqQuestion(input)))}
+                  aria-label={locale === 'ko' ? '보내기' : 'Send'}
+                  className="h-11 w-11"
+                  disabled={!input.trim() || isLoading || (includeWebIq && (!webIqStatus?.configured || !webIqBotToken || webIqUsage.remainingSeconds > 0 || webIqRetrySeconds > 0 || !isAllowedWebIqQuestion(input)))}
                 >
                   <Send20Regular className="h-4 w-4" />
                 </Button>
@@ -1395,7 +1381,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
                 <RuntimeSettingsPanel
                   knowledgeSources={selectedAgent.knowledgeSources || []}
                   settings={runtimeSettings}
-                  onSettingsChange={setRuntimeSettings}
+                  onSettingsChange={settings => { setRuntimeSettings(settings); setComparisonRun(null); requestGeneration.current += 1; combinedController.current?.abort(); setIsLoading(false) }}
                   hasWebSource={selectedAgent.knowledgeSources?.some(ks => ks.name?.toLowerCase().includes('web')) || false}
                 />
 

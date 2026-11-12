@@ -1,3 +1,5 @@
+
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { CopyableCodeBlock } from '@/components/guides/copyable-code-block'
@@ -40,6 +42,8 @@ export default function SharePointGuidePage() {
           { href: '/playground', label: 'Try Playground' },
         ]}
       />
+
+      <WebIqServiceLinks features={['graph-files', 'sharepoint-indexer']} context="documentation" className="grid gap-3 md:grid-cols-2" />
 
       <GuideCallout title="Demo source type and product availability">
         This app indexes SharePoint documents and creates a searchIndex Knowledge Source.

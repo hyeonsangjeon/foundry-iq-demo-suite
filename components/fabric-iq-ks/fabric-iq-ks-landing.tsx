@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import { useEffect, useState } from 'react'
 import { LiveKnowledgeSourcesReference } from '@/components/live-knowledge-sources-reference'
 import { FabricIqHero } from './fabric-iq-hero'
@@ -19,6 +21,7 @@ export function FabricIqKsLanding() {
       <FabricIqHero locale={locale} />
 
       <div className="mx-auto w-full max-w-7xl px-4 pb-12 pt-5 sm:px-6 sm:pt-7 lg:px-8">
+        <WebIqServiceLinks features={['ontology', 'kb-retrieval']} locale={locale} context="sample" className="mb-5 grid gap-3 md:grid-cols-2" />
         <LiveKnowledgeSourcesReference locale={locale} focus="fabric" />
       </div>
 

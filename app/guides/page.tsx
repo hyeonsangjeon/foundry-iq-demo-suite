@@ -1,3 +1,4 @@
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
 import Link from 'next/link'
 import { FeatureAvailability } from '@/components/feature-availability'
 import {
@@ -115,10 +116,10 @@ export default function GuidesPage() {
         {guideCards.map((card) => {
           const Icon = card.icon
           return (
+            <div key={card.title}>
             <Link
-              key={card.title}
               href={card.href}
-              className="group rounded-lg border border-stroke-divider bg-bg-card p-4 transition-colors hover:border-accent-muted hover:bg-bg-elevated"
+              className="group block rounded-lg border border-stroke-divider bg-bg-card p-4 transition-colors hover:border-accent-muted hover:bg-bg-elevated"
             >
               <div className="mb-4 flex items-center justify-between gap-3">
                 <Icon className="h-5 w-5 text-accent" />
@@ -127,6 +128,8 @@ export default function GuidesPage() {
               <h2 className="text-sm font-semibold text-fg-default">{card.title}</h2>
               <p className="mt-2 text-xs leading-5 text-fg-muted">{card.description}</p>
             </Link>
+            <WebIqServiceLinks features={card.href.endsWith('search-index') ? ['search-index'] : card.href.endsWith('sharepoint') ? ['graph-files', 'sharepoint-indexer'] : card.href.endsWith('mcp-server') ? ['learn-mcp', 'search-mcp'] : ['ontology']} context="documentation" className="mt-3" />
+            </div>
           )
         })}
       </section>

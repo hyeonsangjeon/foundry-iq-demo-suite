@@ -1,5 +1,8 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+import { serviceFeaturesForSource } from '@/lib/webIqServiceReferences';
+
 import * as React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -406,6 +409,7 @@ export function EditKnowledgeBaseForm({
               <FormDescription>
                 Add or remove sources that this knowledge base can access.
               </FormDescription>
+              <WebIqServiceLinks features={Array.from(new Set(knowledgeSources.filter(source => selectedSources.includes(source.name)).flatMap(source => serviceFeaturesForSource(source.kind))))} context="documentation" />
               <FormMessage />
             </FormField>
           </div>

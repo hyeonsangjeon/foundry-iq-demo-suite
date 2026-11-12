@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { getLocale, type Locale } from '@/lib/i18n'
 import { t } from '@/lib/i18n/translations'
@@ -547,6 +549,7 @@ export function SPDemoHub() {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-8">
+        <WebIqServiceLinks features={step === 'connection' ? ['graph-files'] : step === 'indexing' ? ['sharepoint-indexer'] : ['graph-files', 'sharepoint-indexer']} locale={locale} context={isLiveMode ? 'implemented' : 'sample'} className="mb-6 grid gap-3 md:grid-cols-2" />
         <div className="relative">
           <AnimatePresence mode="wait">
             {step === 'intro' && (

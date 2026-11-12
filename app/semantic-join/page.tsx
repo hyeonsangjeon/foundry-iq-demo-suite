@@ -1,5 +1,7 @@
 'use client'
 
+import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
+
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import './semantic-join.css'
@@ -276,6 +278,8 @@ export default function SemanticJoinPage() {
           <a href="https://www.kaggle.com/datasets/usdot/flight-delays" target="_blank" rel="noopener noreferrer" className="font-mono text-sm bg-bg-elevated px-2 py-0.5 rounded text-accent hover:underline">airline_flights</a>
         </p>
       </div>
+
+      <WebIqServiceLinks features={['onelake', 'kb-retrieval']} locale={locale} context="documentation" className="mb-6 grid gap-3 md:grid-cols-2" />
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
