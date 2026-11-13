@@ -130,19 +130,22 @@ test('stale internal-only URL cannot replace stage 5 content with the stage 2 sc
   assert.ok(!hero.includes(stages[1].narration.en));
 });
 
-test('speaker notes expose every Korean and English script and select the active stage', () => {
-  const html = renderToStaticMarkup(React.createElement(WebIqSpeakerNotes, { language: 'ko', stageIndex: 4, onSelectStage: () => {} }));
-  assert.equal((html.match(/<option /g) || []).length, 6);
-  assert.equal((html.match(/<p lang="ko"/g) || []).length, 6);
-  assert.equal((html.match(/<p lang="en"/g) || []).length, 6);
-  assert.match(html, /<option value="4" selected="">5\./);
-  for (const stage of stages) {
-    assert.ok(html.includes(stage.narration.ko));
-    assert.ok(html.includes(stage.narration.en));
+test('each of six notes buttons shows only the selected Korean and English script', () => {
+  for (let selected = 0; selected < stages.length; selected++) {
+    const html = renderToStaticMarkup(React.createElement(WebIqSpeakerNotes, { language: 'ko', stageIndex: selected, onSelectStage: () => {} }));
+    assert.equal((html.match(/aria-controls="web-iq-selected-script"/g) || []).length, 6);
+    assert.equal((html.match(/aria-pressed="true"/g) || []).length, 1);
+    assert.equal((html.match(/<p lang="ko"/g) || []).length, 1);
+    assert.equal((html.match(/<p lang="en"/g) || []).length, 1);
+    assert.ok(!html.includes('<select'));
+    for (let index = 0; index < stages.length; index++) {
+      assert.equal(html.includes(stages[index].narration.ko), index === selected);
+      assert.equal(html.includes(stages[index].narration.en), index === selected);
+    }
   }
 });
 
-test('stage buttons, notes selector, playback, and material toggles use the same URL transition', () => {
+test('stage buttons, notes buttons, playback, and material toggles use the same URL transition', () => {
   const interaction = modules({ interactive: true });
   interaction.setQuery('view=executive&scene=1&sources=internal&comparison=manual');
   const tree = interaction.load('components/web-iq/web-iq-demo.tsx').WebIqDemo();
@@ -151,8 +154,8 @@ test('stage buttons, notes selector, playback, and material toggles use the same
   const stageUrl = interaction.replacements.at(-1);
   const notes = elements(tree, item => item.props.onSelectStage)[0];
   const notesTree = interaction.load('components/web-iq/web-iq-speaker-notes.tsx').WebIqSpeakerNotes(notes.props);
-  const selector = elements(notesTree, item => item.type === 'select')[0];
-  selector.props.onChange({ target: { value: '4' } });
+  const notesButtons = elements(notesTree, item => item.props['aria-controls'] === 'web-iq-selected-script');
+  notesButtons[4].props.onClick();
   assert.equal(interaction.replacements.at(-1), stageUrl);
   const play = elements(tree, item => Array.isArray(item.props.children) && item.props.children.includes('Play 90s walkthrough'))[0];
   play.props.onClick();
