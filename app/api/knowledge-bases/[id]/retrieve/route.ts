@@ -1,129 +1,106 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { tokenManager } from '@/lib/token-manager'
+import { NextRequest, NextResponse } from 'next/server';
+import { tokenManager } from '@/lib/token-manager';
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-const ENDPOINT = process.env.AZURE_SEARCH_ENDPOINT
-const API_KEY = process.env.AZURE_SEARCH_API_KEY
-const API_VERSION = process.env.AZURE_SEARCH_API_VERSION
-// When true, authenticate to Azure AI Search with an Entra ID (RBAC) bearer
-// token from the service principal instead of the admin api-key. Requires the
-// SP to hold a data-plane role (e.g. "Search Index Data Reader") on the
-// Search service. Falls back to api-key when false/unset.
-const USE_RBAC = process.env.AZURE_SEARCH_USE_RBAC === 'true'
+const ENDPOINT = process.env.AZURE_SEARCH_ENDPOINT;
+const API_KEY = process.env.AZURE_SEARCH_API_KEY;
+const API_VERSION = process.env.AZURE_SEARCH_API_VERSION;
+const USE_RBAC = process.env.AZURE_SEARCH_USE_RBAC === 'true';
+const PROVIDER_CODES = new Set([
+  'InvalidAgentRetrievalRequest', 'InvalidRequest', 'InvalidRequestParameter', 'InvalidParameter',
+  'BadRequest', 'Unauthorized', 'Forbidden', 'ResourceNotFound', 'IndexNotFound',
+  'KnowledgeBaseNotFound', 'TooManyRequests', 'QuotaExceeded', 'ServiceUnavailable',
+  'InternalServerError', 'Timeout', 'OperationNotAllowed', 'InvalidCredentials',
+]);
 
 interface RouteContext {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
+}
+
+/** Extract only a known provider code; messages, source content and credentials stay server-side. */
+function providerCode(value: unknown, depth = 0): string | undefined {
+  if (!value || typeof value !== 'object' || depth > 4) return undefined;
+  if (Array.isArray(value)) {
+    for (const child of value.slice(0, 10)) {
+      const code = providerCode(child, depth + 1);
+      if (code) return code;
+    }
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  if (typeof record.code === 'string' && PROVIDER_CODES.has(record.code)) return record.code;
+  for (const key of ['error', 'details', 'innererror', 'innerError']) {
+    const code = providerCode(record[key], depth + 1);
+    if (code) return code;
+  }
+  return undefined;
+}
+
+function failure(status: number, code: string, options: {
+  upstreamStatus?: number; providerCode?: string; retryAfterSeconds?: number;
+} = {}) {
+  return NextResponse.json({
+    schemaVersion: 'kb.retrieve.error.v1', code, stage: 'kb',
+    error: 'Knowledge base retrieval could not be completed.', status, ...options,
+  }, { status, headers: {
+    'Cache-Control': 'no-store', 'X-KB-Error-Schema': 'kb.retrieve.error.v1',
+    ...(options.retryAfterSeconds ? { 'Retry-After': String(options.retryAfterSeconds) } : {}),
+  } });
+}
+
+function upstreamCode(status: number): string {
+  if (status === 401 || status === 403) return 'KB_ACCESS_DENIED';
+  if (status === 404) return 'KB_NOT_FOUND';
+  if (status === 408 || status === 504) return 'KB_TIMEOUT';
+  if (status === 429) return 'KB_RATE_LIMITED';
+  return 'KB_RETRIEVAL_FAILED';
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
+  let body: unknown;
+  try { body = await request.json(); } catch { return failure(400, 'KB_INVALID_REQUEST'); }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return failure(400, 'KB_INVALID_REQUEST');
+  if (!ENDPOINT || !API_VERSION || (!USE_RBAC && !API_KEY)) return failure(503, 'KB_NOT_CONFIGURED');
+  if (request.signal.aborted) return failure(499, 'KB_CANCELLED');
+
+  let authHeaders: Record<string, string>;
   try {
-    const params = context.params instanceof Promise ? await context.params : context.params
-    const knowledgeBaseId = params.id
-    const body = await request.json()
-
-    const aclHeader = request.headers.get('x-ms-query-source-authorization') ??
-      request.headers.get('x-ms-user-authorization') ??
-      undefined
-
-    const url = `${ENDPOINT}/knowledgebases/${knowledgeBaseId}/retrieve?api-version=${API_VERSION}`
-
-    // 🔍 DEBUG: Log the complete request payload
-    console.log('═══════════════════════════════════════════════════════════')
-    console.log('🚀 [SERVER] Knowledge Base Retrieve Request')
-    console.log('═══════════════════════════════════════════════════════════')
-    console.log('📍 Knowledge Base ID:', knowledgeBaseId)
-    console.log('🌐 Azure Search URL:', url)
-    console.log('🔐 Has ACL Header:', !!aclHeader)
-    console.log('🪪 Auth mode:', USE_RBAC ? 'RBAC (Entra bearer)' : 'api-key')
-    console.log('📦 Request Body:', JSON.stringify(body, null, 2))
-    console.log('───────────────────────────────────────────────────────────')
-
-    // Build auth header: RBAC bearer token (service principal) or admin api-key.
-    const authHeaders: Record<string, string> = USE_RBAC
+    authHeaders = USE_RBAC
       ? { Authorization: `Bearer ${await tokenManager.getSearchToken()}` }
-      : { 'api-key': API_KEY! }
+      : { 'api-key': API_KEY! };
+  } catch {
+    return request.signal.aborted ? failure(499, 'KB_CANCELLED') : failure(503, 'KB_AUTH_FAILED');
+  }
+  if (request.signal.aborted) return failure(499, 'KB_CANCELLED');
 
+  try {
+    const { id } = await context.params;
+    const url = `${ENDPOINT.trim().replace(/\/+$/, '')}/knowledgebases/${encodeURIComponent(id)}/retrieve?api-version=${encodeURIComponent(API_VERSION)}`;
+    const aclHeader = request.headers.get('x-ms-query-source-authorization')
+      ?? request.headers.get('x-ms-user-authorization');
     const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...authHeaders,
-        ...(aclHeader ? { 'x-ms-query-source-authorization': aclHeader } : {})
-      },
-      body: JSON.stringify(body)
-    })
-
-    const responseText = await response.text()
-
-    // 🔍 DEBUG: Log the response
-    console.log('📨 [SERVER] Azure Search Response Status:', response.status, response.statusText)
-    
+      method: 'POST', cache: 'no-store', redirect: 'error', signal: request.signal,
+      headers: { 'Content-Type': 'application/json', ...authHeaders,
+        ...(aclHeader ? { 'x-ms-query-source-authorization': aclHeader } : {}) },
+      body: JSON.stringify(body),
+    });
+    const data: unknown = await response.json().catch(() => null);
     if (!response.ok) {
-      let parsedError: unknown = responseText
-      try {
-        parsedError = JSON.parse(responseText)
-      } catch {
-        // keep as text
-      }
-
-      // 🔍 DEBUG: Log detailed error information
-      console.log('❌ [SERVER] Azure Search Error Response:')
-      console.log('Status:', response.status, response.statusText)
-      console.log('Parsed Error:', JSON.stringify(parsedError, null, 2))
-      console.log('Raw Response Text:', responseText)
-      console.log('═══════════════════════════════════════════════════════════')
-
-      return NextResponse.json({
-        error: `Failed to retrieve from knowledge base (${response.status})`,
-        azureError: parsedError,
-        details: responseText,
-        status: response.status,
-        statusText: response.statusText
-      }, { status: response.status })
+      const status = response.status >= 400 && response.status <= 599 ? response.status : 502;
+      const retryHeader = response.headers.get('Retry-After') || '';
+      const retry = /^\d{1,5}$/.test(retryHeader) ? Number(retryHeader) : 0;
+      const safeProviderCode = providerCode(data);
+      return failure(status, upstreamCode(status), { upstreamStatus: response.status,
+        ...(safeProviderCode ? { providerCode: safeProviderCode } : {}),
+        ...(retry > 0 && retry <= 86_400 ? { retryAfterSeconds: retry } : {}),
+      });
     }
-
-    let data: any = {}
-    try {
-      data = responseText ? JSON.parse(responseText) : {}
-    } catch {
-      data = { message: responseText }
-    }
-
-    // 🔍 DEBUG: Log successful response with full details
-    console.log('✅ [SERVER] Request successful')
-    console.log('Response length:', responseText.length, 'characters')
-    console.log('───────────────────────────────────────────────────────────')
-    console.log('📊 Response Summary:')
-    console.log('  - Has response:', !!data.response)
-    console.log('  - References count:', data.references?.length || 0)
-    console.log('  - Activity count:', data.activity?.length || 0)
-    if (data.references?.length > 0) {
-      console.log('📚 References:')
-      data.references.forEach((ref: any, idx: number) => {
-        console.log(`  [${idx}] type: ${ref.type}, id: ${ref.id}, hasSourceData: ${!!ref.sourceData}`)
-      })
-    }
-    if (data.activity?.length > 0) {
-      console.log('🔄 Activity:')
-      data.activity.forEach((act: any, idx: number) => {
-        console.log(`  [${idx}] type: ${act.type}, id: ${act.id}, elapsedMs: ${act.elapsedMs}ms`)
-      })
-    }
-    console.log('───────────────────────────────────────────────────────────')
-    console.log('📦 Full Response Data:')
-    console.log(JSON.stringify(data, null, 2))
-    console.log('═══════════════════════════════════════════════════════════')
-
-    return NextResponse.json(data)
-  } catch (error: any) {
-    return NextResponse.json({
-      error: 'Internal server error',
-      details: error.message,
-      stack: error.stack,
-      type: 'exception'
-    }, { status: 500 })
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return failure(502, 'KB_INVALID_RESPONSE');
+    // Keep the successful Azure response intact so comparison reuses the original snapshot.
+    return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store' } });
+  } catch {
+    return request.signal.aborted ? failure(499, 'KB_CANCELLED') : failure(502, 'KB_RETRIEVAL_FAILED');
   }
 }

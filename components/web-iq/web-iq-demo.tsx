@@ -14,21 +14,21 @@ import { WebIqLiveSearch } from '@/components/web-iq/web-iq-live-search';
 import { WebIqComparisonWorkspace } from '@/components/web-iq/web-iq-comparison-workspace';
 import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
 import { WebIqComparison } from '@/components/web-iq/web-iq-comparison';
+import { WebIqSpeakerNotes } from '@/components/web-iq/web-iq-speaker-notes';
+import {
+  WEB_IQ_LAST_PRESENTATION_STAGE, WEB_IQ_PRESENTATION_DURATION, WEB_IQ_PRESENTATION_STAGES,
+  webIqPresentationSourceUpdate, webIqPresentationStageIndex, webIqPresentationStageUpdate,
+} from '@/components/web-iq/web-iq-presentation';
 import { getLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import {
-  WEB_IQ_EVIDENCE, WEB_IQ_QUESTION, WEB_IQ_SCENES, WEB_IQ_SHIPMENTS,
+  WEB_IQ_EVIDENCE, WEB_IQ_QUESTION, WEB_IQ_SHIPMENTS,
   evaluateWebIqScenario, type WebIqLanguage, type WebIqSignal,
 } from '@/lib/webIqScenario';
 
 function clock(seconds: number) {
   return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
 }
-
-const sceneLabels = {
-  en: ['The question', 'Internal records only', 'Web notice', 'Affected shipments', 'Proposed action', 'Takeaway'],
-  ko: ['질문', '내부 자료만 활용', '웹 공지', '영향받는 화물', '대응 제안', '핵심 정리'],
-};
 
 export function WebIqDemo() {
   const router = useRouter();
@@ -43,27 +43,14 @@ export function WebIqDemo() {
   const view = params.get('view') === 'technical' ? 'technical' : 'executive';
   const techMode = params.get('tech') === 'search' ? 'search' : params.get('tech') === 'scenario' ? 'scenario' : 'compare';
   const rawScene = Number(params.get('scene') || 0);
-  const sceneIndex = Number.isInteger(rawScene) ? Math.max(0, Math.min(5, rawScene)) : 0;
-  const includeWeb = params.get('sources') === 'web';
-  const signal: WebIqSignal = params.get('signal') === 'unrelated' ? 'unrelated' : 'closure';
-  const scene = WEB_IQ_SCENES[sceneIndex];
+  const sceneIndex = webIqPresentationStageIndex(rawScene);
+  const scene = WEB_IQ_PRESENTATION_STAGES[sceneIndex];
+  const includeWeb = view === 'executive' ? scene.includeWeb : params.get('sources') === 'web';
+  const signal: WebIqSignal = view === 'technical' && params.get('signal') === 'unrelated' ? 'unrelated' : 'closure';
   const ko = language === 'ko';
   const pick = (en: string, korean: string) => ko ? korean : en;
   const result = useMemo(() => evaluateWebIqScenario(includeWeb, signal), [includeWeb, signal]);
-  const totalElapsed = WEB_IQ_SCENES.slice(0, sceneIndex).reduce((sum, item) => sum + item.duration, 0) + elapsed;
-  const comparisonOverride = (sceneIndex >= 2 && (!includeWeb || signal === 'unrelated')) || (sceneIndex < 2 && includeWeb);
-  const comparisonTitle = !includeWeb
-    ? { en: 'Check the route before recommending priority transport', ko: '우선 운송을 제안하기 전에 경로부터 확인합니다' }
-    : signal === 'unrelated'
-      ? { en: 'This notice does not change our plan', ko: '이 공지로는 계획이 바뀌지 않습니다' }
-      : { en: 'We now have grounds to propose priority transport for A', ko: 'A의 우선 운송을 제안할 근거가 생겼습니다' };
-  const comparisonNarration = !includeWeb
-    ? { en: 'Internal records show that A has the least stock. But with no confirmed route restriction, we should check road conditions before proposing priority transport.', ko: '내부 자료상 A의 재고가 가장 빠듯합니다. 다만 경로 통제는 확인되지 않았으므로, 우선 운송을 제안하기 전에 도로 상황부터 확인해야 합니다.' }
-    : signal === 'unrelated'
-      ? { en: 'The notice is about a road none of our shipments use. The recommendation stays the same.', ko: '공지에 나온 도로는 우리 화물이 지나지 않습니다. 따라서 기존 판단을 유지합니다.' }
-      : { en: 'The fictional notice affects routes used by A and B. With only four days of stock, A is the priority transport candidate. For B, check whether regular transport can reroute; keep C on its current plan.', ko: '가상 공지의 통제 구간은 A와 B의 운송 경로에 해당합니다. 재고가 4일분인 A에 우선 운송을 제안하고, B는 일반 운송의 우회 가능성을 확인합니다. C는 기존 계획을 유지합니다.' };
-  const visibleTitle = comparisonOverride ? comparisonTitle : scene.title;
-  const visibleNarration = comparisonOverride ? comparisonNarration : scene.narration;
+  const totalElapsed = WEB_IQ_PRESENTATION_STAGES.slice(0, sceneIndex).reduce((sum, item) => sum + item.duration, 0) + elapsed;
 
   useEffect(() => { setLanguage(getLocale() === 'ko' ? 'ko' : 'en'); }, []);
   useEffect(() => { setElapsed(0); }, [sceneIndex]);
@@ -74,28 +61,22 @@ export function WebIqDemo() {
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });
   }, [params, pathname, router]);
 
-  const goToScene = useCallback((next: number, auto = false, restart = false) => {
-    const bounded = Math.max(0, Math.min(5, next));
+  const goToScene = useCallback((next: number, auto = false) => {
     if (!auto) setPlaying(false);
     setElapsed(0);
-    const updates: Record<string, string> = { scene: String(bounded) };
-    if (auto || restart || params.get('comparison') !== 'manual') {
-      Object.assign(updates, { sources: bounded >= 2 ? 'web' : 'internal', signal: 'closure', comparison: 'guided' });
-    }
-    updateUrl(updates);
-  }, [params, updateUrl]);
+    updateUrl(webIqPresentationStageUpdate(next));
+  }, [updateUrl]);
 
   function togglePlayback() {
     if (playing) {
       setPlaying(false);
       return;
     }
-    if (totalElapsed >= 90) {
-      goToScene(0, true, true);
+    if (totalElapsed >= WEB_IQ_PRESENTATION_DURATION) {
+      goToScene(0, true);
     } else {
-      // Play resumes the guided story; manual comparisons apply only while paused.
-      // Keep the current elapsed time when resuming within the same scene.
-      updateUrl({ sources: sceneIndex >= 2 ? 'web' : 'internal', signal: 'closure', comparison: 'guided' });
+      // Resume the selected stage without resetting its elapsed time.
+      updateUrl(webIqPresentationStageUpdate(sceneIndex));
     }
     setPlaying(true);
   }
@@ -108,7 +89,7 @@ export function WebIqDemo() {
 
   useEffect(() => {
     if (!playing || elapsed < scene.duration) return;
-    if (sceneIndex === 5) {
+    if (sceneIndex === WEB_IQ_LAST_PRESENTATION_STAGE) {
       setElapsed(scene.duration);
       setPlaying(false);
     } else {
@@ -145,7 +126,7 @@ export function WebIqDemo() {
 
   function selectView(next: 'executive' | 'technical') {
     setPlaying(false);
-    updateUrl({ view: next });
+    updateUrl({ view: next, ...(next === 'executive' ? webIqPresentationStageUpdate(sceneIndex) : {}) });
   }
 
   function openEvidence(id: string) {
@@ -159,7 +140,11 @@ export function WebIqDemo() {
     <div className="flex flex-wrap items-center gap-2" role="group" aria-label={pick('Information to compare', '비교할 정보')}>
       {[false, true].map(web => (
         <Button key={String(web)} size="sm" variant={includeWeb === web ? 'default' : 'outline'} aria-pressed={includeWeb === web}
-          onClick={() => { setPlaying(false); updateUrl({ sources: web ? 'web' : 'internal', comparison: 'manual' }); }}>
+          onClick={() => {
+            setPlaying(false);
+            setElapsed(0);
+            updateUrl(view === 'executive' ? webIqPresentationSourceUpdate(sceneIndex, web) : { sources: web ? 'web' : 'internal', comparison: 'manual' });
+          }}>
           {web ? pick('Internal records + web notice', '내부 자료 + 웹 공지') : pick('Internal records only', '내부 자료만')}
         </Button>
       ))}
@@ -218,11 +203,23 @@ export function WebIqDemo() {
         </div>
         <h2 id="web-iq-question" className="max-w-4xl text-xl font-medium leading-relaxed sm:text-2xl">{WEB_IQ_QUESTION[language]}</h2>
         {sourceButtons}
+        <nav aria-label={pick('Walkthrough stages', '시나리오 단계')}>
+          <ol className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            {WEB_IQ_PRESENTATION_STAGES.map((item, index) => (
+              <li key={item.id} className="min-w-0">
+                <button type="button" aria-current={sceneIndex === index ? 'step' : undefined} aria-controls="web-iq-walkthrough" onClick={() => goToScene(index)}
+                  className={cn('flex h-full min-h-[4rem] w-full items-start gap-2 rounded-lg border p-3 text-left text-xs leading-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent', sceneIndex === index ? 'border-accent bg-accent/10 text-fg-default' : 'border-stroke-divider text-fg-muted hover:bg-bg-hover')}>
+                  <span className="text-accent">{item.id}</span><span className="break-keep">{item.label[language]}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </nav>
       </section>}
 
       {view === 'executive' ? (
         <>
-          <section className="overflow-hidden rounded-2xl border border-stroke-divider bg-bg-card" aria-label={pick('Executive walkthrough', 'Executive 시나리오')}>
+          <section id="web-iq-walkthrough" className="overflow-hidden rounded-2xl border border-stroke-divider bg-bg-card" aria-label={pick('Executive walkthrough', 'Executive 시나리오')}>
             <div className="grid lg:grid-cols-[1.35fr_1fr]">
               <div className="relative min-w-0 bg-bg-subtle">
                 {sceneIndex === 3 && includeWeb && signal === 'closure' ? <div className="flex h-full min-h-56 flex-col justify-center gap-4 p-6 sm:p-8">
@@ -233,12 +230,12 @@ export function WebIqDemo() {
               </div>
               <div className="flex flex-col justify-between gap-5 p-5 sm:p-7">
                 <div>
-                  <p className="text-xs font-medium text-accent">{String(sceneIndex + 1).padStart(2, '0')} / 06 · {sceneLabels[language][sceneIndex]}</p>
-                  <h3 className="mt-3 break-keep text-xl font-semibold leading-snug sm:text-2xl">{visibleTitle[language]}</h3>
-                  <p className="mt-4 break-keep text-sm leading-7 text-fg-muted">{visibleNarration[language]}</p>
+                  <p className="text-xs font-medium text-accent">{String(sceneIndex + 1).padStart(2, '0')} / 06 · {scene.label[language]}</p>
+                  <h3 className="mt-3 break-keep text-xl font-semibold leading-snug sm:text-2xl">{scene.title[language]}</h3>
+                  <p className="mt-4 break-keep text-sm leading-7 text-fg-muted">{scene.narration[language]}</p>
                 </div>
                 <div className="border-t border-stroke-divider pt-4 text-sm leading-6">
-                  {comparisonOverride ? <p className="text-fg-muted">{result.decisions[0].action[language]}</p> : sceneIndex < 2 ? (
+                  {sceneIndex < 2 ? (
                     <div className="flex flex-wrap gap-x-5 gap-y-2 text-fg-muted">
                       {WEB_IQ_SHIPMENTS.map(shipment => <span key={shipment.id}><strong className="text-fg-default">{shipment.id}</strong> · {shipment.stockDays}{pick(' days of stock', '일분 재고')}</span>)}
                     </div>
@@ -250,33 +247,23 @@ export function WebIqDemo() {
                 </div>
               </div>
             </div>
-            {captions && <p lang="en" className="border-t border-stroke-divider bg-bg-subtle px-5 py-4 text-sm leading-6 text-fg-muted sm:px-7">{visibleNarration.en}</p>}
+            {captions && <p lang="en" className="border-t border-stroke-divider bg-bg-subtle px-5 py-4 text-sm leading-6 text-fg-muted sm:px-7">{scene.narration.en}</p>}
           </section>
 
           <div className="space-y-4">
-            <ol className="grid grid-cols-3 gap-2 sm:grid-cols-6" aria-label={pick('Scenes', '장면')}>
-              {WEB_IQ_SCENES.map((item, index) => (
-                <li key={item.id}>
-                  <button aria-current={sceneIndex === index ? 'step' : undefined} onClick={() => goToScene(index)}
-                    className={cn('flex h-full w-full items-start gap-2 rounded-lg border p-3 text-left text-xs leading-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent', sceneIndex === index ? 'border-accent bg-accent/10 text-fg-default' : 'border-stroke-divider text-fg-muted hover:bg-bg-hover')}>
-                    <span className="text-accent">{item.id}</span>{sceneLabels[language][index]}
-                  </button>
-                </li>
-              ))}
-            </ol>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-2">
                 <Button size="sm" onClick={togglePlayback}>
                   {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                   {playing ? pick('Pause', '일시 정지') : pick('Play 90s walkthrough', '90초 시나리오 재생')}
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => goToScene(0, false, true)} aria-label={pick('Restart walkthrough', '시나리오 처음부터')} title={pick('Restart the story with the original settings', '비교 조건을 초기화하고 처음부터 보기')}><RotateCcw className="h-4 w-4" /></Button>
+                <Button size="sm" variant="ghost" onClick={() => goToScene(0)} aria-label={pick('Restart walkthrough', '시나리오 처음부터')} title={pick('Restart the story with the original settings', '비교 조건을 초기화하고 처음부터 보기')}><RotateCcw className="h-4 w-4" /></Button>
                 <span className="text-xs tabular-nums text-fg-muted" aria-label={pick('Presentation elapsed time', '시나리오 진행 시간')}>{clock(totalElapsed)} / 01:30</span>
               </div>
               <div className="flex items-center gap-2">
                 <Button size="sm" variant="ghost" aria-pressed={captions} onClick={() => setCaptions(value => !value)}>{pick('EN captions', '영어 자막')}</Button>
                 <Button size="sm" variant="outline" disabled={sceneIndex === 0} onClick={() => goToScene(sceneIndex - 1)} aria-label={pick('Previous scene', '이전 장면')}><ArrowLeft className="h-4 w-4" /></Button>
-                <Button size="sm" variant="outline" disabled={sceneIndex === 5} onClick={() => goToScene(sceneIndex + 1)} aria-label={pick('Next scene', '다음 장면')}><ArrowRight className="h-4 w-4" /></Button>
+                <Button size="sm" variant="outline" disabled={sceneIndex === WEB_IQ_LAST_PRESENTATION_STAGE} onClick={() => goToScene(sceneIndex + 1)} aria-label={pick('Next scene', '다음 장면')}><ArrowRight className="h-4 w-4" /></Button>
               </div>
             </div>
           </div>
@@ -286,11 +273,7 @@ export function WebIqDemo() {
             <p className="text-sm text-fg-muted">{pick('The question and internal records stay the same. See whether the web notice changes the recommendation.', '질문과 내부 자료는 같습니다. 웹 공지가 우선 운송 판단을 바꾸는지 비교해 보세요.')}</p>
             <Button variant="outline" onClick={() => { setPlaying(false); updateUrl({ view: 'technical', tech: 'compare' }); }}>{pick('Compare real KB answers', '실제 KB 답변 비교하기')}<ArrowRight className="h-4 w-4" /></Button>
           </div>
-          <details className="rounded-xl border border-stroke-divider p-5 text-sm">
-            <summary className="cursor-pointer font-medium">{pick('Speaker notes · Korean / English', '발표 대본 · 한국어 / 영어')}</summary>
-            <p lang="ko" className="mt-4 leading-7 text-fg-muted">{visibleNarration.ko}</p>
-            <p lang="en" className="mt-3 leading-7 text-fg-muted">{visibleNarration.en}</p>
-          </details>
+          <WebIqSpeakerNotes language={language} stageIndex={sceneIndex} onSelectStage={goToScene} />
         </>
       ) : (
         <>
@@ -343,9 +326,10 @@ export function WebIqDemo() {
         </>
       )}
       <footer className="flex flex-wrap gap-x-6 gap-y-2 border-t border-stroke-divider pt-5 text-xs text-fg-muted">
-        <Link href="/test" className="text-accent hover:underline">{pick('Ask your own knowledge base', '내 지식 베이스로 질문')}</Link>
+        <Link href="/test" className="text-accent hover:underline">{pick('Advanced experiments with your KB', '내 지식 베이스로 고급 실험')}</Link>
         <Link href="/guides" className="hover:underline">{pick('Setup and deployment guides', '구성·배포 가이드')}</Link>
         <a href="https://github.com/microsoft/azure-ai-search-foundry-iq-live-knowledge-sources" target="_blank" rel="noopener noreferrer" className="hover:underline">{pick('Microsoft repository · Search / MCP / Fabric', 'Microsoft 저장소 · Search / MCP / Fabric')}</a>
+        <p className="w-full text-xs leading-6 text-fg-subtle">{pick('Advanced experiments are separate from this verified NASA example. Knowledge-base and question fit must be checked for each experiment.', '고급 실험은 이 NASA 검증 예시와 별개입니다. 사용하는 KB와 질문의 적합성은 실험마다 직접 확인해야 합니다.')}</p>
       </footer>
     </div>
   );

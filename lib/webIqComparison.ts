@@ -1,9 +1,11 @@
 import { buildKbWebContext, type KbWebAnswerResponse, type KbWebAnswerStatus } from '@/lib/kbWebAnswer';
+import { KnowledgeBaseRetrievalError } from '@/lib/api';
 import { isAllowedWebIqQuestion } from '@/lib/webIqDemoQuestions';
 import { parseWebIqTelemetry } from '@/lib/webIqTelemetry';
 import type { KnowledgeBaseRetrievalResponse } from '@/types/knowledge-retrieval';
 
 export type ComparisonState = 'retrieving-kb' | 'retrieving-web' | 'complete' | 'partial' | 'failed' | 'cancelled' | 'blocked_empty';
+export type ComparisonErrorStage = 'kb' | 'web' | 'synthesis';
 export interface ComparisonSelection {
   kbId: string;
   presetId: string;
@@ -23,22 +25,49 @@ export interface ComparisonRun {
   comparisonWallMs?: number;
   webAttemptWallMs?: number;
   errorCode?: string;
+  errorStatus?: number;
+  errorUpstreamStatus?: number;
+  errorProviderCode?: string;
+  errorStage?: ComparisonErrorStage;
   retryAfterSeconds?: number;
 }
 
+const answerErrorCodes = new Set([
+  'ANSWER_FAILED', 'ANSWER_NOT_CONFIGURED', 'QUESTION_NOT_ALLOWED', 'KB_CONTEXT_EMPTY', 'KB_EMPTY',
+  'BOT_CHECK_REQUIRED', 'BOT_CHECK_FAILED', 'BOT_CHECK_UNAVAILABLE', 'DAILY_BUDGET_EXHAUSTED', 'RATE_LIMITED',
+  'USAGE_GUARD_UNAVAILABLE', 'WEB_SEARCH_FAILED', 'UPSTREAM_INVALID_RESPONSE', 'SYNTHESIS_FAILED',
+  'ANSWER_INCOMPLETE', 'CITATION_INVALID', 'UPSTREAM_TIMEOUT', 'UPSTREAM_FAILED', 'INVALID_ANSWER_RESPONSE', 'SNAPSHOT_CHANGED',
+]);
+
 export class WebIqComparisonError extends Error {
-  constructor(public code: string, public status?: number, public retryAfterSeconds?: number) {
-    super(code);
+  public code: string;
+  constructor(code: string, public status?: number, public retryAfterSeconds?: number, public stage?: ComparisonErrorStage) {
+    const safeCode = answerErrorCodes.has(code) ? code : 'ANSWER_FAILED';
+    super(safeCode);
+    this.code = safeCode;
     this.name = 'WebIqComparisonError';
   }
+}
+
+function comparisonFailure(error: unknown, stage: ComparisonErrorStage) {
+  if (error instanceof KnowledgeBaseRetrievalError || error instanceof WebIqComparisonError) {
+    return { errorCode: error.code, errorStatus: error.status, errorStage: error.stage || stage,
+      errorUpstreamStatus: error instanceof KnowledgeBaseRetrievalError ? error.upstreamStatus : undefined,
+      errorProviderCode: error instanceof KnowledgeBaseRetrievalError ? error.providerCode : undefined,
+      retryAfterSeconds: error.retryAfterSeconds };
+  }
+  return { errorCode: stage === 'kb' ? 'KB_RETRIEVAL_FAILED' : 'REQUEST_FAILED', errorStage: stage,
+    errorStatus: undefined, errorUpstreamStatus: undefined, errorProviderCode: undefined, retryAfterSeconds: undefined };
 }
 
 async function readAnswerResponse(response: Response) {
   const body = await response.json().catch(() => null);
   if (!response.ok) {
-    const retry = Number(response.headers.get('Retry-After'));
+    const header = response.headers.get('Retry-After');
+    const retry = header && /^\d+$/.test(header) ? Number(header) : NaN;
+    const stage = body?.stage === 'internal' ? 'kb' : body?.stage === 'web' || body?.stage === 'synthesis' ? body.stage : undefined;
     throw new WebIqComparisonError(typeof body?.code === 'string' ? body.code : 'ANSWER_FAILED', response.status,
-      Number.isFinite(retry) && retry > 0 ? retry : undefined);
+      Number.isSafeInteger(retry) && retry > 0 && retry <= 86_400 ? retry : undefined, stage);
   }
   if (!body || typeof body !== 'object' || Array.isArray(body)) return body;
   return { ...body, telemetry: parseWebIqTelemetry(body.telemetry) ?? undefined };
@@ -108,7 +137,9 @@ export class WebIqComparisonController {
     this.controller = null;
     if (this.current) this.emit({ ...this.current, state: 'cancelled',
       comparisonWallMs: this.current.comparisonWallMs ?? Math.round(this.now() - this.started),
-      ...(this.webAttemptStarted === null ? {} : { webAttemptWallMs: Math.round(this.now() - this.webAttemptStarted) }), errorCode: 'CANCELLED' });
+      ...(this.webAttemptStarted === null ? {} : { webAttemptWallMs: Math.round(this.now() - this.webAttemptStarted) }),
+      errorCode: 'CANCELLED', errorStatus: undefined, errorUpstreamStatus: undefined, errorProviderCode: undefined,
+      errorStage: this.current.internalTraceResponse ? 'web' : 'kb' });
     this.webAttemptStarted = null;
   }
   async startComparison(selection: ComparisonSelection, token: string) {
@@ -145,9 +176,10 @@ export class WebIqComparisonController {
       this.emit({ ...run, comparisonWallMs: Math.round(this.now() - this.started), webAttemptWallMs: Math.round(this.now() - this.webAttemptStarted) });
     } catch (error) {
       if (generation !== this.generation) return;
-      run.state = run.internalTraceResponse ? 'partial' : 'failed';
-      run.errorCode = error instanceof WebIqComparisonError ? error.code : 'REQUEST_FAILED';
-      run.retryAfterSeconds = error instanceof WebIqComparisonError ? error.retryAfterSeconds : undefined;
+      run.state = controller.signal.aborted || error instanceof KnowledgeBaseRetrievalError && ['CANCELLED', 'KB_CANCELLED'].includes(error.code)
+        ? 'cancelled' : run.internalTraceResponse ? 'partial' : 'failed';
+      Object.assign(run, comparisonFailure(error, run.internalTraceResponse ? 'web' : 'kb'));
+      if (!run.internalTraceResponse) run.kbRequestWallMs = Math.round(this.now() - this.started);
       this.emit({ ...run, comparisonWallMs: Math.round(this.now() - this.started),
         ...(this.webAttemptStarted === null ? {} : { webAttemptWallMs: Math.round(this.now() - this.webAttemptStarted) }) });
     } finally {
@@ -163,7 +195,9 @@ export class WebIqComparisonController {
     const generation = ++this.generation;
     const controller = new AbortController();
     this.controller = controller;
-    const run = { ...previous, attemptId: this.id(), state: 'retrieving-web' as ComparisonState, combined: undefined, errorCode: undefined, retryAfterSeconds: undefined, webAttemptWallMs: undefined };
+    const run = { ...previous, attemptId: this.id(), state: 'retrieving-web' as ComparisonState, combined: undefined,
+      errorCode: undefined, errorStatus: undefined, errorUpstreamStatus: undefined, errorProviderCode: undefined,
+      errorStage: undefined, retryAfterSeconds: undefined, webAttemptWallMs: undefined };
     this.webAttemptStarted = this.now();
     this.emit(run);
     try {
@@ -172,8 +206,7 @@ export class WebIqComparisonController {
       this.emit({ ...run, state: 'complete', webAttemptWallMs: Math.round(this.now() - this.webAttemptStarted) });
     } catch (error) {
       if (generation !== this.generation) return;
-      this.emit({ ...run, state: 'partial', errorCode: error instanceof WebIqComparisonError ? error.code : 'REQUEST_FAILED',
-        retryAfterSeconds: error instanceof WebIqComparisonError ? error.retryAfterSeconds : undefined,
+      this.emit({ ...run, state: controller.signal.aborted ? 'cancelled' : 'partial', ...comparisonFailure(error, 'web'),
         webAttemptWallMs: Math.round(this.now() - this.webAttemptStarted) });
     } finally {
       if (generation === this.generation) { this.controller = null; this.webAttemptStarted = null; }

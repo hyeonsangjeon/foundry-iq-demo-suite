@@ -39,6 +39,24 @@ function modules(fetch = () => { throw new Error('Unexpected network request'); 
 }
 const load = modules();
 const { WebIqComparisonController, WebIqComparisonError } = load('lib/webIqComparison.ts');
+const React = require('react');
+const { renderToStaticMarkup } = require('react-dom/server');
+function comparisonView(run, language) {
+  const filename = path.join(root, 'components/web-iq/web-iq-answer-comparison.tsx');
+  const exports = {};
+  const compiled = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
+  }).outputText;
+  vm.runInNewContext(compiled, { exports, require: name => {
+    if (name === 'react' || name === 'react/jsx-runtime') return require(name);
+    if (name === '@/lib/kbWebAnswer') return load('lib/kbWebAnswer.ts');
+    if (name === '@/components/ui/button') return { Button: ({ children }) => React.createElement('button', null, children) };
+    if (name === '@/components/web-iq/web-iq-source-detail') return { WebIqSourceDetail: () => null };
+    if (name === '@/components/web-iq/web-iq-service-links') return { WebIqServiceLinks: () => null };
+    throw new Error(`Unexpected view dependency: ${name}`);
+  } }, { filename });
+  return renderToStaticMarkup(React.createElement(exports.WebIqAnswerComparison, { run, language }));
+}
 const questions = load('lib/webIqDemoQuestions.ts');
 const query = questions.WEB_IQ_DEMO_QUESTIONS.find(item => item.id === 'nasa-earth-at-night').en;
 function selection(extra = {}) {
@@ -177,6 +195,141 @@ test('KB failure: web/model stage never starts', async () => {
   assert.equal(h.latest.state, 'failed');
   assert.equal(h.latest.internalTraceResponse, undefined);
   assert.equal(h.calls.web.length, 0);
+  assert.equal(h.latest.errorCode, 'KB_RETRIEVAL_FAILED');
+  assert.equal(h.latest.errorStage, 'kb');
+});
+
+test('KB HTTP failures: safe status/stage reach the controller and both locales without false preservation or downstream work', async () => {
+  for (const status of [400, 401, 403, 404, 429, 502, 504]) {
+    const expectedCode = { 400: 'KB_INVALID_REQUEST', 401: 'KB_AUTH_FAILED', 403: 'KB_ACCESS_DENIED',
+      404: 'KB_NOT_FOUND', 429: 'KB_RATE_LIMITED', 502: 'KB_RETRIEVAL_FAILED', 504: 'KB_TIMEOUT' }[status];
+    const calls = [];
+    let bodyReads = 0, latest, webCalls = 0;
+    const transport = modules(async (url, init) => {
+      calls.push({ url, init });
+      const response = Response.json({ error: 'do-not-expose-provider-body', details: 'do-not-expose-credential', code: 'unsafe-code' },
+        { status, headers: { 'Retry-After': '17' } });
+      response.json = async () => { bodyReads++; throw new Error('Provider error bodies must not be read'); };
+      return response;
+    });
+    const { retrieveFromKnowledgeBase } = transport('lib/api.ts');
+    const { WebIqComparisonController: Controller } = transport('lib/webIqComparison.ts');
+    const instance = new Controller({
+      retrieve: (picked, signal) => retrieveFromKnowledgeBase(picked.kbId, [], {}, signal),
+      answer: () => { webCalls++; throw new Error('Unexpected downstream request'); },
+      onChange: run => { latest = run; },
+    });
+    await instance.startComparison(selection(), 'fresh-token');
+    assert.equal(calls.length, 1);
+    assert.equal(bodyReads, 0);
+    assert.equal(webCalls, 0);
+    assert.equal(latest.state, 'failed');
+    assert.equal(latest.internalTraceResponse, undefined);
+    assert.equal(latest.errorCode, expectedCode);
+    assert.equal(latest.errorStatus, status);
+    assert.equal(latest.errorStage, 'kb');
+    assert.equal(latest.retryAfterSeconds, 17);
+    assert.doesNotMatch(JSON.stringify(latest), /do-not-expose|unsafe-code|fresh-token/);
+    for (const language of ['ko', 'en']) {
+      const markup = comparisonView(latest, language);
+      assert.match(markup, new RegExp(`HTTP ${status}`));
+      assert.match(markup, new RegExp(expectedCode));
+      assert.match(markup, language === 'ko' ? /웹 검색과 추가 답변 생성을 시작하지 않았습니다/ : /Web search and additional synthesis were not started/);
+      assert.doesNotMatch(markup, /보존|preserved|will appear here|여기에 표시됩니다/);
+    }
+  }
+});
+
+test('KB proxy v1 errors: allowlisted provider metadata survives without old body, stack or credential fields', async () => {
+  const safe = { schemaVersion: 'kb.retrieve.error.v1', code: 'KB_RETRIEVAL_FAILED', stage: 'kb', status: 502,
+    upstreamStatus: 502, providerCode: 'InvalidAgentRetrievalRequest', retryAfterSeconds: 23,
+    details: 'do-not-expose-details', stack: 'do-not-expose-stack' };
+  const transport = modules(async () => Response.json(safe, { status: 502, headers: { 'X-KB-Error-Schema': 'kb.retrieve.error.v1' } }));
+  const { retrieveFromKnowledgeBase } = transport('lib/api.ts');
+  const { WebIqComparisonController: Controller } = transport('lib/webIqComparison.ts');
+  let latest;
+  const instance = new Controller({ retrieve: (picked, signal) => retrieveFromKnowledgeBase(picked.kbId, [], {}, signal),
+    answer: () => { throw new Error('Unexpected paid downstream request'); }, onChange: run => { latest = run; } });
+  await instance.startComparison(selection(), 'fresh-token');
+  assert.equal(latest.errorStatus, 502);
+  assert.equal(latest.errorUpstreamStatus, 502);
+  assert.equal(latest.errorProviderCode, 'InvalidAgentRetrievalRequest');
+  assert.equal(latest.retryAfterSeconds, 23);
+  assert.doesNotMatch(JSON.stringify(latest), /do-not-expose|details|stack|fresh-token/);
+  assert.match(comparisonView(latest, 'en'), /InvalidAgentRetrievalRequest/);
+  for (const invalid of [{ ...safe, schemaVersion: 'unrecognized' }, { ...safe, code: 'do-not-expose-code' },
+    { ...safe, stage: 'do-not-expose-stage' }, { ...safe, status: 401 }]) {
+    const mod = modules(async () => Response.json(invalid, { status: 502, headers: { 'X-KB-Error-Schema': 'kb.retrieve.error.v1' } }))('lib/api.ts');
+    await assert.rejects(mod.retrieveFromKnowledgeBase('sample', [], {}), error => error.code === 'KB_RETRIEVAL_FAILED'
+      && error.status === 502 && error.upstreamStatus === undefined && error.providerCode === undefined && error.retryAfterSeconds === undefined);
+  }
+  const forged = modules(async () => Response.json({ ...safe, providerCode: 'do-not-expose-provider', upstreamStatus: '502', retryAfterSeconds: 1000000 },
+    { status: 502, headers: { 'X-KB-Error-Schema': 'kb.retrieve.error.v1' } }))('lib/api.ts');
+  await assert.rejects(forged.retrieveFromKnowledgeBase('sample', [], {}), error => error.code === 'KB_RETRIEVAL_FAILED'
+    && error.providerCode === undefined && error.upstreamStatus === undefined && error.retryAfterSeconds === undefined);
+});
+
+test('KB network, malformed success and abort errors retain only safe metadata and never expose transport messages', async () => {
+  const signal = new AbortController();
+  const network = modules(async () => { throw new Error('do-not-expose-network-credential'); })('lib/api.ts');
+  await assert.rejects(network.retrieveFromKnowledgeBase('sample', [], {}, signal.signal), error =>
+    error.code === 'KB_RETRIEVAL_NETWORK_FAILED' && error.stage === 'kb' && error.status === undefined
+      && !error.message.includes('do-not-expose'));
+  for (const payload of ['{', 'null', '[]', '42', '{"response":"not-array"}', '{"references":null}']) {
+    const malformed = modules(async () => new Response(payload, { status: 200 }))('lib/api.ts');
+    await assert.rejects(malformed.retrieveFromKnowledgeBase('sample', [], {}), error =>
+      error.code === 'KB_INVALID_RESPONSE' && error.stage === 'kb' && error.status === 200);
+  }
+  signal.abort();
+  await assert.rejects(network.retrieveFromKnowledgeBase('sample', [], {}, signal.signal), error => error.code === 'CANCELLED' && error.stage === 'kb');
+});
+
+test('KB empty and cancelled-before-KB views never claim a preserved answer', async () => {
+  const empty = controller({ retrieve: () => snapshot({ response: [], references: [] }) });
+  await empty.instance.startComparison(selection(), 'fresh-token');
+  const pending = deferred(), cancelled = controller({ retrieve: () => pending.promise });
+  const run = cancelled.instance.startComparison(selection(), 'fresh-token');
+  cancelled.instance.cancel();
+  for (const language of ['ko', 'en']) {
+    const emptyMarkup = comparisonView(empty.latest, language);
+    const cancelledMarkup = comparisonView(cancelled.latest, language);
+    assert.doesNotMatch(emptyMarkup + cancelledMarkup, /보존|preserved/);
+    assert.match(emptyMarkup, language === 'ko' ? /사용할 KB 근거 없음/ : /No usable KB material/);
+    assert.match(cancelledMarkup, language === 'ko' ? /내부 결과를 받기 전에 요청을 취소/ : /cancelled before a KB result was received/);
+  }
+  assert.equal(cancelled.calls.web.length, 0);
+  pending.resolve(snapshot()); await run;
+});
+
+test('answer failures: safe HTTP code and web/synthesis stage survive while only an existing snapshot gets preservation text', async () => {
+  for (const stage of ['web', 'synthesis']) {
+    const code = stage === 'web' ? 'WEB_SEARCH_FAILED' : 'SYNTHESIS_FAILED';
+    const transport = modules(async () => Response.json({ code, stage, error: 'do-not-expose-answer-body' }, { status: 502 }));
+    const { requestWebIqAnswer, WebIqComparisonController: Controller } = transport('lib/webIqComparison.ts');
+    let latest;
+    const instance = new Controller({ retrieve: async () => snapshot(), answer: requestWebIqAnswer, onChange: run => { latest = run; } });
+    await instance.startComparison(selection(), 'fresh-token');
+    assert.equal(latest.state, 'partial');
+    assert.equal(latest.errorCode, code);
+    assert.equal(latest.errorStatus, 502);
+    assert.equal(latest.errorStage, stage);
+    assert.deepEqual(plain(latest.internalTraceResponse), snapshot());
+    assert.doesNotMatch(JSON.stringify(latest), /do-not-expose|fresh-token/);
+    for (const language of ['ko', 'en']) {
+      const markup = comparisonView(latest, language);
+      assert.match(markup, /HTTP 502/);
+      assert.match(markup, language === 'ko' ? /KB 결과는 보존됩니다/ : /The KB result is preserved/);
+      assert.doesNotMatch(markup, /were not started|시작하지 않았습니다/);
+    }
+  }
+});
+
+test('answer error parsing: unknown provider fields/codes/stages and unbounded retry delays are discarded', async () => {
+  const transport = modules(async () => Response.json({ code: 'do-not-expose-code', stage: 'do-not-expose-stage', details: 'do-not-expose-details' },
+    { status: 502, headers: { 'Retry-After': '999999999' } }))('lib/webIqComparison.ts');
+  await assert.rejects(transport.requestWebIqAnswer(query, snapshot(), 'fresh-token', new AbortController().signal), error =>
+    error.code === 'ANSWER_FAILED' && error.status === 502 && error.stage === undefined && error.retryAfterSeconds === undefined
+      && !JSON.stringify(error).includes('do-not-expose') && !error.message.includes('do-not-expose'));
 });
 
 for (const empty of [snapshot({ response: [], references: [] }), snapshot({ response: [], references: [{ id: 'm', type: 'searchIndex', activitySource: 0, sourceData: { title: 'Metadata only' } }] })]) {
@@ -254,7 +407,7 @@ test('invalidate on selection/language/clear: old response has no visible consum
 
 test('retry web: same snapshot, new attempt and token, zero extra KB, original wait plus separate retry wait', async () => {
   let attempts = 0; const retry = deferred();
-  const h = controller({ answer: () => ++attempts === 1 ? Promise.reject(new WebIqComparisonError('WEB_SEARCH_FAILED')) : retry.promise });
+  const h = controller({ answer: () => ++attempts === 1 ? Promise.reject(new WebIqComparisonError('WEB_SEARCH_FAILED', 502, undefined, 'web')) : retry.promise });
   await h.instance.startComparison(selection(), 'fresh-token-one');
   const original = plain(h.latest.internalTraceResponse), runId = h.latest.runId, attemptId = h.latest.attemptId, initialWait = h.latest.comparisonWallMs;
   h.setClock(100000);
@@ -270,6 +423,9 @@ test('retry web: same snapshot, new attempt and token, zero extra KB, original w
   assert.deepEqual(plain(h.calls.web[1][1]), original);
   assert.equal(h.latest.comparisonWallMs, initialWait);
   assert.equal(h.latest.webAttemptWallMs, 50);
+  assert.equal(h.latest.errorCode, undefined);
+  assert.equal(h.latest.errorStatus, undefined);
+  assert.equal(h.latest.errorStage, undefined);
 });
 
 test('retry selection mismatch: changing KB/question/language/settings never reuses an old snapshot', async () => {

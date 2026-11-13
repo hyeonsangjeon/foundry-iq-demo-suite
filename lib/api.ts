@@ -28,6 +28,32 @@ interface RetrieveParams {
   [key: string]: any
 }
 
+export type KnowledgeBaseRetrievalErrorCode = 'KB_INVALID_REQUEST' | 'KB_NOT_CONFIGURED' | 'KB_AUTH_FAILED'
+  | 'KB_ACCESS_DENIED' | 'KB_NOT_FOUND' | 'KB_TIMEOUT' | 'KB_RATE_LIMITED' | 'KB_RETRIEVAL_FAILED'
+  | 'KB_INVALID_RESPONSE' | 'KB_CANCELLED' | 'KB_RETRIEVAL_NETWORK_FAILED' | 'CANCELLED';
+const kbErrorCodes = new Set<string>(['KB_INVALID_REQUEST', 'KB_NOT_CONFIGURED', 'KB_AUTH_FAILED', 'KB_ACCESS_DENIED',
+  'KB_NOT_FOUND', 'KB_TIMEOUT', 'KB_RATE_LIMITED', 'KB_RETRIEVAL_FAILED', 'KB_INVALID_RESPONSE', 'KB_CANCELLED']);
+const kbProviderCodes = new Set(['InvalidAgentRetrievalRequest', 'InvalidRequest', 'InvalidRequestParameter', 'InvalidParameter',
+  'BadRequest', 'Unauthorized', 'Forbidden', 'ResourceNotFound', 'IndexNotFound', 'KnowledgeBaseNotFound', 'TooManyRequests',
+  'QuotaExceeded', 'ServiceUnavailable', 'InternalServerError', 'Timeout', 'OperationNotAllowed', 'InvalidCredentials']);
+const boundedRetrySeconds = (value: unknown): number | undefined => typeof value === 'number' && Number.isSafeInteger(value)
+  && value > 0 && value <= 86_400 ? value : undefined;
+const httpStatus = (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value) && value >= 100 && value <= 599;
+
+export class KnowledgeBaseRetrievalError extends Error {
+  readonly stage = 'kb' as const;
+  constructor(
+    public code: KnowledgeBaseRetrievalErrorCode,
+    public status?: number,
+    public retryAfterSeconds?: number,
+    public upstreamStatus?: number,
+    public providerCode?: string,
+  ) {
+    super(code === 'CANCELLED' ? 'Knowledge base retrieval cancelled.' : 'Knowledge base retrieval could not be completed.');
+    this.name = 'KnowledgeBaseRetrievalError';
+  }
+}
+
 export async function fetchKnowledgeSources(): Promise<ApiResponse<any>> {
   const first = await fetch('/api/knowledge-sources', {
     cache: 'no-store',
@@ -177,18 +203,50 @@ export async function retrieveFromKnowledgeBase(
   delete payload.xMsUserToken
   delete payload.globalHeaders // Don't send globalHeaders in body, only as HTTP headers
 
-  const response = await fetch(`${KNOWLEDGE_BASES_BASE_PATH}/${knowledgeBaseId}/retrieve`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(payload),
-    signal,
-  })
+  let response: Response
+  try {
+    response = await fetch(`${KNOWLEDGE_BASES_BASE_PATH}/${knowledgeBaseId}/retrieve`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+      signal,
+    })
+  } catch {
+    throw new KnowledgeBaseRetrievalError(signal?.aborted ? 'CANCELLED' : 'KB_RETRIEVAL_NETWORK_FAILED')
+  }
 
   if (!response.ok) {
-    // Keep provider payloads, ACL headers and internal content out of browser logs/UI.
-    throw new Error(`Knowledge base retrieval failed (${response.status})`)
+    // Legacy provider bodies stay unread. Only the proxy's versioned safe error envelope is consumed.
+    const retry = response.headers.get('Retry-After')
+    const seconds = retry && /^\d+$/.test(retry) ? Number(retry) : NaN
+    let safe: Record<string, unknown> | undefined
+    if (response.headers.get('X-KB-Error-Schema') === 'kb.retrieve.error.v1') {
+      const value: unknown = await response.json().catch(() => null)
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const dto = value as Record<string, unknown>
+        if (dto.schemaVersion === 'kb.retrieve.error.v1' && dto.stage === 'kb' && dto.status === response.status
+          && typeof dto.code === 'string' && kbErrorCodes.has(dto.code)) safe = dto
+      }
+    }
+    const fallback: KnowledgeBaseRetrievalErrorCode = response.status === 400 ? 'KB_INVALID_REQUEST'
+      : response.status === 401 ? 'KB_AUTH_FAILED' : response.status === 403 ? 'KB_ACCESS_DENIED'
+        : response.status === 404 ? 'KB_NOT_FOUND' : response.status === 408 || response.status === 504 ? 'KB_TIMEOUT'
+          : response.status === 429 ? 'KB_RATE_LIMITED' : 'KB_RETRIEVAL_FAILED'
+    throw new KnowledgeBaseRetrievalError(safe ? safe.code as KnowledgeBaseRetrievalErrorCode : fallback, response.status,
+      boundedRetrySeconds(seconds) ?? boundedRetrySeconds(safe?.retryAfterSeconds),
+      httpStatus(safe?.upstreamStatus) ? safe.upstreamStatus : undefined,
+      typeof safe?.providerCode === 'string' && kbProviderCodes.has(safe.providerCode) ? safe.providerCode : undefined)
   }
-  return response.json()
+  try {
+    const data: unknown = await response.json()
+    if (!data || typeof data !== 'object' || Array.isArray(data)
+      || ['response', 'activity', 'references'].some(key => key in data && !Array.isArray((data as Record<string, unknown>)[key]))) {
+      throw new KnowledgeBaseRetrievalError('KB_INVALID_RESPONSE', response.status)
+    }
+    return data
+  } catch {
+    throw new KnowledgeBaseRetrievalError(signal?.aborted ? 'CANCELLED' : 'KB_INVALID_RESPONSE', response.status)
+  }
 }
 
 export async function createKnowledgeBase(knowledgeBaseData: Partial<KnowledgeBase>): Promise<KnowledgeBase> {

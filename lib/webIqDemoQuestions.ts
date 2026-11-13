@@ -23,6 +23,23 @@ export const WEB_IQ_DEMO_QUESTIONS: readonly WebIqDemoQuestion[] = [
   },
 ];
 
+/** Public comparison examples pair questions only with material verified for that example. */
+export const WEB_IQ_COMPARISON_EXAMPLES: readonly { questionId: string; kbId: string }[] = [
+  { questionId: 'nasa-earth-at-night', kbId: 'nasa-earth-book' },
+];
+
+/** A missing exact KB disables the example; names of other KBs never imply question fit. */
+export function resolveWebIqComparisonExample<T extends { name: string }>(
+  questionId: string,
+  knowledgeBases: readonly T[],
+): { question: WebIqDemoQuestion; kb: T } | null {
+  const example = WEB_IQ_COMPARISON_EXAMPLES.find(item => item.questionId === questionId);
+  if (!example) return null;
+  const question = WEB_IQ_DEMO_QUESTIONS.find(item => item.id === example.questionId);
+  const kb = knowledgeBases.find(item => item.name === example.kbId);
+  return question && kb ? { question, kb } : null;
+}
+
 /** Derive answer language only from an exact preset; retrieved text cannot override it. */
 export function getWebIqQuestionLanguage(query: string): 'ko' | 'en' | null {
   const normalized = query.trim().replace(/\s+/g, ' ');
