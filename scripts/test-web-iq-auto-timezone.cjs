@@ -118,3 +118,54 @@ test('calculations require a complete UTC timestamp, city and offset from the sa
     assert.equal(parsed.differenceMinutes, null);
   }
 });
+
+// Public Web IQ field values captured from the single Nov 18 preview comparison.
+const liveComparison = {
+  startTimeZone: { timeZoneName: 'Korean Standard Time', timeZoneAbbreviation: 'KST', utcOffset: 9,
+    utcTime: 'Wednesday, 2026-11-18T05:43:01Z', localTime: 'Wednesday, 2026-11-18T14:43:01+09:00' },
+  endTimeZone: { timeZoneName: 'Greenwich Mean Time', timeZoneAbbreviation: 'GMT', utcOffset: 0,
+    utcTime: 'Wednesday, 2026-11-18T05:43:01Z', localTime: 'Wednesday, 2026-11-18T05:43:01Z' },
+  timeDifference: 'Korean Standard Time is ahead of Greenwich Mean Time by 9 hours. ',
+};
+
+test('live Seoul–London comparison: explicit sides and independently verified zones work without location fields', () => {
+  const parsed = parse([liveComparison], 'london');
+  assert.equal(parsed.status, 'usable');
+  assert.equal(parsed.differenceMinutes, 540);
+  assert.equal(parsed.seoul.localTime, liveComparison.startTimeZone.localTime);
+  assert.equal(parsed.destination.localTime, liveComparison.endTimeZone.localTime);
+  assert.equal(parsed.destination.location, null);
+  assert.equal(parsed.destination.comparisonZone.timeZoneName, 'Greenwich Mean Time');
+  assert.equal(parsed.destination.comparisonZone.role, 'endTimeZone');
+  assert.equal(api.isAutoTimeZoneResponse(response(parsed, 'london'), 'london'), true);
+  assert.equal(api.isAutoTimeZoneResponse({ ...response(parsed, 'london'), destination: {
+    ...parsed.destination, comparisonZone: { ...parsed.destination.comparisonZone, role: 'startTimeZone' } } }, 'london'), false);
+});
+
+test('unlabelled comparisons must match their ordered city, UTC instant, offset and zone name', () => {
+  const { startTimeZone, endTimeZone } = liveComparison;
+  for (const contents of [
+    { startTimeZone: endTimeZone, endTimeZone: startTimeZone },
+    { timeZones: [startTimeZone, endTimeZone] },
+    { startTimeZone, endTimeZone: { ...endTimeZone, location: 'London, Ontario' } },
+    { startTimeZone, endTimeZone: { ...endTimeZone, timeZoneName: 'Iceland Time' } },
+    { startTimeZone, endTimeZone: { ...endTimeZone, timeZoneAbbreviation: 'BST' } },
+    { startTimeZone, endTimeZone: { ...endTimeZone, localTime: 'Wednesday, 2026-11-18T07:43:01Z' } },
+    { startTimeZone, endTimeZone: { ...endTimeZone, localTime: '2026-11-19T05:43:01Z', utcTime: '2026-11-19T05:43:01Z' } },
+    { startTimeZone, endTimeZone: { ...endTimeZone, localTime: '2026-07-18T05:43:01Z', utcTime: '2026-07-18T05:43:01Z' } },
+  ]) {
+    const partial = parse([contents], 'london');
+    assert.equal(partial.differenceMinutes, null);
+    assert.equal(partial.status, 'not_verified');
+    assert.equal(api.isAutoTimeZoneResponse(response(partial, 'london'), 'london'), true);
+  }
+});
+
+test('summer comparison verifies the London daylight offset at the returned instant', () => {
+  const utcTime = '2026-07-18T05:43:01Z';
+  const parsed = parse([{ startTimeZone: { ...liveComparison.startTimeZone, utcTime, localTime: '2026-07-18T14:43:01+09:00' },
+    endTimeZone: { timeZoneName: 'British Summer Time', timeZoneAbbreviation: 'BST',
+      utcTime, localTime: '2026-07-18T06:43:01+01:00', utcOffset: 1 } }], 'london');
+  assert.equal(parsed.differenceMinutes, 480);
+  assert.equal(api.isAutoTimeZoneResponse(response(parsed, 'london'), 'london'), true);
+});

@@ -241,6 +241,29 @@ test('timezone can verify and submit once before comparison opens, without turni
   h.unmount();
 });
 
+test('renders both clocks from the November 18 Auto comparison with unnamed locations', async () => {
+  const utcTime = 'Wednesday, 2026-11-18T05:43:01Z';
+  const actualContent = {
+    startTimeZone: { timeZoneName: 'Korean Standard Time', timeZoneAbbreviation: 'KST', utcOffset: 9,
+      utcTime, localTime: 'Wednesday, 2026-11-18T14:43:01+09:00' },
+    endTimeZone: { timeZoneName: 'Greenwich Mean Time', timeZoneAbbreviation: 'GMT', utcOffset: 0,
+      utcTime, localTime: utcTime },
+    timeDifference: 'Korean Standard Time is ahead of Greenwich Mean Time by 9 hours. ',
+  };
+  const parsed = timeZoneContract.parseWebIqTimeZonePayload({
+    results: [{ evidence: { type: 'structured/timeZone', content: actualContent } }],
+  }, 'london');
+  const h = await readyHarness({ post: () => Response.json(timeZoneResult('london', parsed)) }, false);
+  h.token();
+  h.submit('timezone');
+  await h.flush();
+  const html = h.timeZoneHtml();
+  assert.match(html, /Seoul is 9 hours ahead of London/);
+  assert.match(html, /2026-11-18T14:43/);
+  assert.match(html, /2026-11-18T05:43/);
+  h.unmount();
+});
+
 test('both Auto actions share one synchronous lock, and city changes leave a pending weather request alone', async () => {
   const response = deferred();
   const h = await readyHarness({ post: () => response.promise });

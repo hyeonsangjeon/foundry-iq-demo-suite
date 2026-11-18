@@ -20,8 +20,12 @@ export function getTimeZoneServiceQuestion(cityId: TimeZoneCityId): string {
   return `time difference between Seoul and ${TIME_ZONE_CITY_LABELS[cityId].en}`;
 }
 
+type ComparisonRole = 'startTimeZone' | 'endTimeZone';
+
 interface TimeZoneEntry {
-  location: string;
+  location: string | null;
+  // Region identity inferred only from a named side of the requested comparison.
+  comparisonZone?: { role: ComparisonRole; timeZoneName: string; timeZoneAbbreviation: string; utcTime: string };
   localTime: string;
   // Preserve the actual fields when we derive a dated local clock from the provider's UTC clock.
   derivedFromUtc?: { utcTime: string; localTime: string | null };
@@ -97,8 +101,39 @@ function localClockFromUtc(utcTime: unknown, minutes: number | null): string | n
   return new Date(utc + minutes * 60_000).toISOString().slice(0, 19);
 }
 
-function readEntry(value: unknown): TimeZoneEntry | null {
-  if (!record(value) || !displayText(value.location)) return null;
+// Each city's two names/abbreviations describe the time zone, not a unique geographic location.
+const comparisonZones: Record<City, { iana: string; namesByAbbr: Record<string, string[]> }> = {
+  seoul: { iana: 'Asia/Seoul', namesByAbbr: { KST: ['korean standard time', 'korea standard time'] } },
+  london: { iana: 'Europe/London', namesByAbbr: { GMT: ['greenwich mean time', 'gmt standard time'],
+    BST: ['british summer time', 'gmt daylight time', 'gmt standard time'] } },
+  seattle: { iana: 'America/Los_Angeles', namesByAbbr: { PST: ['pacific standard time'],
+    PDT: ['pacific daylight time', 'pacific standard time'] } },
+  tokyo: { iana: 'Asia/Tokyo', namesByAbbr: { JST: ['japan standard time', 'tokyo standard time'] } },
+};
+
+function readComparisonZone(value: Record<string, unknown>, role: ComparisonRole, city: City,
+  localTime: string, minutes: number | null): TimeZoneEntry['comparisonZone'] {
+  if (!displayText(value.timeZoneName) || !displayText(value.timeZoneAbbreviation) || !displayText(value.utcTime) || minutes === null) return;
+  const timeZoneName = value.timeZoneName.trim();
+  const timeZoneAbbreviation = value.timeZoneAbbreviation.trim();
+  const zone = comparisonZones[city];
+  const abbreviation = timeZoneAbbreviation.toUpperCase();
+  if (!Object.hasOwn(zone.namesByAbbr, abbreviation) || !zone.namesByAbbr[abbreviation].includes(timeZoneName.toLowerCase())) return;
+  const utcClock = localClockFromUtc(value.utcTime, 0);
+  const localClock = localClockFromUtc(value.utcTime, minutes);
+  const reported = /(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}(?::\d{2})?)/.exec(localTime);
+  if (!utcClock || !localClock || !reported || !localClock.startsWith(`${reported[1]}T${reported[2]}`)) return;
+  const offsetLabel = new Intl.DateTimeFormat('en-GB', { timeZone: zone.iana, timeZoneName: 'longOffset' })
+    .formatToParts(new Date(`${utcClock}Z`)).find(part => part.type === 'timeZoneName')?.value;
+  const expectedOffset = offsetLabel === 'GMT' ? 0 : timedOffset(`00:00${offsetLabel?.replace(/^GMT/, '')}`);
+  // Reject a summer/winter abbreviation that conflicts with the stated offset even if the name is generic.
+  const abbreviationMinutes: Record<string, number> = { KST: 540, GMT: 0, BST: 60, PST: -480, PDT: -420, JST: 540 };
+  if (minutes !== expectedOffset || minutes !== abbreviationMinutes[abbreviation]) return;
+  return { role, timeZoneName, timeZoneAbbreviation, utcTime: value.utcTime.trim() };
+}
+
+function readEntry(value: unknown, role?: ComparisonRole, requestedCity?: City): TimeZoneEntry | null {
+  if (!record(value) || (value.location != null && !displayText(value.location))) return null;
   const minutes = offsetMinutes(value.utcOffset);
   if (value.utcOffset != null && minutes === null) return null;
   const rawLocal = displayText(value.localTime) ? value.localTime.trim() : null;
@@ -124,7 +159,14 @@ function readEntry(value: unknown): TimeZoneEntry | null {
   }
   const localOffset = timedOffset(localTime);
   if (minutes !== null && localOffset !== null && minutes !== localOffset) return null;
-  return { location: value.location.trim(), localTime, utcOffset: minutes === null ? null : String(value.utcOffset),
+  const location = displayText(value.location) ? value.location.trim() : null;
+  let comparisonZone: TimeZoneEntry['comparisonZone'];
+  if (location === null) {
+    if (!role || !requestedCity) return null;
+    comparisonZone = readComparisonZone(value, role, requestedCity, localTime, minutes);
+    if (!comparisonZone) return null;
+  }
+  return { location, localTime, ...(comparisonZone ? { comparisonZone } : {}), utcOffset: minutes === null ? null : String(value.utcOffset),
     ...(derivedFromUtc ? { derivedFromUtc } : {}) };
 }
 
@@ -134,6 +176,11 @@ function entryOffset(entry: TimeZoneEntry | null): number | null {
 }
 
 function compareEntries(seoul: TimeZoneEntry | null, destination: TimeZoneEntry | null): number | null {
+  if (seoul?.comparisonZone && destination?.comparisonZone) {
+    const fromTime = localClockFromUtc(seoul.comparisonZone.utcTime, 0);
+    const toTime = localClockFromUtc(destination.comparisonZone.utcTime, 0);
+    if (!fromTime || !toTime || Math.abs(Date.parse(`${fromTime}Z`) - Date.parse(`${toTime}Z`)) >= 60_000) return null;
+  }
   const from = entryOffset(seoul);
   const to = entryOffset(destination);
   return from === null || to === null ? null : from - to;
@@ -151,13 +198,17 @@ export function parseWebIqTimeZonePayload(payload: unknown, cityId: TimeZoneCity
     hasTimeZone = true;
     const content = result.evidence.content;
     if (!record(content)) continue;
-    const entries = [content.startTimeZone, content.endTimeZone];
-    if (Array.isArray(content.timeZones)) entries.push(...content.timeZones.slice(0, 20));
-    for (const raw of entries) {
-      const entry = readEntry(raw);
+    const entries: [unknown, ComparisonRole?][] = [[content.startTimeZone, 'startTimeZone'], [content.endTimeZone, 'endTimeZone']];
+    if (Array.isArray(content.timeZones)) {
+      for (const raw of content.timeZones.slice(0, 20)) entries.push([raw]);
+    }
+    for (const [raw, role] of entries) {
+      const side = role === 'startTimeZone' ? 'seoul' : cityId;
+      const entry = readEntry(raw, role, side);
       if (!entry) continue;
-      if (matchesCity(entry.location, 'seoul') && (!seoul || entryOffset(seoul) === null)) seoul = entry;
-      if (matchesCity(entry.location, cityId) && (!destination || entryOffset(destination) === null)) destination = entry;
+      // An explicit location controls the match regardless of order. An anonymous array item has no city binding.
+      if ((entry.location ? matchesCity(entry.location, 'seoul') : side === 'seoul') && (!seoul || entryOffset(seoul) === null)) seoul = entry;
+      if ((entry.location ? matchesCity(entry.location, cityId) : side === cityId) && (!destination || entryOffset(destination) === null)) destination = entry;
     }
   }
   const differenceMinutes = compareEntries(seoul, destination);
@@ -175,9 +226,16 @@ function isCityEntry(value: unknown, city: City): value is TimeZoneEntry | null 
     if (!record(source) || !displayText(source.utcTime) || (source.localTime !== null && !displayText(source.localTime))) return false;
     fields = { ...value, utcTime: source.utcTime, localTime: source.localTime };
   }
-  const entry = readEntry({ ...fields, utcOffset: value.utcOffset === null ? null : Number(value.utcOffset) });
+  const role = city === 'seoul' ? 'startTimeZone' : 'endTimeZone';
+  if (value.comparisonZone !== undefined) {
+    if (value.location !== null || !record(value.comparisonZone) || value.comparisonZone.role !== role) return false;
+    if (record(value.derivedFromUtc) && value.derivedFromUtc.utcTime !== value.comparisonZone.utcTime) return false;
+    fields = { ...fields, timeZoneName: value.comparisonZone.timeZoneName,
+      timeZoneAbbreviation: value.comparisonZone.timeZoneAbbreviation, utcTime: value.comparisonZone.utcTime };
+  }
+  const entry = readEntry({ ...fields, utcOffset: value.utcOffset === null ? null : Number(value.utcOffset) }, role, city);
   if (!entry || entry.localTime !== value.localTime || Boolean(entry.derivedFromUtc) !== Boolean(value.derivedFromUtc)) return false;
-  return matchesCity(entry.location, city);
+  return entry.location ? matchesCity(entry.location, city) : Boolean(entry.comparisonZone && value.comparisonZone);
 }
 
 /** Validate the response discriminator and selected city before applying it to the visible card. */

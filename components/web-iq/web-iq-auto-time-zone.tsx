@@ -109,6 +109,8 @@ export function WebIqAutoTimeZone({ language, cityId, onCityChange, result, cont
                     <dl key={label} aria-label={label} className="space-y-2 rounded-lg bg-bg-subtle p-3 text-xs">
                       {Object.entries({
                         location: entry.location,
+                        ...(entry.comparisonZone ? { timeZoneName: entry.comparisonZone.timeZoneName,
+                          timeZoneAbbreviation: entry.comparisonZone.timeZoneAbbreviation, utcTime: entry.comparisonZone.utcTime } : {}),
                         localTime: entry.derivedFromUtc ? entry.derivedFromUtc.localTime : entry.localTime,
                         utcOffset: entry.utcOffset,
                         ...(entry.derivedFromUtc ? { utcTime: entry.derivedFromUtc.utcTime } : {}),
@@ -118,6 +120,12 @@ export function WebIqAutoTimeZone({ language, cityId, onCityChange, result, cont
                           <dd className="mt-0.5 break-all font-mono text-fg-default">{value ?? (ko ? '응답에 없음' : 'Not returned')}</dd>
                         </div>
                       ))}
+                      {entry.comparisonZone && <div>
+                        <dt className="text-fg-muted">{ko ? '도시를 연결한 방법' : 'How the city was matched'}</dt>
+                        <dd>{ko
+                          ? `질문의 ${entry.comparisonZone.role === 'startTimeZone' ? '첫 번째' : '두 번째'} 도시인 ${label}을 응답의 시간대 이름과 해당 시각의 UTC 오프셋으로 확인했습니다.`
+                          : `Matched ${label}, the ${entry.comparisonZone.role === 'startTimeZone' ? 'first' : 'second'} city in the question, using the returned zone name and its UTC offset at that instant.`}</dd>
+                      </div>}
                       {entry.derivedFromUtc && <div>
                         <dt className="text-fg-muted">{ko ? 'UTC 시각과 오프셋으로 계산한 현지 시각' : 'Local time calculated from UTC time and offset'}</dt>
                         <dd className="mt-0.5 break-all font-mono text-fg-default">{entry.localTime}</dd>
