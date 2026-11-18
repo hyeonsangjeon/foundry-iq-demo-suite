@@ -107,12 +107,21 @@ export function WebIqAutoTimeZone({ language, cityId, onCityChange, result, cont
                 <div className="mt-2 grid gap-3 sm:grid-cols-2">
                   {clocks.map(({ label, entry }) => (
                     <dl key={label} aria-label={label} className="space-y-2 rounded-lg bg-bg-subtle p-3 text-xs">
-                      {(['location', 'localTime', 'utcOffset'] as const).map(field => (
+                      {Object.entries({
+                        location: entry.location,
+                        localTime: entry.derivedFromUtc ? entry.derivedFromUtc.localTime : entry.localTime,
+                        utcOffset: entry.utcOffset,
+                        ...(entry.derivedFromUtc ? { utcTime: entry.derivedFromUtc.utcTime } : {}),
+                      }).map(([field, value]) => (
                         <div key={field}>
                           <dt className="font-mono text-fg-muted">{field}</dt>
-                          <dd className="mt-0.5 break-all font-mono text-fg-default">{entry[field] ?? (ko ? '응답에 없음' : 'Not returned')}</dd>
+                          <dd className="mt-0.5 break-all font-mono text-fg-default">{value ?? (ko ? '응답에 없음' : 'Not returned')}</dd>
                         </div>
                       ))}
+                      {entry.derivedFromUtc && <div>
+                        <dt className="text-fg-muted">{ko ? 'UTC 시각과 오프셋으로 계산한 현지 시각' : 'Local time calculated from UTC time and offset'}</dt>
+                        <dd className="mt-0.5 break-all font-mono text-fg-default">{entry.localTime}</dd>
+                      </div>}
                     </dl>
                   ))}
                 </div>

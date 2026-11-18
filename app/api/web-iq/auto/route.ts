@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getWebIqRequestAuth, isWebIqConfigured } from '@/lib/webIqAuth';
-import { abortableAuto, parseWebIqAutoPayload, readWebIqAutoJson, WEB_IQ_AUTO_LOCATION_ID, WEB_IQ_AUTO_QUESTION } from '@/lib/webIqAuto';
-import { getTimeZoneServiceQuestion, parseWebIqTimeZonePayload, TIME_ZONE_CITY_IDS } from '@/lib/webIqAutoTimeZone';
+import { abortableAuto, parseWebIqAutoPayload, readWebIqAutoJson, WEB_IQ_AUTO_LOCATION, WEB_IQ_AUTO_LOCATION_ID, WEB_IQ_AUTO_QUESTION } from '@/lib/webIqAuto';
+import { getTimeZoneServiceQuestion, parseWebIqTimeZonePayload, TIME_ZONE_CITY_IDS, WEB_IQ_AUTO_SEOUL_LOCATION } from '@/lib/webIqAutoTimeZone';
 import { getWebIqBotProtectionConfig, verifyWebIqBotCheck } from '@/lib/webIqBotCheck';
 import { WEB_IQ_AUTO_MICRO_USD } from '@/lib/webIqPricing';
 import { reserveWebIqUsage, usageErrorResponse } from '@/lib/webIqUsage';
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     const cityId = parsed.data.schemaVersion === 'webiq.auto.timezone.request.v1' ? parsed.data.cityId : null;
     if (cityId) schemaVersion = 'webiq.auto.timezone.response.v1';
     if (!configured()) return fail('AUTO_NOT_CONFIGURED', 503);
-    const { language, turnstileToken } = parsed.data;
+    const { turnstileToken } = parsed.data;
     const botError = await abortableAuto(verifyWebIqBotCheck(request, turnstileToken, 'webiq_auto'), controller.signal);
     if (botError) return botError;
     const auth = await abortableAuto(getWebIqRequestAuth(controller.signal, 'auto'), controller.signal);
@@ -99,8 +99,9 @@ export async function POST(request: NextRequest) {
     requestCount = 1;
     const upstream = await abortableAuto(fetch(auth.url, {
       method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...auth.headers },
-      body: JSON.stringify({ query: cityId ? getTimeZoneServiceQuestion(cityId, language) : WEB_IQ_AUTO_QUESTION[language],
-        language, region: 'KR', mode: 'lite', responseFilter: [cityId ? 'timezone' : 'weather'], maxResponseLength: 1_500, maxCitations: 5 }),
+      body: JSON.stringify({ query: cityId ? getTimeZoneServiceQuestion(cityId) : WEB_IQ_AUTO_QUESTION,
+        location: cityId ? WEB_IQ_AUTO_SEOUL_LOCATION : WEB_IQ_AUTO_LOCATION,
+        language: 'en', region: 'KR', mode: 'lite', responseFilter: [cityId ? 'timezone' : 'weather'], maxResponseLength: 1_500, maxCitations: 5 }),
       signal: controller.signal, redirect: 'error', cache: 'no-store',
     }), controller.signal);
     if (upstream.status !== 200) {
@@ -113,6 +114,17 @@ export async function POST(request: NextRequest) {
       if (controller.signal.aborted) throw error;
       return null;
     });
+    // Keep the documented public fields for preview diagnosis without logging request headers, URLs or credentials.
+    if (process.env.VERCEL_ENV === 'preview' && payload && typeof payload === 'object' && 'results' in payload && Array.isArray(payload.results)) {
+      const fields = ['evidence', 'type', 'content', 'location', 'units', 'currentWeather', 'temperature', 'speed', 'windSpeed', 'observedAt',
+        'citations', 'title', 'timeZones', 'startTimeZone', 'endTimeZone', 'timeDifference', 'description',
+        'timeZoneName', 'timeZoneAbbreviation', 'utcOffset', 'utcTime', 'localTime'];
+      const summary = JSON.stringify(payload.results.slice(0, 4), (key, value) => {
+        if (key && !/^\d+$/.test(key) && !fields.includes(key)) return undefined;
+        return typeof value === 'string' ? value.slice(0, 180) : value;
+      });
+      console.info('web-iq-auto-preview', cityId || WEB_IQ_AUTO_LOCATION_ID, summary.slice(0, 4000));
+    }
     const result = cityId ? parseWebIqTimeZonePayload(payload, cityId) : parseWebIqAutoPayload(payload);
     if (!result) return fail('AUTO_INVALID_RESPONSE', 502);
     return NextResponse.json({ schemaVersion, ...(cityId ? { cityId } : {}), ...result,

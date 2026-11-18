@@ -92,15 +92,16 @@ test('Auto lite makes one fixed weather-only request with one 8000 reservation a
   assert.equal(result.status, 'usable'); assert.equal(result.mode, 'lite'); assert.equal(result.requestCount, 1);
   assert.equal(result.estimatedMicroUsd, 8000); assert.equal(result.weather[0].currentWeather.temperature, 0);
   assert.deepEqual(h.events, ['bot', 'reserve', 'auto']); assert.deepEqual(h.reservations, [8000]);
-  assert.deepEqual(h.requests[0].body, { query: h.load('lib/webIqAuto.ts').WEB_IQ_AUTO_QUESTION.ko,
-    language: 'ko', region: 'KR', mode: 'lite', responseFilter: ['weather'], maxResponseLength: 1500, maxCitations: 5 });
+  assert.deepEqual(h.requests[0].body, { query: 'current weather in Incheon', location: 'lat:37.4500;long:126.6167',
+    language: 'en', region: 'KR', mode: 'lite', responseFilter: ['weather'], maxResponseLength: 1500, maxCitations: 5 });
   assert.equal(JSON.stringify(result).includes('offline'), false);
 });
 
-test('English uses its fixed question, never a user supplied query/location/mode/scope', async () => {
+test('English uses the same fixed weather intent and port coordinates; callers cannot supply their own', async () => {
   const h = harness(); assert.equal((await h.post({ language: 'en' })).status, 200);
-  assert.equal(h.requests[0].body.query, h.load('lib/webIqAuto.ts').WEB_IQ_AUTO_QUESTION.en);
-  for (const extra of [{ query: 'arbitrary' }, { locationId: 'seattle' }, { language: 'fr' }, { mode: 'advanced' },
+  assert.equal(h.requests[0].body.query, 'current weather in Incheon');
+  assert.equal(h.requests[0].body.location, 'lat:37.4500;long:126.6167');
+  for (const extra of [{ query: 'arbitrary' }, { locationId: 'seattle' }, { location: 'lat:0;long:0' }, { language: 'fr' }, { mode: 'advanced' },
     { responseFilter: ['web'] }, { scopeName: 'scope' }, { url: 'https://evil.com/' }, { schemaVersion: 'other' }]) {
     const invalid = harness(); assert.equal((await invalid.post(extra)).status, 400); assert.deepEqual(invalid.events, []);
   }
@@ -121,8 +122,8 @@ test('selected city uses the protected Auto lite route and one weather-sized sha
   assert.equal('weather' in result, false);
   assert.deepEqual(h.events, ['bot', 'reserve', 'auto']);
   assert.deepEqual(h.reservations, [8000]);
-  assert.deepEqual(h.requests[0].body, { query: timeZone.getTimeZoneServiceQuestion('london', 'ko'),
-    language: 'ko', region: 'KR', mode: 'lite', responseFilter: ['timezone'], maxResponseLength: 1500, maxCitations: 5 });
+  assert.deepEqual(h.requests[0].body, { query: timeZone.getTimeZoneServiceQuestion('london'), location: 'lat:37.5665;long:126.9780',
+    language: 'en', region: 'KR', mode: 'lite', responseFilter: ['timezone'], maxResponseLength: 1500, maxCitations: 5 });
 });
 
 test('disallowed city data, disabled mode, failed bot verification, and unavailable budget never call Auto', async () => {
@@ -252,10 +253,48 @@ test('parser inspects later results without borrowing citations, measurements or
   assert.equal(result.status, 'usable'); assert.equal(result.weather[0].status, 'not_verified');
   assert.equal(result.weather[1].status, 'usable'); assert.equal(result.weather[1].evidenceIndex, 1);
   const observation = fixture(); delete observation.results[0].evidence.content.currentWeather.observedAt;
-  observation.results[0].citations[0].observedAt = new Date().toISOString(); assert.equal(parse(observation).status, 'not_verified');
-  assert.equal('observedAt' in parse(observation).weather[0].currentWeather, false);
-  observation.results[0].citations[0].lastUpdatedAt = observation.results[0].citations[0].observedAt;
-  delete observation.results[0].citations[0].observedAt; assert.equal(parse(observation).status, 'not_verified');
+  observation.results.push({ evidence: { type: 'text', content: 'Another result' },
+    citations: [{ ...observation.results[0].citations[0], observedAt: new Date().toISOString() }] });
+  assert.equal(parse(observation).status, 'not_verified');
+});
+
+test('only a matching weather citation supplies a missing observation timestamp', () => {
+  const parse = harness().load('lib/webIqAuto.ts').parseWebIqAutoPayload;
+  const value = fixture();
+  const { currentWeather } = value.results[0].evidence.content;
+  delete currentWeather.observedAt;
+  const citation = value.results[0].citations[0];
+  const url = citation.url;
+  const observed = new Date().toISOString();
+  citation.observedAt = observed.replace('Z', '0000Z');
+  const result = parse(value);
+  assert.equal(result.status, 'usable'); assert.equal(result.weather[0].currentWeather.observedAt, observed);
+  citation.url = 'https://www.msn.com/weather/other';
+  assert.equal(parse(value).weather[0].currentWeather.observedAt, undefined);
+  citation.url = url;
+  currentWeather.observedAt = 'not a timestamp';
+  assert.equal(parse(value).status, 'not_verified');
+  delete currentWeather.observedAt;
+  value.results[0].citations.push({ url, observedAt: new Date(Date.parse(observed) - 60_000).toISOString() });
+  assert.equal(parse(value).weather[0].currentWeather.observedAt, undefined);
+  value.results[0].citations.pop();
+  delete citation.observedAt;
+  Object.assign(citation, { crawledAt: observed, lastUpdatedAt: observed });
+  assert.equal(parse(value).status, 'not_verified');
+});
+
+test('accepts named Incheon localities but never treats country context or nearby cities as Incheon', () => {
+  const parse = harness().load('lib/webIqAuto.ts').parseWebIqAutoPayload;
+  const value = fixture();
+  for (const location of ['Incheon, South Korea', 'Jung-gu, Incheon, South Korea', 'Incheon, Incheon, South Korea',
+    '대한민국 인천광역시 중구', '인천광역시, 대한민국', 'Incheon Metropolitan City']) {
+    value.results[0].evidence.content.location = location;
+    assert.equal(parse(value).status, 'usable', location);
+  }
+  for (const location of ['대한민국', 'South Korea', 'Seoul, South Korea', 'Jung-gu', 'Incheon Road, Seoul', 'Incheon, China']) {
+    value.results[0].evidence.content.location = location;
+    assert.equal(parse(value).weather[0].checks.location, false, location);
+  }
 });
 
 test('omitted optional weather is not invented; true zeros, forecast validity and alert authority/time fields survive separately', () => {

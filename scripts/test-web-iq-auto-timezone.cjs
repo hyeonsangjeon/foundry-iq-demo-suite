@@ -86,3 +86,35 @@ test('no time-zone evidence, invalid response envelopes and a mismatched visible
   assert.equal(api.isAutoTimeZoneResponse(valid, 'london'), false);
   assert.equal(api.isAutoTimeZoneResponse({ ...valid, differenceMinutes: 0 }, 'seattle'), false);
 });
+
+test('a fixed English comparison query is independent of the Korean display question', () => {
+  assert.equal(api.getTimeZoneServiceQuestion('london'), 'time difference between Seoul and London');
+  assert.match(api.getTimeZoneQuestion('london', 'ko'), /서울과 런던/);
+  assert.equal(api.WEB_IQ_AUTO_SEOUL_LOCATION, 'lat:37.5665;long:126.9780');
+});
+
+test('use the UTC instant and offset returned for each city if localTime has no date', () => {
+  const utcTime = 'Wednesday, 2026-11-18T22:06:01.4567890Z';
+  const parsed = parse([{ startTimeZone: { location: 'Seoul', utcTime, utcOffset: 9 },
+    endTimeZone: { location: 'London, England', utcTime, utcOffset: 0, localTime: '22:06' } }], 'london');
+  assert.equal(parsed.seoul.localTime, '2026-11-19T07:06:01');
+  assert.equal(parsed.destination.localTime, '2026-11-18T22:06:01');
+  assert.equal(parsed.seoul.derivedFromUtc.utcTime, utcTime);
+  assert.equal(parsed.seoul.derivedFromUtc.localTime, null);
+  assert.equal(parsed.destination.derivedFromUtc.localTime, '22:06');
+  assert.equal(parsed.differenceMinutes, 540);
+  const body = response(parsed, 'london');
+  assert.equal(api.isAutoTimeZoneResponse(body, 'london'), true);
+  assert.equal(api.isAutoTimeZoneResponse({ ...body, seoul: { ...body.seoul, localTime: '2026-11-18T07:06:01' } }, 'london'), false);
+});
+
+test('calculations require a complete UTC timestamp, city and offset from the same entry', () => {
+  const utc = 'Wednesday, 2026-11-18T22:06:01Z';
+  for (const bad of [{ utcTime: '2026-02-30T22:06:01Z', utcOffset: 0 }, { utcTime: '22:06:01', utcOffset: 0 },
+    { utcTime: '2026-11-18T22:06:01+03:00', utcOffset: 0 }, { utcTime: utc, utcOffset: null },
+    { utcTime: utc, utcOffset: 0, localTime: '23:06' }, { utcTime: utc, utcOffset: 0, location: 'London, Ontario' }]) {
+    const parsed = parse([{ startTimeZone: seoul, endTimeZone: { location: 'London', ...bad } }], 'london');
+    assert.equal(parsed.destination, null);
+    assert.equal(parsed.differenceMinutes, null);
+  }
+});

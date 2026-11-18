@@ -13,21 +13,18 @@ export function getTimeZoneQuestion(cityId: TimeZoneCityId, language: 'ko' | 'en
     : `What is the current time difference between Seoul and ${city}?`;
 }
 
-/** Ask for both dated clocks along with the difference, using unambiguous locations. */
-export function getTimeZoneServiceQuestion(cityId: TimeZoneCityId, language: 'ko' | 'en'): string {
-  const destinations = {
-    london: { en: 'London, United Kingdom', ko: '영국 런던' },
-    seattle: { en: 'Seattle, Washington, United States', ko: '미국 워싱턴주 시애틀' },
-    tokyo: { en: 'Tokyo, Japan', ko: '일본 도쿄' },
-  };
-  const destination = destinations[cityId][language];
-  return language === 'ko' ? `대한민국 서울과 ${destination}의 시차, 두 도시의 현재 현지 날짜와 시각, UTC 오프셋을 알려주세요.`
-    : `Compare Seoul, South Korea and ${destination}. What are their time difference, current local dates and times, and UTC offsets?`;
+export const WEB_IQ_AUTO_SEOUL_LOCATION = 'lat:37.5665;long:126.9780';
+
+/** One time-difference intent for the provider; the visible question stays localized. */
+export function getTimeZoneServiceQuestion(cityId: TimeZoneCityId): string {
+  return `time difference between Seoul and ${TIME_ZONE_CITY_LABELS[cityId].en}`;
 }
 
 interface TimeZoneEntry {
   location: string;
   localTime: string;
+  // Preserve the actual fields when we derive a dated local clock from the provider's UTC clock.
+  derivedFromUtc?: { utcTime: string; localTime: string | null };
   // The numeric hours supplied by Web IQ, represented as text for display.
   utcOffset: string | null;
 }
@@ -90,22 +87,45 @@ function timedOffset(localTime: string): number | null {
   return suffix[2] === '-' ? -minutes : minutes;
 }
 
+function localClockFromUtc(utcTime: unknown, minutes: number | null): string | null {
+  if (!displayText(utcTime) || minutes === null) return null;
+  // utcTime is defined as UTC even if the source omits the zero-offset suffix.
+  const match = /^(?:[^\d,]{1,24}(?:,\s*|\s+))?(\d{4}-\d{2}-\d{2})[T ]((?:[01]\d|2[0-3]):[0-5]\d)(?::([0-5]\d)(?:\.(\d+))?)?(?:Z|[+]00:00)?$/i.exec(utcTime.trim());
+  if (!match) return null;
+  const utc = Date.parse(`${match[1]}T${match[2]}:${match[3] || '00'}.${(match[4] || '').slice(0, 3).padEnd(3, '0')}Z`);
+  if (!Number.isFinite(utc) || new Date(utc).toISOString().slice(0, 10) !== match[1]) return null;
+  return new Date(utc + minutes * 60_000).toISOString().slice(0, 19);
+}
+
 function readEntry(value: unknown): TimeZoneEntry | null {
-  if (!record(value) || !displayText(value.location) || !displayText(value.localTime)) return null;
-  const localTime = value.localTime.trim();
+  if (!record(value) || !displayText(value.location)) return null;
+  const minutes = offsetMinutes(value.utcOffset);
+  if (value.utcOffset != null && minutes === null) return null;
+  const rawLocal = displayText(value.localTime) ? value.localTime.trim() : null;
+  let localTime = rawLocal;
+  let derivedFromUtc: TimeZoneEntry['derivedFromUtc'];
+  if (!localTime || !/\b\d{4}\b/.test(localTime)) {
+    const derived = localClockFromUtc(value.utcTime, minutes);
+    if (!derived || !displayText(value.utcTime)) return null;
+    // A returned 24-hour clock fragment must agree with the fully dated UTC calculation.
+    const partialClock = rawLocal && /^([01]?\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?$/.exec(rawLocal);
+    if (partialClock && `${partialClock[1].padStart(2, '0')}:${partialClock[2]}` !== derived.slice(11, 16)) return null;
+    derivedFromUtc = { utcTime: value.utcTime.trim(), localTime: rawLocal };
+    localTime = derived;
+  }
   // Keep the returned wall clock, including its calendar date. Never use the browser's zone.
   if (!/\b\d{4}\b/.test(localTime) || !/(?:^|[^\d:])(?:[01]?\d|2[0-3]):[0-5]\d/.test(localTime)) return null;
   const date = /(\d{4}-\d{2}-\d{2})[T ]/.exec(localTime)?.[1];
   if (date) {
-    const clock = /^(?:[^\d,]{1,24},\s*)?\d{4}-\d{2}-\d{2}[T ](?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?\s*(?:Z|[+-](\d{2}):([0-5]\d))?$/i.exec(localTime);
+    const clock = /^(?:[^\d,]{1,24}(?:,\s*|\s+))?\d{4}-\d{2}-\d{2}[T ](?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?\s*(?:Z|[+-](\d{2}):([0-5]\d))?$/i.exec(localTime);
     if (!clock || (clock[1] && Number(clock[1]) * 60 + Number(clock[2]) > 840)) return null;
     const instant = Date.parse(`${date}T00:00:00Z`);
     if (!Number.isFinite(instant) || new Date(instant).toISOString().slice(0, 10) !== date) return null;
   }
-  const minutes = offsetMinutes(value.utcOffset);
   const localOffset = timedOffset(localTime);
-  if (value.utcOffset != null && (minutes === null || (localOffset !== null && minutes !== localOffset))) return null;
-  return { location: value.location.trim(), localTime, utcOffset: minutes === null ? null : String(value.utcOffset) };
+  if (minutes !== null && localOffset !== null && minutes !== localOffset) return null;
+  return { location: value.location.trim(), localTime, utcOffset: minutes === null ? null : String(value.utcOffset),
+    ...(derivedFromUtc ? { derivedFromUtc } : {}) };
 }
 
 function entryOffset(entry: TimeZoneEntry | null): number | null {
@@ -149,8 +169,15 @@ function isCityEntry(value: unknown, city: City): value is TimeZoneEntry | null 
   if (value === null) return true;
   if (!record(value) || (value.utcOffset !== null && (typeof value.utcOffset !== 'string'
     || !/^-?\d{1,2}(?:\.\d+)?$/.test(value.utcOffset)))) return false;
-  const entry = readEntry({ ...value, utcOffset: value.utcOffset === null ? null : Number(value.utcOffset) });
-  return entry !== null && matchesCity(entry.location, city);
+  let fields = value;
+  if (value.derivedFromUtc !== undefined) {
+    const source = value.derivedFromUtc;
+    if (!record(source) || !displayText(source.utcTime) || (source.localTime !== null && !displayText(source.localTime))) return false;
+    fields = { ...value, utcTime: source.utcTime, localTime: source.localTime };
+  }
+  const entry = readEntry({ ...fields, utcOffset: value.utcOffset === null ? null : Number(value.utcOffset) });
+  if (!entry || entry.localTime !== value.localTime || Boolean(entry.derivedFromUtc) !== Boolean(value.derivedFromUtc)) return false;
+  return matchesCity(entry.location, city);
 }
 
 /** Validate the response discriminator and selected city before applying it to the visible card. */

@@ -1,10 +1,9 @@
-/** Narrow public-weather contract, checked against the Auto reference on 2026-11-17. */
+/** Fixed regional weather lookup for the Incheon Port demo. */
 export const WEB_IQ_AUTO_DOCUMENTATION = 'https://learn.microsoft.com/en-us/web-iq/reference/auto';
 export const WEB_IQ_AUTO_LOCATION_ID = 'incheon-port';
-export const WEB_IQ_AUTO_QUESTION = {
-  en: 'What are the current weather conditions in Incheon, South Korea, for a pre-departure check at Incheon Port?',
-  ko: '인천항 출발 전 확인을 위해 대한민국 인천의 현재 날씨를 알려주세요.',
-} as const;
+// UN/LOCODE KRINC (3727N 12637E), used as Auto's geographic context.
+export const WEB_IQ_AUTO_LOCATION = 'lat:37.4500;long:126.6167';
+export const WEB_IQ_AUTO_QUESTION = 'current weather in Incheon';
 export const WEB_IQ_AUTO_MAX_RESPONSE_BYTES = 64 * 1_024;
 
 export interface WebIqAutoReadiness {
@@ -93,7 +92,7 @@ function publicUrl(value: unknown): string | undefined {
 /** An explicit offset is required; crawl/update/retrieval times are never observations. */
 function timestamp(value: unknown): string | undefined {
   const raw = text(value, 64);
-  const match = raw && /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(?:\.(\d{1,3}))?(Z|[+-]\d{2}:\d{2})$/.exec(raw);
+  const match = raw && /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(?:\.(\d{1,9}))?(Z|[+-]\d{2}:\d{2})$/.exec(raw);
   if (!match) return undefined;
   const offset = match[4] === 'Z' ? 0 : (match[4][0] === '+' ? 1 : -1)
     * (Number(match[4].slice(1, 3)) * 60 + Number(match[4].slice(4, 6)));
@@ -101,7 +100,7 @@ function timestamp(value: unknown): string | undefined {
   const time = Date.parse(raw);
   if (!Number.isFinite(time)) return undefined;
   const local = new Date(time + offset * 60_000).toISOString();
-  const expected = `${match[1]}T${match[2]}.${(match[3] || '').padEnd(3, '0')}Z`;
+  const expected = `${match[1]}T${match[2]}.${(match[3] || '').slice(0, 3).padEnd(3, '0')}Z`;
   return local === expected ? new Date(time).toISOString() : undefined;
 }
 
@@ -112,8 +111,14 @@ function date(value: unknown): string | undefined {
 }
 
 function locationMatches(value: string | null): boolean {
-  // A named regional match is not proof of a port-specific observation station.
-  return Boolean(value && /^(?:incheon(?:\s+port)?|inchon(?:\s+port)?|인천(?:항|광역시)?)(?:$|\s*[,，]\s*(?:south korea|republic of korea|korea|대한민국|한국|인천광역시|incheon))$/i.test(value));
+  if (!value) return false;
+  const withoutCountry = value.replace(/\b(?:republic of korea|south korea|korea)\b|대한민국|한국/gi, ',');
+  const city = /^inche?on(?:\s+(?:port|metropolitan city))?$|^인천(?:항|광역시)?$/i;
+  // Localized labels can include a district or repeat the province and city.
+  const parts = withoutCountry.replace(/(인천광역시|인천)\s+(?=[가-힣])/g, '$1,')
+    .split(/[,，]/).map(part => part.trim()).filter(Boolean);
+  return parts.some(part => city.test(part)) && parts.every(part => city.test(part)
+    || /^(?:[a-z]+(?:-[a-z]+)*(?:-(?:gu|gun|dong)| district)|[가-힣]+(?:구|군|동))$/i.test(part));
 }
 
 function supportedUnit(value: string | undefined, kind: 'temperature' | 'speed'): boolean {
@@ -157,19 +162,22 @@ export function parseWebIqAutoPayload(payload: unknown, now = Date.now()): Pick<
     if (condition) currentWeather.condition = condition;
     if (temperature !== undefined) currentWeather.temperature = temperature;
     if (windSpeed !== undefined) currentWeather.windSpeed = windSpeed;
-    if (observedAt) currentWeather.observedAt = observedAt;
     const location = text(content.location) || null;
     const url = publicUrl(content.url);
     const citations = Array.isArray(result.citations) && result.citations.length <= 50
       ? result.citations.map(citation).filter((item): item is WebIqAutoCitation => item !== null) : [];
     const supporting = citations.filter(item => item.url === url);
     const citationTimes = supporting.map(item => item.observedAt).filter((item): item is string => Boolean(item));
-    const observation = observedAt;
+    // Auto can put the observation time only on this weather result's attribution.
+    // Withhold a citation-derived time when sources disagree or an explicit time is malformed.
+    const citationObservation = citationTimes.length && citationTimes.every(time => time === citationTimes[0])
+      ? citationTimes[0] : undefined;
+    const observation = current.observedAt == null ? citationObservation : observedAt;
+    if (observation) currentWeather.observedAt = observation;
     // This demo's current-conditions window is explicit: at most six hours old, no more than five minutes ahead.
     const observationTime = Boolean(observation && Date.parse(observation) >= now - 6 * 60 * 60_000
       && Date.parse(observation) <= now + 5 * 60_000
-      && citationTimes.every(item => item === observation)
-      && (!('observedAt' in current) || Boolean(observedAt)));
+      && citationTimes.every(item => item === observation));
     const checks = { location: locationMatches(location), observationTime,
       units: (temperature !== undefined || windSpeed !== undefined)
         && (temperature === undefined || supportedUnit(units.temperature, 'temperature'))
