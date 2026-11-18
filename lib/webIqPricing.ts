@@ -2,6 +2,7 @@
 export const WEB_IQ_PRICING_PROFILE = 'webiq-2026-11-12-v1';
 export const WEB_IQ_SEARCH_MICRO_USD = 7_000;
 export const WEB_IQ_BROWSE_MICRO_USD = 1_000;
+export const WEB_IQ_AUTO_MICRO_USD = 8_000;
 export const WEB_IQ_ANSWER_MODEL = 'gpt-4o-2024-11-20';
 export const WEB_IQ_ANSWER_INPUT_MICRO_USD_PER_TOKEN = 3;
 export const WEB_IQ_ANSWER_OUTPUT_MICRO_USD_PER_TOKEN = 12;
@@ -34,12 +35,12 @@ export const WEB_IQ_PRICING = {
     promotionalCondition: null,
   },
   auto: {
-    operation: 'auto', unit: 'microUSD/call', checkedAt: '2026-11-12',
+    operation: 'auto', unit: 'microUSD/call', checkedAt: '2026-11-17',
     sourceUrl: 'https://learn.microsoft.com/en-us/web-iq/resources/pricing',
-    normalPrice: 8_000, advancedNormalPrice: 9_000,
-    promotionalCondition: 'Not charged while in beta; current AppID terms and access must be verified.',
-    // No executable pricing profile until AppID access, terms and response schema pass the gate.
-    conservativeReservation: null, enabled: false,
+    normalPrice: WEB_IQ_AUTO_MICRO_USD, advancedNormalPrice: 9_000,
+    promotionalCondition: null, chargedFrom: '2026-11-17', mode: 'lite',
+    // Product availability and executable pricing do not enable this application's route.
+    conservativeReservation: WEB_IQ_AUTO_MICRO_USD, enabled: false,
   },
 } as const;
 

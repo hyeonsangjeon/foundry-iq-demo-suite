@@ -27,7 +27,7 @@ for (const [id, rawUrl] of Object.entries(urls)) {
     assert(!url.username && !url.password);
     assert.equal(checks[id].httpStatus, 200);
     assert(checks[id].title.length > 3);
-    assert.equal(checks[id].checkedAt, '2026-11-12');
+    assert.equal(checks[id].checkedAt, ['S105', 'S106', 'S107'].includes(id) ? '2026-11-17' : '2026-11-12');
   });
 }
 for (const [id, record] of Object.entries(references)) {

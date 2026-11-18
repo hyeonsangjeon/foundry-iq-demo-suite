@@ -8,7 +8,7 @@ const completion = (extra = {}) => ({ model: 'gpt-4o-2024-11-20', usage: { promp
   choices: [{ finish_reason: 'stop', message: { content: 'Internal observation [I1]. Public update [W1].' } }], ...extra });
 const plain = value => JSON.parse(JSON.stringify(value));
 
-test('pricing: integer USD conversion, legacy reservation and disabled Auto gate', () => {
+test('pricing: integer USD conversion, legacy reservations and additive Auto lite price with default-off gate', () => {
   const p = harness().load('lib/webIqPricing.ts');
   assert.equal(p.WEB_IQ_SEARCH_MICRO_USD, 7 / 1000 * 1000000);
   assert.equal(p.WEB_IQ_BROWSE_MICRO_USD, 1 / 1000 * 1000000);
@@ -16,7 +16,9 @@ test('pricing: integer USD conversion, legacy reservation and disabled Auto gate
   for (const value of [undefined, null, '0', -1, 0.1, Infinity, Number.MAX_SAFE_INTEGER + 1]) assert.equal(p.isKnownMicroUsd(value), false);
   assert.equal(p.isKnownMicroUsd(0), true);
   assert.equal(p.WEB_IQ_PRICING.auto.enabled, false);
-  assert.equal(p.WEB_IQ_PRICING.auto.conservativeReservation, null);
+  assert.equal(p.WEB_IQ_PRICING.auto.conservativeReservation, 8_000);
+  assert.equal(p.WEB_IQ_PRICING.auto.promotionalCondition, null);
+  assert.equal(p.WEB_IQ_PRICING.auto.checkedAt, '2026-11-17');
 });
 
 test('answer: additive telemetry preserves legacy contract and exposes only observed safe values', async () => {

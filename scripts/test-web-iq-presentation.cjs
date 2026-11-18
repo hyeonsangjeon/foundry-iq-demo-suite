@@ -16,7 +16,10 @@ function modules({ interactive = false } = {}) {
   const cache = new Map();
   let query = new URLSearchParams();
   const replacements = [];
+  const pushes = [];
   const stopped = [];
+  const effects = [];
+  const networkCalls = [];
   let stateIndex = 0;
   const hooks = interactive ? {
     ...React,
@@ -24,7 +27,8 @@ function modules({ interactive = false } = {}) {
       const index = stateIndex++;
       return [initial, next => { if (index === 1) stopped.push(next); }];
     },
-    useMemo: run => run(), useCallback: run => run, useEffect: () => {},
+    useMemo: run => run(), useCallback: run => run, useEffect: run => effects.push(run),
+    useRef: initial => ({ current: initial }),
   } : React;
   function load(relative) {
     const filename = path.resolve(root, relative);
@@ -35,13 +39,14 @@ function modules({ interactive = false } = {}) {
       compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
     }).outputText;
     vm.runInNewContext(compiled, {
-      exports, URLSearchParams,
+      exports, URLSearchParams, URL, AbortController, setTimeout, clearTimeout,
+      fetch: (...args) => { networkCalls.push(args); return Promise.reject(new Error('Offline readiness unavailable')); },
       require: name => {
         if (name === 'react') return hooks;
         if (name === 'react/jsx-runtime') return require(name);
         if (name === 'next/navigation') return {
           usePathname: () => '/web-iq', useSearchParams: () => query,
-          useRouter: () => ({ replace: url => replacements.push(url) }),
+          useRouter: () => ({ replace: url => replacements.push(url), push: url => pushes.push(url) }),
         };
         if (name === 'next/image') return props => React.createElement('img', { src: props.src, alt: props.alt });
         if (name === 'next/link') return props => React.createElement('a', { href: props.href }, props.children);
@@ -49,7 +54,7 @@ function modules({ interactive = false } = {}) {
         if (name === '@/components/ui/button') return { Button: ({ children, variant, size, ...props }) => React.createElement('button', props, children) };
         if (name === '@/lib/utils') return { cn: (...items) => items.filter(Boolean).join(' ') };
         if (name === '@/lib/i18n') return { getLocale: () => 'en' };
-        if (name.startsWith('@/components/web-iq/') && !/web-iq-(presentation|speaker-notes)$/.test(name)) {
+        if (name.startsWith('@/components/web-iq/') && !/web-iq-(presentation|speaker-notes|auto-weather|auto-time-zone|service-links)$/.test(name)) {
           return new Proxy({}, { get: () => () => React.createElement('div') });
         }
         if (name.startsWith('@/')) {
@@ -62,7 +67,8 @@ function modules({ interactive = false } = {}) {
     return exports;
   }
   return {
-    load, replacements, stopped,
+    load, replacements, pushes, stopped, networkCalls,
+    flushEffects: () => { for (const run of effects.splice(0)) run(); },
     setQuery: value => { query = new URLSearchParams(value); stateIndex = 0; },
   };
 }
@@ -166,6 +172,78 @@ test('stage buttons, notes buttons, playback, and material toggles use the same 
   assert.equal(materialUrl.searchParams.get('scene'), '2');
   assert.equal(materialUrl.searchParams.get('sources'), 'web');
   assert.ok(interaction.stopped.filter(value => value === false).length >= 3);
+});
+
+test('Auto opens with a free comparison prompt, visible Learn links and a guarded city lookup in either language', () => {
+  const { WebIqAutoWeather } = h.load('components/web-iq/web-iq-auto-weather.tsx');
+  for (const language of ['ko', 'en']) {
+    const html = renderToStaticMarkup(React.createElement(WebIqAutoWeather, { language }));
+    const ko = language === 'ko';
+    assert.match(html, /<h2[^>]*>Web IQ Auto<\/h2>/);
+    assert.ok(html.includes('>GA</span>'));
+    assert.ok(!html.includes('Beta'));
+    assert.ok(html.includes(ko ? '이 앱의 설정 확인 중' : 'Checking this app'));
+    const header = html.match(/<header[^>]*>([\s\S]*?)<\/header>/)[1];
+    assert.ok(header.includes('https://learn.microsoft.com/en-us/web-iq/overview'));
+    assert.ok(header.includes('https://learn.microsoft.com/en-us/web-iq/reference/auto'));
+    assert.match(html, /<button[^>]*aria-expanded="false"[^>]*aria-controls="web-iq-auto-comparison"/);
+    assert.ok(html.includes(ko ? '같은 질문으로 결과 비교하기' : 'Compare results for the same question'));
+    assert.ok(html.includes(ko ? '두 도시 시차 조회' : 'Check local time in both cities'));
+    assert.ok(!html.includes(ko ? '인천 날씨 실제 조회' : 'Check Incheon weather'));
+    assert.match(html, /<button[^>]*disabled=""[^>]*>/);
+    assert.ok(!/°[CF]|hPa|km\/h|\bhumidity\b/i.test(html));
+  }
+});
+
+test('Auto tab navigation sends nothing and its mounted panel checks readiness without a paid POST', () => {
+  const navigation = modules({ interactive: true });
+  navigation.setQuery('view=technical&tech=search&query=NASA&kb=nasa-earth-book');
+  const tree = navigation.load('components/web-iq/web-iq-demo.tsx').WebIqDemo();
+  const tab = elements(tree, item => item.props.children === 'Web IQ Auto')[0];
+  assert.ok(tab);
+  tab.props.onClick();
+  const target = new URL(navigation.pushes.at(-1), 'https://offline.example');
+  assert.equal(target.searchParams.get('tech'), 'auto');
+  assert.equal(navigation.networkCalls.length, 0);
+
+  const mounted = modules({ interactive: true });
+  const Panel = mounted.load('components/web-iq/web-iq-auto-weather.tsx').WebIqAutoWeather;
+  const html = renderToStaticMarkup(React.createElement(Panel, { language: 'en' }));
+  mounted.flushEffects();
+  assert.equal(mounted.networkCalls.length, 1);
+  assert.equal(mounted.networkCalls[0][0], '/api/web-iq/auto');
+  assert.ok(!mounted.networkCalls.some(([, options]) => options?.method === 'POST'));
+  assert.match(html, /<option value="london" selected=""/);
+  assert.ok(!html.includes('nasa-earth-book'));
+  assert.ok(html.includes('Checking this app'));
+});
+
+test('Executive step 6 weather CTA only opens Tech Auto while all six stages remain intact', () => {
+  const navigation = modules({ interactive: true });
+  navigation.setQuery('view=executive&scene=5&sources=web');
+  const tree = navigation.load('components/web-iq/web-iq-demo.tsx').WebIqDemo();
+  const cta = elements(tree, item => item.props.children === 'Open Web IQ Auto')[0];
+  assert.ok(cta);
+  cta.props.onClick();
+  const target = new URL(navigation.pushes.at(-1), 'https://offline.example');
+  assert.equal(target.searchParams.get('view'), 'technical');
+  assert.equal(target.searchParams.get('tech'), 'auto');
+  assert.equal(target.searchParams.get('scene'), '5');
+  assert.equal(navigation.networkCalls.length, 0);
+  assert.equal(stages.length, 6);
+  assert.equal(presentation.WEB_IQ_PRESENTATION_DURATION, 90);
+  for (let index = 0; index < 5; index++) {
+    h.setQuery(`view=executive&scene=${index}`);
+    const html = renderToStaticMarkup(React.createElement(WebIqDemo));
+    assert.ok(!html.includes('Open Web IQ Auto'));
+  }
+});
+
+test('Executive Web Search label remains explicitly fictional and does not claim an API run', () => {
+  h.setQuery('view=executive&scene=2&sources=web');
+  const html = renderToStaticMarkup(React.createElement(WebIqDemo));
+  assert.ok(html.includes('Web Search scenario · fictional notice'));
+  assert.equal(h.networkCalls.length, 0);
 });
 
 let failures = 0;

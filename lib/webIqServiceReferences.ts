@@ -72,9 +72,9 @@ export const SERVICE_DOCUMENT_CHECKS = {
   S102: {"httpStatus": 200, "title": "Web Search REST API reference | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/web-iq/reference/web-search", "checkedAt": "2026-11-12"},
   S103: {"httpStatus": 200, "title": "Browse REST API reference | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/web-iq/reference/browse", "checkedAt": "2026-11-12"},
   S104: {"httpStatus": 200, "title": "Passages and content formats in Microsoft Web IQ | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/web-iq/concepts/content-formats", "checkedAt": "2026-11-12"},
-  S105: {"httpStatus": 200, "title": "Auto REST API reference (Beta) | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/web-iq/reference/auto", "checkedAt": "2026-11-12"},
-  S106: {"httpStatus": 200, "title": "Microsoft Web IQ frequently asked questions | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/web-iq/resources/faq", "checkedAt": "2026-11-12"},
-  S107: {"httpStatus": 200, "title": "Microsoft Web IQ pricing | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/web-iq/resources/pricing", "checkedAt": "2026-11-12"},
+  S105: {"httpStatus": 200, "title": "Auto REST API reference | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/web-iq/reference/auto", "checkedAt": "2026-11-17"},
+  S106: {"httpStatus": 200, "title": "Microsoft Web IQ frequently asked questions | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/web-iq/resources/faq", "checkedAt": "2026-11-17"},
+  S107: {"httpStatus": 200, "title": "Microsoft Web IQ pricing | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/web-iq/resources/pricing", "checkedAt": "2026-11-17"},
   S108: {"httpStatus": 200, "title": "Engage Center", "finalUrl": "https://engagecenter.microsoft.com/#view/Microsoft_AzureCXP_EngageHub/EngageHubMenu.MenuView/~/helpSupport/targetExperience/sfb/sapId/143d582a-dc9f-f111-b8dc-70a8a58bc692", "checkedAt": "2026-11-12"},
   S109: {"httpStatus": 200, "title": "Introduction to Azure AI Search - Azure AI Search | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/azure/search/search-what-is-azure-search", "checkedAt": "2026-11-12"},
   S110: {"httpStatus": 200, "title": "Migrate Agentic Retrieval Code - Azure AI Search | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/azure/search/agentic-retrieval-how-to-migrate", "checkedAt": "2026-11-12"},
@@ -123,14 +123,13 @@ function reference(
 }
 const ga = { en: 'GA', ko: 'GA' };
 const preview = { en: 'Preview', ko: '미리 보기' };
-const beta = { en: 'Beta · AppID access not verified', ko: '베타 · AppID 접근 미확인' };
 const versioned = { en: 'Availability depends on feature and API version', ko: '기능·API 버전별 지원 범위 확인 필요' };
 
 export const WEB_IQ_SERVICE_REFERENCES: Record<ServiceFeatureId, ServiceReference> = {
   'web-search': reference('webiq', 'Microsoft Web IQ', 'Web Search', { en: 'Finds public-web evidence; answer generation is separate.', ko: '공개 웹 근거를 검색합니다. 답변 생성은 별도 단계입니다.' }, ga, 'S101', 'S102', 'S102', 'S107', ['S106']),
   'browse-passage': reference('webiq', 'Microsoft Web IQ', 'Browse passage', { en: 'Retrieves a query-relevant passage from the selected web source, subject to publisher policies.', ko: '선택한 웹 출처에서 질문과 관련된 본문 일부를 가져옵니다. 발행자 정책에 따라 제한됩니다.' }, ga, 'S101', 'S103', 'S103', 'S107', ['S104', 'S106']),
-  auto: reference('webiq', 'Microsoft Web IQ', 'Auto', { en: 'Optional typed evidence. Disabled until AppID access, pricing and runtime are verified.', ko: '구조화된 근거를 제공하는 선택 기능입니다. AppID 접근·가격·실제 응답 확인 전에는 비활성입니다.' }, beta, 'S101', 'S105', 'S105', 'S107', ['S106', 'S108']),
-  weather: reference('webiq', 'Microsoft Web IQ', 'Auto weather evidence', { en: 'Weather evidence inside Auto; no independent Weather endpoint is connected.', ko: 'Auto 안의 날씨 근거입니다. 독립 Weather API가 연결된 기능은 아닙니다.' }, beta, 'S101', 'S105', 'S105', 'S107', ['S106']),
+  auto: { ...reference('webiq', 'Microsoft Web IQ', 'Auto', { en: 'Returns typed evidence in one call. This app keeps requests off until its access and shared budget controls are ready.', ko: '한 번의 호출로 구조화된 근거를 가져옵니다. 이 앱은 접근과 공유 예산 제어를 준비할 때까지 조회를 비활성으로 유지합니다.' }, ga, 'S101', 'S105', 'S105', 'S107', ['S106', 'S108']), statusCheckedAt: '2026-11-17' },
+  weather: { ...reference('webiq', 'Microsoft Web IQ', 'Auto weather evidence', { en: 'Weather evidence inside Auto. App configuration and actual weather evidence require separate verification.', ko: 'Auto 안의 날씨 근거입니다. 앱 구성과 실제 날씨 근거는 각각 확인해야 합니다.' }, ga, 'S101', 'S105', 'S105', 'S107', ['S106']), statusCheckedAt: '2026-11-17' },
   'kb-retrieval': reference('azure-ai-search', 'Azure AI Search', 'Knowledge retrieval', { en: 'Retrieves knowledge-base content, citations and activity. Minimal retrieval and preview synthesis have different contracts.', ko: '지식 베이스 자료·인용·조회 과정을 가져옵니다. 최소 검색과 미리 보기 답변 합성의 계약은 다릅니다.' }, versioned, 'S109', 'S111', 'S112', 'S113', ['S110']),
   'answer-synthesis': reference('azure-openai', 'Azure OpenAI', 'Additional answer synthesis', { en: 'Generates the additional answer from KB context and Web IQ evidence using an Azure-hosted model.', ko: 'Azure에서 제공하는 모델로 KB 자료와 웹 근거를 종합해 추가 답변을 생성합니다.' }, versioned, 'S114', 'S115', 'S115', 'S116'),
   'learn-mcp': reference('microsoft-learn-mcp', 'Microsoft Learn MCP Server', 'Documentation tools', { en: 'Provides public Learn documentation and code examples. Sample content is separate from a current tool call.', ko: '공개 Learn 문서와 코드 예제를 제공합니다. 예시 자료와 현재 도구 호출은 구분합니다.' }, { en: 'Public documentation service', ko: '공개 문서 서비스' }, 'S117', 'S118', 'S118', 'S117'),

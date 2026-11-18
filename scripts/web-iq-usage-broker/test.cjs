@@ -122,17 +122,18 @@ test('both declared and chunked oversized bodies are rejected', async () => {
   assert.equal(calls.length, 0);
 });
 
-test('only valid IPs and the three Web IQ reservation amounts reach the core', async () => {
+test('only valid IPs and the four Web IQ reservation amounts reach the core', async () => {
   const { core, calls } = fakeCore();
   await withServer(core, async port => {
     for (const ip of ['hostname', '203.0.113.1, 1.2.3.4', ' 203.0.113.1', 'fe80::1%en0', null]) {
       assert.equal((await request(port, { value: { ip, microUsd: 7_000 } })).status, 400);
     }
-    for (const microUsd of [0, -1, 1, 7_000.5, 5_000_001, '7000', null]) {
+    for (const microUsd of [0, -1, 1, 7_000.5, 7_999, 8_001, 9_000, 5_000_001, '7000', null]) {
       assert.equal((await request(port, { value: { ip: '203.0.113.1', microUsd } })).status, 400);
     }
     assert.equal(calls.length, 0);
-    for (const [pathname, ip, microUsd] of [['/check', '203.0.113.1', 7_000], ['/reserve', '2001:db8::1', 421_000], ['/reserve', '203.0.113.2', 1_000]]) {
+    for (const pathname of ['/check', '/reserve']) for (const microUsd of [1_000, 7_000, 8_000, 421_000]) {
+      const ip = pathname === '/check' ? '203.0.113.1' : '2001:db8::1';
       const result = await request(port, { pathname, value: { ip, microUsd } });
       assert.equal(result.status, 200);
       assert.equal(result.body.ok, true);
@@ -162,6 +163,19 @@ test('settlement requires its exact reservation envelope and bounded actual amou
     assert.equal(calls.length, 1);
     const browseReservation = { ...reservation, reservedMicroUsd: 1_000, remainingMicroUsd: 4_999_000 };
     assert.equal((await request(port, { pathname: '/settle', value: { reservation: browseReservation, actualMicroUsd: 1_000 } })).status, 200);
+    const autoReservation = { ...reservation, reservedMicroUsd: 8_000, remainingMicroUsd: 4_992_000 };
+    for (const actualMicroUsd of [8_001, 9_000]) {
+      assert.equal((await request(port, { pathname: '/settle', value: { reservation: autoReservation, actualMicroUsd } })).status, 400);
+    }
+    for (const reservedMicroUsd of [7_999, 8_001, 9_000]) {
+      assert.equal((await request(port, { pathname: '/settle', value: {
+        reservation: { ...autoReservation, reservedMicroUsd }, actualMicroUsd: 7_000,
+      } })).status, 400);
+    }
+    const auto = await request(port, { pathname: '/settle', value: { reservation: autoReservation, actualMicroUsd: 8_000 } });
+    assert.equal(auto.status, 200);
+    assert.equal(auto.body.result.chargedMicroUsd, 8_000);
+    assert.equal(calls.length, 3);
   });
 });
 
@@ -326,6 +340,116 @@ function loadCore() {
   return coreModule.exports;
 }
 
+function timedCore(now) {
+  const core = loadCore();
+  return Object.fromEntries(['checkDemoUsage', 'reserveDemoUsage', 'settleDemoUsage'].map(name => [name, (...args) => {
+    const options = args.pop();
+    return core[name](...args, { ...options, now });
+  }]));
+}
+
+/** An in-memory Blob CAS adapter; every data-plane request is intercepted. */
+function mockBlobStore() {
+  let ledger = null;
+  let etag = 0;
+  let conflicts = 0;
+  let readBarrier;
+  return {
+    get ledger() { return ledger; },
+    get writes() { return etag; },
+    get conflicts() { return conflicts; },
+    synchronizeNextReads(count) {
+      let release;
+      const wait = new Promise(resolve => { release = resolve; });
+      readBarrier = { remaining: count, release, wait };
+    },
+    fetchImpl: async (url, options) => {
+      if (new URL(url).hostname === '127.0.0.1') {
+        return Response.json({ access_token: 'offline-token', expires_on: Math.floor(Date.now() / 1000) + 3_600 });
+      }
+      assert.equal(url, env.DEMO_USAGE_BLOB_URL);
+      if (options.method === 'PUT') {
+        const expected = ledger === null ? '*' : `"${etag}"`;
+        const condition = options.headers[ledger === null ? 'If-None-Match' : 'If-Match'];
+        if (condition !== expected) { conflicts++; return new Response(null, { status: 412 }); }
+        ledger = JSON.parse(options.body); etag++;
+        return new Response(null, { status: 201 });
+      }
+      const snapshot = ledger === null
+        ? new Response(null, { status: 404, headers: { 'x-ms-error-code': 'BlobNotFound' } })
+        : Response.json(ledger, { headers: { ETag: `"${etag}"` } });
+      const barrier = readBarrier;
+      if (barrier) {
+        if (--barrier.remaining === 0) { readBarrier = undefined; barrier.release(); }
+        await barrier.wait;
+      }
+      return snapshot;
+    },
+  };
+}
+
+test('Auto reservations keep the 100-request rolling window across the KST daily reset', async () => {
+  const beforeMidnight = Date.parse('2026-11-17T14:59:59Z');
+  let now = beforeMidnight;
+  const store = mockBlobStore();
+  const ip = '203.0.113.1';
+  await withServer(timedCore(() => now), async port => {
+    for (let index = 0; index < 100; index++) {
+      const held = await request(port, { pathname: '/reserve', value: { ip, microUsd: 8_000 } });
+      assert.equal(held.status, 200);
+      assert.equal(held.body.result.reservedMicroUsd, 8_000);
+      assert.equal(held.body.result.day, '2026-11-17');
+    }
+    assert.equal(store.ledger.days['2026-11-17'].spentMicroUsd, 800_000);
+    now = beforeMidnight + 1_000;
+    const before = store.writes;
+    for (const pathname of ['/check', '/reserve']) {
+      const denied = await request(port, { pathname, value: { ip, microUsd: 8_000 } });
+      assert.equal(denied.status, 429);
+      assert.equal(denied.body.code, 'rate_limit_exceeded');
+      assert.equal(denied.headers['retry-after'], '119');
+    }
+    assert.equal(store.writes, before);
+    const nextDay = await request(port, { pathname: '/reserve', value: { ip: '203.0.113.2', microUsd: 8_000 } });
+    assert.equal(nextDay.status, 200);
+    assert.equal(nextDay.body.result.day, '2026-11-18');
+    assert.equal(nextDay.body.result.remainingMicroUsd, 4_992_000);
+    assert.equal(store.ledger.days['2026-11-17'].spentMicroUsd, 800_000);
+    now = beforeMidnight + 120_000;
+    const afterWindow = await request(port, { pathname: '/reserve', value: { ip, microUsd: 8_000 } });
+    assert.equal(afterWindow.status, 200);
+    assert.equal(store.ledger.days['2026-11-18'].spentMicroUsd, 16_000);
+    assert.equal(JSON.stringify(store.ledger).includes(ip), false);
+  }, { fetchImpl: store.fetchImpl });
+});
+
+test('Auto and Browse compete atomically for the last daily 8000 microUSD without exceeding five dollars', async () => {
+  const now = Date.parse('2026-11-17T10:00:00Z');
+  const store = mockBlobStore();
+  await withServer(timedCore(() => now), async port => {
+    const priorAmounts = [...Array(11).fill(421_000), ...Array(51).fill(7_000), ...Array(4).fill(1_000)];
+    for (const microUsd of priorAmounts) {
+      assert.equal((await request(port, { pathname: '/reserve', value: { ip: '203.0.113.1', microUsd } })).status, 200);
+    }
+    assert.equal(store.ledger.days['2026-11-17'].spentMicroUsd, 4_992_000);
+    const beforeCheck = store.writes;
+    assert.equal((await request(port, { value: { ip: '203.0.113.1', microUsd: 8_000 } })).status, 200);
+    assert.equal(store.writes, beforeCheck);
+    store.synchronizeNextReads(2);
+    const results = await Promise.all([8_000, 1_000].map(microUsd => request(port,
+      { pathname: '/reserve', value: { ip: '203.0.113.1', microUsd } })));
+    assert.equal(results.filter(result => result.status === 200).length, 1);
+    const denied = results.find(result => result.status === 429);
+    assert.ok(denied);
+    assert.equal(denied.body.code, 'daily_budget_exceeded');
+    assert.equal(denied.headers['retry-after'], '18000');
+    const admitted = results.find(result => result.status === 200).body.result;
+    assert.equal(store.ledger.days['2026-11-17'].spentMicroUsd, 4_992_000 + admitted.reservedMicroUsd);
+    assert.ok(store.ledger.days['2026-11-17'].spentMicroUsd <= 5_000_000);
+    assert.ok(store.conflicts > 0);
+  }, { fetchImpl: store.fetchImpl });
+});
+
 test('real shared core roundtrip reserves, settles idempotently, and preflight performs no write', async () => {
   let ledger = null;
   let etag = 0;
@@ -377,7 +501,7 @@ test('bundle contains only builtins and parses; build rejects an unignored desti
   assert.throws(() => writeBundle('/tmp/broker.cjs'), /git-ignored directory/);
 });
 
-test('mixed Browse and legacy reservations remain atomic under concurrent reserve and settle', async () => {
+test('mixed Auto, Browse and legacy reservations remain atomic under concurrent reserve and settle', async () => {
   let ledger = null;
   let etag = 0;
   let conflicts = 0;
@@ -400,18 +524,27 @@ test('mixed Browse and legacy reservations remain atomic under concurrent reserv
     return snapshot;
   };
   await withServer(loadCore(), async port => {
-    const amounts = [1_000, 7_000, 421_000];
+    const amounts = [1_000, 7_000, 8_000, 421_000];
     const held = await Promise.all(amounts.map(microUsd => request(port,
       { pathname: '/reserve', value: { ip: '203.0.113.1', microUsd } })));
     assert.ok(held.every(result => result.status === 200));
-    assert.equal(Object.values(ledger.days).at(-1).spentMicroUsd, 429_000);
-    const actual = [1_000, 7_000, 10_600];
+    assert.equal(Object.values(ledger.days).at(-1).spentMicroUsd, 437_000);
+    const actual = [1_000, 7_000, 8_000, 10_600];
     const settled = await Promise.all(held.map((result, index) => request(port,
       { pathname: '/settle', value: { reservation: result.body.result, actualMicroUsd: actual[index] } })));
     assert.ok(settled.every(result => result.status === 200));
-    assert.equal(Object.values(ledger.days).at(-1).spentMicroUsd, 18_600);
+    assert.equal(Object.values(ledger.days).at(-1).spentMicroUsd, 26_600);
     const beforeDuplicate = etag;
     assert.equal((await request(port, { pathname: '/settle', value: { reservation: held[0].body.result, actualMicroUsd: 1_000 } })).status, 200);
+    assert.equal(etag, beforeDuplicate);
+    assert.equal((await request(port, { pathname: '/settle', value: { reservation: held[2].body.result, actualMicroUsd: 8_000 } })).status, 200);
+    assert.equal(etag, beforeDuplicate);
+    // A forged lower original reservation cannot refund an actual Auto reservation.
+    const forged = await request(port, { pathname: '/settle', value: {
+      reservation: { ...held[2].body.result, reservedMicroUsd: 7_000 }, actualMicroUsd: 0,
+    } });
+    assert.equal(forged.status, 503);
+    assert.equal(forged.body.code, 'usage_unavailable');
     assert.equal(etag, beforeDuplicate);
     assert.ok(conflicts > 0);
     assert.equal(JSON.stringify(ledger).includes('203.0.113.1'), false);

@@ -7,7 +7,7 @@ import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
 
 type TurnstileOptions = {
   sitekey: string;
-  action: 'webiq_search' | 'webiq_answer' | 'webiq_browse';
+  action: 'webiq_search' | 'webiq_answer' | 'webiq_browse' | 'webiq_auto';
   language: 'en' | 'ko';
   size: 'flexible' | 'compact';
   appearance: 'interaction-only';
@@ -31,7 +31,7 @@ type CheckStatus = 'loading' | 'checking' | 'verified' | 'expired' | 'error';
 
 type WebIqBotCheckProps = {
   siteKey: string;
-  action: 'webiq_search' | 'webiq_answer' | 'webiq_browse';
+  action: 'webiq_search' | 'webiq_answer' | 'webiq_browse' | 'webiq_auto';
   language: 'en' | 'ko';
   onTokenChange: (token: string | null) => void;
   resetKey: number;
@@ -103,11 +103,13 @@ const copy = {
   },
 };
 
-/** Managed Turnstile check shared by the two Web IQ search entry points. */
+/** Managed Turnstile check shared by the guarded Web IQ actions. */
 export function WebIqBotCheck({ siteKey, action, language, onTokenChange, resetKey }: WebIqBotCheckProps) {
   const text = action === 'webiq_browse'
     ? { ...copy[language], label: language === 'ko' ? '본문 조회 전 간단한 확인' : 'Quick verification before inspecting the passage', verified: language === 'ko' ? '본문 확인 준비 완료' : 'Ready to inspect the passage' }
-    : copy[language];
+    : action === 'webiq_auto'
+      ? { ...copy[language], label: language === 'ko' ? 'Auto 조회 전 브라우저 확인' : 'Browser check before using Auto', verified: language === 'ko' ? 'Auto 조회 준비 완료' : 'Ready to use Auto' }
+      : copy[language];
   const id = React.useId();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const widgetRef = React.useRef<{ api: TurnstileApi; id: string } | null>(null);
@@ -196,7 +198,7 @@ export function WebIqBotCheck({ siteKey, action, language, onTokenChange, resetK
       </p>
       <WebIqServiceLinks features={['bot-check']} locale={language} compact />
       {(status === 'error' || status === 'expired') && (
-        <Button type="button" variant="outline" size="sm" onClick={() => setAttempt(value => value + 1)}>{text.retry}</Button>
+        <Button type="button" variant="outline" size="sm" className="min-h-11" onClick={() => setAttempt(value => value + 1)}>{text.retry}</Button>
       )}
     </div>
   );

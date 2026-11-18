@@ -27,11 +27,12 @@ function rememberSource(key: string, change: Partial<{ attempts: number; result:
 
 const copy = {
   ko: {
-    title: '선택한 출처의 관련 본문', close: '본문 닫기', original: '원문 열기', summary: '검색 요약',
+    title: 'Browse가 선택한 출처에서 질문과 관련된 발췌를 제공합니다.', close: '본문 닫기', original: '원문 열기', originalHint: '발행처 사이트에서 원문을 엽니다.', summary: '검색 요약',
     inspect: '관련 본문 확인', retry: '관련 본문 다시 확인', loading: '본문을 확인하고 있습니다…', cancel: '취소',
     checking: '사용 가능한 기능을 확인하고 있습니다…', unavailable: '이 환경에서는 Browse를 사용할 준비가 되지 않았습니다. 원문 링크를 이용해 주세요.',
     ticket: '본문 확인 권한이 없거나 만료됐습니다. 검색 결과를 새로 받아야 합니다. 원문 링크는 계속 이용할 수 있습니다.',
-    hint: '선택한 검색 출처의 질문 관련 발췌를 조회합니다. 새 확인과 별도 유료 호출이 필요합니다. 답변을 다시 생성하지 않습니다.',
+    hint: '관련 본문 확인은 별도 유료 조회입니다. 확인을 마치고 버튼을 누르면 Browse가 발췌를 가져옵니다.',
+    crawlHint: 'Browse는 색인된 자료를 사용합니다. URL이 색인에 없을 때만 새 수집을 요청하며, 발행처 정책에 따라 수집이 제한될 수 있습니다.',
     pending: '본문 수집을 기다리고 있습니다. 자동으로 다시 조회하지 않습니다.', retryAt: '다시 확인 가능한 시각',
     max: '이 출처의 본문 확인은 이 화면에서 최대 두 번입니다. 새 검색 결과를 받거나 원문을 열어 주세요.',
     empty: '이 출처에서 관련 본문을 받지 못했습니다.', passage: 'Browse 관련 본문 발췌',
@@ -49,11 +50,12 @@ const copy = {
     requestCount: '이 화면의 Browse 요청 수', searched: '검색 질문',
   },
   en: {
-    title: 'Relevant passage from this source', close: 'Close passage', original: 'Open original page', summary: 'Search summary',
+    title: 'Browse provides a query-related excerpt from the selected source.', close: 'Close passage', original: 'Open original page', originalHint: 'Opens the page on the publisher’s site.', summary: 'Search summary',
     inspect: 'Inspect relevant passage', retry: 'Inspect passage again', loading: 'Inspecting the passage…', cancel: 'Cancel',
     checking: 'Checking available features…', unavailable: 'Browse is not ready in this environment. You can open the original page.',
     ticket: 'Passage permission is missing or expired. Run a new search to receive fresh sources. The original link remains available.',
-    hint: 'Retrieve a query-related extract from this selected search source. This needs fresh verification and a separate paid call. It does not regenerate the answer.',
+    hint: 'Inspecting a passage is a separate paid request. Complete verification and click the button to retrieve the excerpt.',
+    crawlHint: 'Browse uses indexed content. It requests a fresh crawl only when the URL is missing from the index. Publisher policies can limit crawling.',
     pending: 'A crawl is pending. The app will not poll or retry automatically.', retryAt: 'Earliest retry time',
     max: 'This screen permits at most two passage requests for this source. Run a new search or open the original page.',
     empty: 'No relevant passage was returned for this source.', passage: 'Browse relevant passage',
@@ -225,18 +227,26 @@ export function WebIqSourceDetail({ source, query, language, onClose }: Props) {
       onCancel={event => { event.preventDefault(); close(); }}>
       <div className="flex h-full min-h-0 flex-col">
         <header className="flex shrink-0 items-start justify-between gap-3 border-b border-stroke-divider p-5">
-          <h2 id={`${id}-title`} className="text-lg font-semibold">{text.title}</h2>
+          <div className="min-w-0">
+            <h2 id={`${id}-title`} className="break-keep text-lg font-semibold">Microsoft Web IQ · Browse</h2>
+            <p className="mt-2 break-keep text-sm leading-6 text-fg-muted">{text.title}</p>
+          </div>
           <Button aria-label={text.close} variant="ghost" className="h-11 w-11 shrink-0 p-2" onClick={close}><X className="h-5 w-5" aria-hidden="true" /></Button>
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
+          <div className="mb-5"><WebIqServiceLinks features={['browse-passage']} locale={language} compact /></div>
           <p className="text-xs font-medium text-accent">{source.sourceId || 'Web'} · {safeUrl ? new URL(safeUrl).hostname : ''}</p>
           <h3 className="mt-2 break-words text-base font-semibold">{source.title}</h3>
-          {safeUrl && <a className="mt-2 inline-flex min-h-11 items-center gap-2 break-words text-sm text-accent hover:underline" href={safeUrl} target="_blank" rel="noopener noreferrer">{text.original}<ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" /></a>}
+          {safeUrl && <div className="mt-2 flex flex-wrap items-center gap-x-3">
+            <a className="inline-flex min-h-11 items-center gap-2 break-words text-sm text-accent hover:underline" href={safeUrl} target="_blank" rel="noopener noreferrer">{text.original}<ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" /></a>
+            <span className="text-xs text-fg-muted">{text.originalHint}</span>
+          </div>}
           <section className="mt-5 rounded-xl border border-stroke-divider p-4">
             <h3 className="text-sm font-semibold">{text.summary}</h3>
             <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-fg-muted">{source.content}</p>
           </section>
           <p id={`${id}-hint`} className="mt-5 text-sm leading-6 text-fg-muted">{text.hint}</p>
+          <p className="mt-2 text-xs leading-5 text-fg-muted">{text.crawlHint}</p>
           <p className="mt-2 text-xs leading-5 text-fg-subtle">{text.cost}</p>
           {!source.sourceTicket && <p role="status" className="mt-4 text-sm text-fg-muted">{text.ticket}</p>}
           {readiness !== 'ready' && <p role="status" className="mt-4 text-sm text-fg-muted">{readiness === 'checking' ? text.checking : text.unavailable}</p>}
@@ -249,7 +259,7 @@ export function WebIqSourceDetail({ source, query, language, onClose }: Props) {
             {(!pending.retryTicket || attempts >= 2) && <p className="mt-2">{text.max}</p>}
           </div>}
           <div className="mt-4 flex flex-wrap gap-3">
-            <Button disabled={!canRequest} onClick={() => void inspect()}>
+            <Button className="h-auto min-h-11 max-w-full whitespace-normal break-keep py-2" disabled={!canRequest} onClick={() => void inspect()}>
               {loading && <LoaderCircle className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />}
               {loading ? text.loading : attempts === 0 ? text.inspect : text.retry}
             </Button>
@@ -276,7 +286,6 @@ export function WebIqSourceDetail({ source, query, language, onClose }: Props) {
             <p className="mt-2 break-all">{source.url}</p>
           </details>
         </div>
-        <footer className="shrink-0 border-t border-stroke-divider p-4"><WebIqServiceLinks features={['browse-passage']} locale={language} /></footer>
       </div>
     </dialog>
   );

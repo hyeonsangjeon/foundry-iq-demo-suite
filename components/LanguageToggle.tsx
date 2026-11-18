@@ -36,11 +36,11 @@ export function LanguageToggle() {
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative shrink-0">
       <button
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'flex items-center gap-1 rounded-full border border-glass-border bg-bg-card px-3 py-1.5',
+          'inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-glass-border bg-bg-card px-3 py-1.5',
           'text-xs font-medium text-fg-muted transition-colors duration-fast',
           'hover:bg-bg-elevated hover:text-fg-default',
           'focus:outline-none focus-visible:ring-2 focus-visible:ring-stroke-focus focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas'
@@ -49,13 +49,13 @@ export function LanguageToggle() {
         aria-expanded={open}
         aria-haspopup="listbox"
       >
-        <span className="text-accent">{LOCALE_LABELS[locale]}</span>
+        <span className="whitespace-nowrap text-accent">{LOCALE_LABELS[locale]}</span>
         <svg
           width="10"
           height="10"
           viewBox="0 0 10 10"
           fill="none"
-          className={cn('transition-transform duration-fast', open && 'rotate-180')}
+          className={cn('shrink-0 transition-transform duration-fast', open && 'rotate-180')}
         >
           <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -77,7 +77,7 @@ export function LanguageToggle() {
               aria-selected={l === locale}
               onClick={() => handleSelect(l)}
               className={cn(
-                'w-full px-3 py-1.5 text-left text-xs font-medium transition-colors duration-fast',
+                'w-full whitespace-nowrap px-3 py-1.5 text-left text-xs font-medium transition-colors duration-fast',
                 l === locale
                   ? 'text-accent bg-accent/5'
                   : 'text-fg-muted hover:bg-bg-elevated hover:text-fg-default'

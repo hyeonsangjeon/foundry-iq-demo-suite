@@ -15,6 +15,7 @@ import { WebIqComparisonWorkspace } from '@/components/web-iq/web-iq-comparison-
 import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
 import { WebIqComparison } from '@/components/web-iq/web-iq-comparison';
 import { WebIqSpeakerNotes } from '@/components/web-iq/web-iq-speaker-notes';
+import { WebIqAutoWeather } from '@/components/web-iq/web-iq-auto-weather';
 import {
   WEB_IQ_LAST_PRESENTATION_STAGE, WEB_IQ_PRESENTATION_DURATION, WEB_IQ_PRESENTATION_STAGES,
   webIqPresentationSourceUpdate, webIqPresentationStageIndex, webIqPresentationStageUpdate,
@@ -41,7 +42,7 @@ export function WebIqDemo() {
   const [selectedEvidence, setSelectedEvidence] = useState<string | null>(null);
   const [evidenceVisit, setEvidenceVisit] = useState(0);
   const view = params.get('view') === 'technical' ? 'technical' : 'executive';
-  const techMode = params.get('tech') === 'search' ? 'search' : params.get('tech') === 'scenario' ? 'scenario' : 'compare';
+  const techMode = params.get('tech') === 'search' ? 'search' : params.get('tech') === 'auto' ? 'auto' : params.get('tech') === 'scenario' ? 'scenario' : 'compare';
   const rawScene = Number(params.get('scene') || 0);
   const sceneIndex = webIqPresentationStageIndex(rawScene);
   const scene = WEB_IQ_PRESENTATION_STAGES[sceneIndex];
@@ -55,10 +56,12 @@ export function WebIqDemo() {
   useEffect(() => { setLanguage(getLocale() === 'ko' ? 'ko' : 'en'); }, []);
   useEffect(() => { setElapsed(0); }, [sceneIndex]);
 
-  const updateUrl = useCallback((updates: Record<string, string>) => {
+  const updateUrl = useCallback((updates: Record<string, string>, history: 'replace' | 'push' = 'replace') => {
     const next = new URLSearchParams(params.toString());
     Object.entries(updates).forEach(([key, value]) => next.set(key, value));
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+    const href = `${pathname}?${next.toString()}`;
+    if (history === 'push') router.push(href, { scroll: false });
+    else router.replace(href, { scroll: false });
   }, [params, pathname, router]);
 
   const goToScene = useCallback((next: number, auto = false) => {
@@ -185,7 +188,7 @@ export function WebIqDemo() {
       <header className="flex flex-col gap-4 border-b border-stroke-divider pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Web IQ</h1>
-          <p className="mt-1 text-sm text-fg-muted">{view === 'executive' ? pick('Use internal stock records and web notices to assess whether priority transport is needed.', '내부 재고와 웹 공지를 함께 검토해 우선 운송이 필요한지 판단합니다.') : pick('Compare the same KB result with an answer that adds public-web evidence.', '같은 KB 결과에 공개 웹 근거를 더해 두 답변을 비교합니다.')}</p>
+          <p className="mt-1 text-sm text-fg-muted">{view === 'executive' ? pick('Microsoft Web IQ helps AI find information on the public web, inspect source content, and use it in answers.', 'Microsoft Web IQ는 AI가 공개 웹에서 자료를 찾고 출처의 내용을 확인해 답변에 활용하도록 돕는 서비스입니다.') : pick('Find web pages with Web Search, look up weather and local times with Auto, or compare answers from your knowledge base and the web.', 'Web Search로 웹 문서를 찾고, Auto로 날씨와 시차를 조회해 보세요. 지식 베이스 답변에 웹 자료를 더해 비교할 수도 있습니다.')}</p>
         </div>
         <div role="group" aria-label={pick('Presentation view', '발표 화면')} className="flex w-fit gap-1 rounded-xl border border-stroke-divider bg-bg-subtle p-1">
           {(['executive', 'technical'] as const).map(mode => (
@@ -198,7 +201,7 @@ export function WebIqDemo() {
 
       {view === 'executive' && <section className="space-y-4" aria-labelledby="web-iq-question">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-subtle">
-          <span>{pick('Illustrative scenario · fictional data', '예시 시나리오 · 가상 데이터')}</span>
+          <span>{pick('Fictional shipment scenario', '가상 화물 시나리오')}</span>
           <Link href="/test" className="text-accent hover:underline">{pick('Try your knowledge base', '내 지식 베이스로 질문하기')}</Link>
         </div>
         <h2 id="web-iq-question" className="max-w-4xl text-xl font-medium leading-relaxed sm:text-2xl">{WEB_IQ_QUESTION[language]}</h2>
@@ -230,6 +233,7 @@ export function WebIqDemo() {
               </div>
               <div className="flex flex-col justify-between gap-5 p-5 sm:p-7">
                 <div>
+                  {sceneIndex === 2 && <p className="mb-3 break-keep text-sm font-semibold text-accent">{pick('Web Search scenario · fictional notice', 'Web Search 활용 예시 · 가상 공지')}</p>}
                   <p className="text-xs font-medium text-accent">{String(sceneIndex + 1).padStart(2, '0')} / 06 · {scene.label[language]}</p>
                   <h3 className="mt-3 break-keep text-xl font-semibold leading-snug sm:text-2xl">{scene.title[language]}</h3>
                   <p className="mt-4 break-keep text-sm leading-7 text-fg-muted">{scene.narration[language]}</p>
@@ -249,6 +253,13 @@ export function WebIqDemo() {
             </div>
             {captions && <p lang="en" className="border-t border-stroke-divider bg-bg-subtle px-5 py-4 text-sm leading-6 text-fg-muted sm:px-7">{scene.narration.en}</p>}
           </section>
+
+          {sceneIndex === 5 && <section className="flex min-w-0 flex-col gap-3 rounded-xl border border-stroke-divider bg-bg-subtle p-5 sm:flex-row sm:items-center sm:justify-between" aria-label={pick('Additional port weather check', '항만 날씨 추가 확인')}>
+            <p className="break-keep text-sm leading-7 text-fg-muted">{pick('Open the separate Auto panel to inspect an example query location before checking weather evidence.', '날씨 근거를 추가로 확인하려면 별도 Auto 패널에서 실제 조회용 예시 위치를 살펴보세요.')}</p>
+            <Button variant="outline" className="min-h-11 h-auto max-w-full shrink-0 whitespace-normal break-keep py-2" onClick={() => { setPlaying(false); updateUrl({ view: 'technical', tech: 'auto' }, 'push'); }}>
+              {pick('Open Web IQ Auto', 'Web IQ Auto 보기')}
+            </Button>
+          </section>}
 
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -278,9 +289,11 @@ export function WebIqDemo() {
       ) : (
         <>
           <div role="group" aria-label={pick('Tech sections', 'Tech 화면')} className="flex flex-wrap gap-2 border-b border-stroke-divider pb-4">
-            {(['compare', 'search', 'scenario'] as const).map(mode => <Button key={mode} variant={techMode === mode ? 'secondary' : 'ghost'} className="min-h-11" aria-pressed={techMode === mode} onClick={() => updateUrl({ tech: mode })}>{mode === 'compare' ? pick('Compare answers', '답변 비교') : mode === 'search' ? pick('Web Search', '웹 검색') : pick('Fictional scenario evidence', '가상 사례 근거')}</Button>)}
+            {(['compare', 'search', 'auto', 'scenario'] as const).map(mode => <Button key={mode} variant={techMode === mode ? 'secondary' : 'ghost'} className="min-h-11 h-auto max-w-full whitespace-normal break-keep py-2" aria-pressed={techMode === mode} onClick={() => {
+              if (techMode !== mode) updateUrl({ tech: mode }, techMode === 'auto' || mode === 'auto' ? 'push' : 'replace');
+            }}>{mode === 'compare' ? pick('Compare answers', '답변 비교') : mode === 'search' ? 'Web Search' : mode === 'auto' ? 'Web IQ Auto' : pick('Fictional scenario evidence', '가상 사례 근거')}</Button>)}
           </div>
-          {techMode === 'compare' ? <WebIqComparisonWorkspace language={language} onWebSearch={() => updateUrl({ tech: 'search' })} /> : techMode === 'search' ? <WebIqLiveSearch language={language} /> : <>
+          {techMode === 'compare' ? <WebIqComparisonWorkspace language={language} onWebSearch={() => updateUrl({ tech: 'search' })} /> : techMode === 'search' ? <WebIqLiveSearch language={language} /> : techMode === 'auto' ? <WebIqAutoWeather language={language} /> : <>
           <p className="text-xs text-fg-muted">{pick('Illustrative scenario · fictional data', '예시 시나리오 · 가상 데이터')}</p>
           {sourceButtons}
           <section className="flex flex-col gap-3 rounded-xl border border-stroke-divider bg-bg-subtle p-5 sm:flex-row sm:items-center sm:justify-between">

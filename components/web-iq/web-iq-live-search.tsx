@@ -17,8 +17,8 @@ import { cn } from '@/lib/utils';
 
 const copy = {
   en: {
-    title: 'Try searching real public-web sources',
-    description: 'Use Microsoft Web IQ to find notices and web pages, then check the evidence behind a decision.',
+    title: 'Microsoft Web IQ · Web Search',
+    description: 'Find relevant information and sources on the web. For transport, check notices and operating information.',
     boundary: 'Results from this live search do not automatically update the fictional shipment recommendations above.',
     reviewTitle: 'Three checks before using a result',
     routeTitle: 'Does it affect your route?',
@@ -26,7 +26,7 @@ const copy = {
     dateTitle: 'When does the restriction apply?',
     dateHint: 'Check the notice date and restriction period in the original. Crawl and retrieval times are different.',
     sourceTitle: 'Who published the notice?',
-    sourceHint: 'Open a result title to check the original page and the issuing organization.',
+    sourceHint: 'Use “Open original page” to check the notice on the publisher’s site.',
     combinedTitle: 'Use web evidence with your own knowledge base',
     combinedHint: 'In Foundry IQ, choose a knowledge base, then select “Internal + Web IQ” before asking your question.',
     combinedLink: 'Ask with your KB and Web IQ',
@@ -42,8 +42,8 @@ const copy = {
     characters: 'characters',
     queryHint: 'Only the selected or entered question is sent to Web IQ. The example shipment records are not sent.',
     limits: 'Live search allows up to 100 requests per IP in the last 2 minutes and has a daily allowance shared by all visitors. The example scenario remains available.',
-    submit: 'Search the web',
-    searching: 'Searching…',
+    submit: 'Search with Web Search',
+    searching: 'Searching with Web Search…',
     cancel: 'Cancel search',
     cancelled: 'Search cancelled.',
     unavailable: 'Live search is not configured on this server.',
@@ -61,15 +61,16 @@ const copy = {
     results: 'Web results',
     summary: 'Search summary',
     inspect: 'Inspect relevant passage',
+    original: 'Open original page',
     searched: 'Query',
     retrieved: 'Retrieved',
     crawled: 'Crawled',
     updated: 'Last updated',
-    docs: 'Web IQ API documentation',
+    docs: 'Web Search API documentation',
   },
   ko: {
-    title: '실제 공개 웹 자료도 찾아보세요',
-    description: 'Microsoft Web IQ로 공지와 웹 페이지를 찾아, 판단에 필요한 근거를 확인합니다.',
+    title: 'Microsoft Web IQ · Web Search',
+    description: '웹에서 관련 자료와 출처를 찾습니다. 운송 예시에서는 공지와 운영 정보를 확인합니다.',
     boundary: '여기서 조회한 실제 웹 자료는 위 가상 화물의 대응 제안에 자동으로 반영되지 않습니다.',
     reviewTitle: '검색 결과를 활용하기 전에 세 가지를 확인하세요',
     routeTitle: '우리 경로와 겹치나요?',
@@ -77,7 +78,7 @@ const copy = {
     dateTitle: '언제부터 언제까지인가요?',
     dateHint: '원문의 공지일과 통제 기간을 확인하세요. 수집·조회 시각과는 다릅니다.',
     sourceTitle: '누가 낸 공지인가요?',
-    sourceHint: '결과 제목을 눌러 원문과 공지를 낸 기관을 확인하세요.',
+    sourceHint: '‘원문 열기’로 발행처 사이트에서 공지를 확인하세요.',
     combinedTitle: '내 지식 베이스에 웹 근거를 더하려면',
     combinedHint: 'Foundry IQ에서 지식 베이스를 고른 뒤, ‘내부 지식 + Web IQ’를 선택하고 질문하세요.',
     combinedLink: '내 지식 베이스와 웹을 함께 조회하기',
@@ -93,8 +94,8 @@ const copy = {
     characters: '자',
     queryHint: '선택하거나 입력한 질문만 Web IQ로 전달합니다. 예시 화물 자료는 전송하지 않습니다.',
     limits: '실제 검색은 같은 IP에서 최근 2분간 최대 100회까지 이용할 수 있으며, 모든 방문자가 하루 체험 한도를 함께 사용합니다. 예시 시나리오는 계속 이용할 수 있습니다.',
-    submit: '웹 검색',
-    searching: '검색 중…',
+    submit: 'Web Search로 검색',
+    searching: 'Web Search로 검색 중…',
     cancel: '검색 취소',
     cancelled: '검색을 취소했습니다.',
     unavailable: '이 서버에 실제 웹 검색이 설정되지 않았습니다.',
@@ -112,11 +113,12 @@ const copy = {
     results: '웹 검색 결과',
     summary: '검색 요약',
     inspect: '관련 본문 확인',
+    original: '원문 열기',
     searched: '검색어',
     retrieved: '조회 시각',
     crawled: '수집 시각',
     updated: '최종 갱신',
-    docs: 'Web IQ API 문서',
+    docs: 'Web Search API 문서',
   },
 };
 
@@ -359,11 +361,11 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
   const safeResults = visibleResult?.results.filter((item) => safeResultUrl(item.url)) ?? [];
 
   return (
-    <section aria-labelledby={`${id}-title`} className="rounded-2xl border border-stroke-divider bg-bg-card p-5 sm:p-6">
+    <section aria-labelledby={`${id}-title`} className="min-w-0 rounded-2xl border border-stroke-divider bg-bg-card p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 id={`${id}-title`} className="text-lg font-semibold text-fg-default">{text.title}</h2>
-          <p className="mt-1 text-sm text-fg-muted">{text.description}</p>
+        <div className="min-w-0 flex-1">
+          <h2 id={`${id}-title`} className="break-keep text-lg font-semibold text-fg-default">{text.title}</h2>
+          <p className="mt-1 break-keep text-sm leading-6 text-fg-muted">{text.description}</p>
         </div>
         <a href={WEB_IQ_SEARCH_DOCUMENTATION} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:underline">
           {text.docs}<ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
@@ -435,7 +437,7 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
             onTokenChange={setTurnstileToken} resetKey={botResetKey} />
         )}
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={configuration !== 'configured' || !validQuery || !turnstileToken || loading || remainingSeconds > 0}>
+          <Button type="submit" className="h-auto min-h-11 max-w-full whitespace-normal break-keep py-2" disabled={configuration !== 'configured' || !validQuery || !turnstileToken || loading || remainingSeconds > 0}>
             {loading ? <LoaderCircle className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" /> : <Search className="h-4 w-4" aria-hidden="true" />}
             {loading ? text.searching : text.submit}
           </Button>
@@ -463,11 +465,9 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
           {safeResults.map((item, index) => (
             <article key={item.url} className="rounded-xl border border-stroke-divider p-4">
               <p className="mb-2 text-xs font-semibold text-accent">{item.sourceId || `W${index + 1}`} · {new URL(item.url).hostname}</p>
-              <a href={safeResultUrl(item.url)!} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-full items-start gap-2 break-words text-sm font-semibold text-accent hover:underline">
-                {item.title}<ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              </a>
+              <h4 className="break-words text-sm font-semibold">{item.title}</h4>
               <p className="mt-1 break-all text-[11px] text-fg-subtle">{item.url}</p>
-              <h4 className="mt-3 text-xs font-medium text-fg-default">{text.summary}</h4>
+              <h5 className="mt-3 text-xs font-medium text-fg-default">{text.summary}</h5>
               <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-fg-muted">{item.content.length > 1500 ? `${item.content.slice(0, 1500)}…` : item.content}</p>
               {(item.crawledAt || item.lastUpdatedAt) && (
                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-fg-subtle">
@@ -475,7 +475,12 @@ export function WebIqLiveSearch({ language }: { language: 'en' | 'ko' }) {
                   {item.lastUpdatedAt && <span>{text.updated}: {item.lastUpdatedAt}</span>}
                 </div>
               )}
-              <Button type="button" variant="outline" className="mt-4 min-h-11" onClick={() => setSelectedSource(item)}>{text.inspect}</Button>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Button type="button" variant="outline" className="min-h-11" onClick={() => setSelectedSource(item)}>{text.inspect}</Button>
+                <a href={safeResultUrl(item.url)!} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 text-sm text-accent hover:underline">
+                  {text.original}<ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                </a>
+              </div>
             </article>
           ))}
         </div>

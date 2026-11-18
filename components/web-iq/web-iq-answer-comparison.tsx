@@ -30,11 +30,26 @@ function CitedText({ text, ids, onSelect, language }: { text: string; ids: strin
   })}</div>;
 }
 
+function WebAnswerHeader({ language }: { language: 'ko' | 'en' }) {
+  const ko = language === 'ko';
+  return <header className="space-y-3 border-b border-stroke-divider p-5">
+    <h3 className="break-keep text-base font-semibold">Microsoft Web IQ · Web Search + Azure OpenAI</h3>
+    <p className="font-medium">{ko ? '웹 근거를 더한 답변' : 'Answer with web evidence'}</p>
+    <p className="break-keep text-sm leading-6 text-fg-muted">{ko
+      ? 'Web Search가 웹 근거를 찾고, Azure OpenAI가 KB 자료와 함께 추가 답변을 생성합니다.'
+      : 'Web Search finds web evidence. Azure OpenAI combines it with KB material to generate the additional answer.'}</p>
+    <WebIqServiceLinks features={['web-search', 'answer-synthesis']} locale={language} compact />
+  </header>;
+}
+
 export function WebIqAnswerComparison({ run, language, onWebSearch }: { run: ComparisonRun | null; language: 'ko' | 'en'; onWebSearch?: () => void }) {
   const [selected, setSelected] = useState<WebIqSearchResult | null>(null);
   const ko = language === 'ko';
   const pick = (en: string, korean: string) => ko ? korean : en;
-  if (!run) return <p className="rounded-xl border border-dashed border-stroke-divider p-6 text-sm text-fg-muted">{pick('Choose a question and knowledge base to compare the answers.', '질문과 지식 베이스를 고르면 두 답변을 비교할 수 있습니다.')}</p>;
+  if (!run) return <section className="min-w-0 rounded-xl border border-dashed border-stroke-divider" aria-label={pick('Answer comparison', '답변 비교')}>
+    <WebAnswerHeader language={language} />
+    <p className="p-5 text-sm text-fg-muted">{pick('Run the example to inspect the KB answer and the additional answer.', '예시를 실행하면 KB 답변과 웹 근거를 더한 추가 답변을 확인할 수 있습니다.')}</p>
+  </section>;
   const snapshot = run.internalTraceResponse;
   const context = snapshot ? buildKbWebContext(snapshot) : null;
   const combined = run.combined;
@@ -64,14 +79,14 @@ export function WebIqAnswerComparison({ run, language, onWebSearch }: { run: Com
     </div>
     <div className="grid min-w-0 gap-5 min-[1280px]:grid-cols-2">
       <article className="min-w-0 rounded-xl border border-stroke-divider bg-bg-card">
-        <header className="border-b border-stroke-divider p-5"><h3 className="font-semibold">{context?.outputKind === 'extractive' ? pick('Internal search results', '내부 검색 결과') : pick('Knowledge-base answer', '지식 베이스 답변')}</h3><p className="mt-1 text-xs text-fg-muted">Azure AI Search · {pick('Original KB output', '원본 KB 출력')}</p></header>
+        <header className="space-y-3 border-b border-stroke-divider p-5"><h3 className="font-semibold">{context?.outputKind === 'extractive' ? pick('Internal search results', '내부 검색 결과') : pick('Knowledge-base answer', '지식 베이스 답변')}</h3><p className="text-sm text-fg-muted">Azure AI Search · {pick('Original KB output', '원본 KB 출력')}</p><WebIqServiceLinks features={['kb-retrieval']} locale={language} compact /></header>
         <div className="space-y-4 p-5">
           {internalText ? <CitedText language={language} text={internalText} ids={(snapshot?.references || []).map(ref => ref.id)} onSelect={id => focusSource(id, 'kb')} /> : <p className="text-sm leading-7 text-fg-muted">{snapshot ? context?.usable ? pick('Retrieved material is available, but no answer was returned.', '검색 자료는 받았지만 답변은 반환되지 않았습니다.') : pick('No usable KB answer or citable material was found.', '이 질문에 사용할 KB 답변이나 근거를 찾지 못했습니다.') : run.state === 'failed' ? pick('The KB request failed; no KB result was received.', 'KB 요청이 실패해 내부 결과를 받지 못했습니다.') : run.state === 'cancelled' ? pick('The request was cancelled before a KB result was received.', '내부 결과를 받기 전에 요청을 취소했습니다.') : pick('The KB result will appear here.', 'KB 결과가 여기에 표시됩니다.')}</p>}
           {snapshot?.references?.length > 0 && <details><summary className="min-h-11 cursor-pointer text-sm text-accent">{pick('View retrieved material', '검색된 자료 보기')} ({snapshot.references.length})</summary><ul className="space-y-3">{snapshot.references.map((ref, index) => <li key={`${ref.id}-${index}`} id={`${run.runId}-kb-${ref.id}`} tabIndex={-1} className="break-words rounded-lg bg-bg-subtle p-3 text-xs leading-6 focus-visible:ring-2 focus-visible:ring-accent"><strong>[{ref.id}] {String(ref.sourceData?.title || ('title' in ref ? ref.title : '') || ('docKey' in ref ? ref.docKey : '') || ref.type)}</strong><pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap font-sans">{String(ref.sourceData?.content || ref.sourceData?.text || ref.sourceData?.snippet || JSON.stringify(ref.sourceData || {}))}</pre></li>)}</ul></details>}
         </div>
       </article>
       <article className="min-w-0 rounded-xl border border-stroke-divider border-t-accent bg-bg-card">
-        <header className="border-b border-stroke-divider p-5"><h3 className="font-semibold">{pick('Answer with web evidence', '웹 근거를 더한 답변')}</h3><p className="mt-1 text-xs text-fg-muted">Web IQ Web Search + Azure OpenAI · {pick('Additional synthesis path', '추가 합성 경로')}</p></header>
+        <WebAnswerHeader language={language} />
         <div className="space-y-4 p-5">
           {combined ? <CitedText language={language} text={combined.answer} ids={combined.sources.map((_, index) => String(index))} onSelect={id => focusSource(id, 'combined')} /> : <p className="text-sm leading-7 text-fg-muted">{run.state === 'blocked_empty' ? pick('No usable KB answer or citable material was found. Web search and additional synthesis were not started.', '사용할 KB 답변이나 근거가 없어 웹 검색과 추가 답변 생성을 시작하지 않았습니다.') : !snapshot && (run.state === 'failed' || run.state === 'cancelled') ? pick('No KB result was received. Web search and additional synthesis were not started.', '내부 결과를 받지 못해 웹 검색과 추가 답변 생성을 시작하지 않았습니다.') : snapshot && (run.state === 'partial' || run.state === 'cancelled') ? pick('The KB result is preserved. The web-supported answer could not be completed.', 'KB 결과는 보존됩니다. 웹 포함 답변은 완성하지 못했습니다.') : pick('The additional answer will appear here.', '웹 근거를 더한 답변이 여기에 표시됩니다.')}</p>}
           {run.state === 'blocked_empty' && onWebSearch && <Button variant="outline" onClick={onWebSearch}>{pick('Check with Web Search', '웹 검색으로 확인')}</Button>}
@@ -81,7 +96,10 @@ export function WebIqAnswerComparison({ run, language, onWebSearch }: { run: Com
       </article>
     </div>
     {snapshot && <p className="text-xs leading-6 text-fg-muted">{pick('Same question · same KB snapshot. This single run is a workflow observation; generation conditions differ and this is not a controlled quality evaluation. KB context is client supplied, not independently verified by the answer server.', '같은 질문 · 같은 KB 조회 자료. 한 번의 실행 비교이며, 답변 생성 조건이 달라 정식 품질 평가로 볼 수 없습니다. KB 문맥은 클라이언트가 전달하며 추가 답변 서버가 직접 검증한 자료가 아닙니다.')}</p>}
-    {combined && <section className="space-y-3" aria-label={pick('Actual sources', '실제 출처')}><h3 className="font-medium">{pick('Cited evidence and retrieved web pages', '인용 근거와 검색한 웹 자료')}</h3>{combined.sources.map((source, index) => {
+    {combined && <section className="space-y-3" aria-label={pick('Actual sources', '실제 출처')}>
+      <h3 className="font-medium">{pick('Cited evidence and retrieved web pages', '인용 근거와 검색한 웹 자료')}</h3>
+      {combined.sources.some(source => source.origin === 'web') && <p className="text-sm leading-6 text-fg-muted">{pick('Inspect relevant passage retrieves an excerpt through Browse. Open original page takes you to the publisher’s site.', '‘관련 본문 확인’은 Browse로 발췌를 조회합니다. ‘원문 열기’는 발행처 사이트로 이동합니다.')}</p>}
+      {combined.sources.map((source, index) => {
       const cited = combined.answer.includes(`[ref_id:${index}]`);
       const web = source.origin === 'web' ? combined.webSearch.results.find(item => item.url === source.url) : null;
       return <article key={source.id} id={`${run.runId}-combined-${index}`} tabIndex={-1} className="min-w-0 rounded-xl border border-stroke-divider p-4 focus-visible:ring-2 focus-visible:ring-accent"><div className="flex flex-wrap items-center gap-2 text-xs"><span className="text-accent">[{index}] {source.id} · {source.origin === 'web' ? 'Web' : 'KB'}</span><span className="text-fg-muted">{cited ? pick('Cited in this answer', '답변에서 인용됨') : pick('Retrieved · not cited', '검색됨 · 답변 인용 없음')}</span></div><p className="mt-2 break-words text-sm font-medium">{source.title}</p><p className="mt-2 text-xs text-fg-muted">{pick('Search / supplied passage', '검색·전달된 발췌')}</p><details className="mt-2 text-sm"><summary className="min-h-11 cursor-pointer">{pick('Read passage', '발췌 보기')}</summary><p className="whitespace-pre-wrap break-words text-sm leading-7">{source.content}</p></details>{web && <div className="flex flex-wrap items-center gap-3"><Button variant="outline" onClick={() => setSelected(web)}>{pick('Inspect relevant passage', '관련 본문 확인')}</Button><a href={web.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center break-all text-xs text-accent">{pick('Open original page ↗', '원문 열기 ↗')}</a></div>}</article>;
@@ -100,7 +118,6 @@ export function WebIqAnswerComparison({ run, language, onWebSearch }: { run: Com
       {run.errorCode && <p>{pick('Error code', '오류 코드')}: {run.errorCode} · {pick('Stage', '단계')}: {run.errorStage === 'kb' ? pick('KB retrieval', 'KB 조회') : run.errorStage === 'web' ? pick('Web evidence', '웹 근거 조회') : run.errorStage === 'synthesis' ? pick('Additional synthesis', '추가 답변 생성') : pick('Not returned', '미제공')}{run.errorStatus !== undefined ? ` · HTTP ${run.errorStatus}` : ''}</p>}
       {(run.errorUpstreamStatus !== undefined || run.errorProviderCode) && <p>{run.errorUpstreamStatus !== undefined ? `${pick('Upstream HTTP status', '상위 서비스 HTTP 상태')}: ${run.errorUpstreamStatus}` : ''}{run.errorProviderCode ? ` · ${pick('Provider code', '서비스 오류 코드')}: ${run.errorProviderCode}` : ''}</p>}
     </details>
-    <WebIqServiceLinks features={['kb-retrieval', 'web-search', 'answer-synthesis']} locale={language} />
     {selected && combined && <WebIqSourceDetail key={`${run.runId}-${selected.sourceId || selected.url}`} source={selected} query={combined.webSearch.query} language={language} onClose={() => setSelected(null)} />}
   </section>;
 }
