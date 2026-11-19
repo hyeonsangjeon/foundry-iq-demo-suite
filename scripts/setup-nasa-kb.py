@@ -16,7 +16,7 @@ Notes:
   - The full earth_at_night_508.pdf (39MB) exceeds the 16MB indexer limit on
     the current service tier. Fallback uses per-page PDFs from:
     https://github.com/Azure-Samples/azure-search-sample-data/tree/main/nasa-e-book/earth_book_2019_text_pages
-  - Embeddings: text-embedding-3-small (1536 dimensions) via Azure OpenAI
+  - Embeddings: text-embedding-3-small (1536 dimensions) in Microsoft Foundry
   - KB model: gpt-4o with answerSynthesis output mode
 """
 

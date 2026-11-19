@@ -85,7 +85,7 @@ const envRows = [
   ['AZURE_SEARCH_API_VERSION', 'Required', 'Match the configured demo request version. MCP/Fabric scripts use 2026-05-01-preview; latest documented preview: 2026-08-01-preview'],
   ['AZURE_SEARCH_USE_RBAC', 'Optional', 'true for Search RBAC, false for api-key mode'],
   ['AZURE_TENANT_ID / AZURE_CLIENT_ID / AZURE_CLIENT_SECRET', 'Required for RBAC', 'Service principal used for Search bearer token'],
-  ['NEXT_PUBLIC_AZURE_OPENAI_ENDPOINT', 'Required for KB model config', 'Azure OpenAI resource endpoint'],
+  ['NEXT_PUBLIC_AZURE_OPENAI_ENDPOINT', 'Required for KB model config', 'Microsoft Foundry resource endpoint for the KB model'],
   ['SP_*', 'SharePoint only', 'Required only for SharePoint live setup'],
 ]
 

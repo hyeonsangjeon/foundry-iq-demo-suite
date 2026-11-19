@@ -63,6 +63,7 @@ const urls = {
   S136: 'https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-blob',
   S137: 'https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-web',
   S138: 'https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-sharepoint-remote',
+  S139: 'https://learn.microsoft.com/en-us/azure/foundry/concepts/foundry-models-overview',
 } as const;
 export const SERVICE_DOCUMENT_URLS = urls;
 
@@ -82,7 +83,7 @@ export const SERVICE_DOCUMENT_CHECKS = {
   S112: {"httpStatus": 200, "title": "Knowledge Retrieval - Retrieve - REST API (Azure Search Service) | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/rest/api/searchservice/knowledge-retrieval/retrieve?view=rest-searchservice-2026-04-01", "checkedAt": "2026-11-12"},
   S113: {"httpStatus": 200, "title": "Pricing - Foundry IQ | Microsoft Azure", "finalUrl": "https://azure.microsoft.com/en-us/pricing/details/search/", "checkedAt": "2026-11-12"},
   S114: {"httpStatus": 200, "title": "Foundry Models sold by Azure - Microsoft Foundry | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure", "checkedAt": "2026-11-12"},
-  S115: {"httpStatus": 200, "title": "Microsoft Foundry REST Reference - Azure OpenAI - Chat | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/rest/api/microsoft-foundry/azureopenai/chat", "checkedAt": "2026-11-12"},
+  S115: {"httpStatus": 200, "title": "Microsoft Foundry REST Reference - Azure OpenAI - Chat | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/rest/api/microsoft-foundry/azureopenai/chat", "checkedAt": "2026-11-19"},
   S116: {"httpStatus": 200, "title": "Azure OpenAI Service - Pricing | Microsoft Azure", "finalUrl": "https://azure.microsoft.com/en-us/pricing/details/azure-openai/", "checkedAt": "2026-11-12"},
   S117: {"httpStatus": 200, "title": "Microsoft Learn MCP Server overview | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/training/support/mcp", "checkedAt": "2026-11-12"},
   S118: {"httpStatus": 200, "title": "Microsoft Learn MCP Server developer reference documentation | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/training/support/mcp-developer-reference", "checkedAt": "2026-11-12"},
@@ -106,6 +107,7 @@ export const SERVICE_DOCUMENT_CHECKS = {
   S136: {"httpStatus": 200, "title": "Create a Blob Knowledge Source for Agentic Retrieval - Azure AI Search | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-blob", "checkedAt": "2026-11-12"},
   S137: {"httpStatus": 200, "title": "Create Web Knowledge Source for Agentic Retrieval - Azure AI Search | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-web", "checkedAt": "2026-11-12"},
   S138: {"httpStatus": 200, "title": "Create a SharePoint (Remote) Knowledge Source - Azure AI Search | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/azure/search/agentic-knowledge-source-how-to-sharepoint-remote", "checkedAt": "2026-11-12"},
+  S139: {"httpStatus": 200, "title": "Microsoft Foundry Models overview - Microsoft Foundry | Microsoft Learn", "finalUrl": "https://learn.microsoft.com/en-us/azure/foundry/concepts/foundry-models-overview", "checkedAt": "2026-11-19"},
 } as const;
 
 type SourceId = keyof typeof urls;
@@ -131,7 +133,13 @@ export const WEB_IQ_SERVICE_REFERENCES: Record<ServiceFeatureId, ServiceReferenc
   auto: { ...reference('webiq', 'Microsoft Web IQ', 'Auto', { en: 'Returns typed evidence in one call. This app keeps requests off until its access and shared budget controls are ready.', ko: '한 번의 호출로 구조화된 근거를 가져옵니다. 이 앱은 접근과 공유 예산 제어를 준비할 때까지 조회를 비활성으로 유지합니다.' }, ga, 'S101', 'S105', 'S105', 'S107', ['S106', 'S108']), statusCheckedAt: '2026-11-17' },
   weather: { ...reference('webiq', 'Microsoft Web IQ', 'Auto weather evidence', { en: 'Weather evidence inside Auto. App configuration and actual weather evidence require separate verification.', ko: 'Auto 안의 날씨 근거입니다. 앱 구성과 실제 날씨 근거는 각각 확인해야 합니다.' }, ga, 'S101', 'S105', 'S105', 'S107', ['S106']), statusCheckedAt: '2026-11-17' },
   'kb-retrieval': reference('azure-ai-search', 'Azure AI Search', 'Knowledge retrieval', { en: 'Retrieves knowledge-base content, citations and activity. Minimal retrieval and preview synthesis have different contracts.', ko: '지식 베이스 자료·인용·조회 과정을 가져옵니다. 최소 검색과 미리 보기 답변 합성의 계약은 다릅니다.' }, versioned, 'S109', 'S111', 'S112', 'S113', ['S110']),
-  'answer-synthesis': reference('azure-openai', 'Azure OpenAI', 'Additional answer synthesis', { en: 'Generates the additional answer from KB context and Web IQ evidence using an Azure-hosted model.', ko: 'Azure에서 제공하는 모델로 KB 자료와 웹 근거를 종합해 추가 답변을 생성합니다.' }, versioned, 'S114', 'S115', 'S115', 'S116'),
+  'answer-synthesis': {
+    ...reference('foundry-models', 'Microsoft Foundry Models', 'Chat Completions', {
+      en: 'The app sends KB material and Web IQ search results to a model deployed in Microsoft Foundry to write the second answer.',
+      ko: '앱이 지식 베이스 자료와 Web IQ 검색 결과를 Microsoft Foundry에 배포한 모델로 보내 두 번째 답변을 작성합니다.',
+    }, versioned, 'S139', 'S115', 'S115', 'S116', ['S114']),
+    statusCheckedAt: '2026-11-19',
+  },
   'learn-mcp': reference('microsoft-learn-mcp', 'Microsoft Learn MCP Server', 'Documentation tools', { en: 'Provides public Learn documentation and code examples. Sample content is separate from a current tool call.', ko: '공개 Learn 문서와 코드 예제를 제공합니다. 예시 자료와 현재 도구 호출은 구분합니다.' }, { en: 'Public documentation service', ko: '공개 문서 서비스' }, 'S117', 'S118', 'S118', 'S117'),
   'search-mcp': reference('azure-ai-search', 'Azure AI Search', 'MCP Server knowledge source', { en: 'Invokes a remote MCP server during knowledge retrieval; separate from the Learn server itself.', ko: '지식 검색 과정에서 원격 MCP 서버를 호출합니다. Learn 서버 자체와는 별도 구성입니다.' }, preview, 'S109', 'S119', 'S119', 'S113'),
   'graph-files': reference('microsoft-graph', 'Microsoft Graph', 'SharePoint file listing', { en: 'Lists files in a site drive when configured. Listing alone does not prove retrieval ACL enforcement.', ko: '설정된 사이트 드라이브의 파일을 나열합니다. 목록 조회만으로 검색 접근 권한 보장을 입증하지는 않습니다.' }, { en: 'Graph v1.0', ko: 'Graph v1.0' }, 'S120', 'S121', 'S121', 'S121'),

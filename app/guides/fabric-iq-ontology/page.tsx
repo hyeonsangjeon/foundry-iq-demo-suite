@@ -97,7 +97,7 @@ export default function FabricIqOntologyGuidePage() {
             { title: 'ontology ID', description: 'Fabric ontology GUID.', meta: '<fabric-ontology-guid>' },
             { title: 'KS name', description: 'Unique Knowledge Source name.', meta: 'airline-ontology-ks' },
             { title: 'KB name', description: 'Knowledge Base that attaches the Fabric KS.', meta: 'airline-fabric-kb' },
-            { title: 'model deployment', description: 'Azure OpenAI deployment used by the KB.', meta: 'gpt-4o' },
+            { title: 'model deployment', description: 'Model deployed in Microsoft Foundry for this KB.', meta: 'gpt-4o' },
             { title: 'authorization strategy', description: 'Configure Search authentication and the Fabric end-user token separately.' },
           ]}
         />

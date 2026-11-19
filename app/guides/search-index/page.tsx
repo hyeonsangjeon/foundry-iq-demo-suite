@@ -102,7 +102,7 @@ export default function SearchIndexGuidePage() {
             { title: 'knowledge source name', description: 'Unique KS name in the Search service.', meta: 'airline-policy-ks' },
             { title: 'index name', description: 'Existing Azure AI Search index name.', meta: 'airline-policy-index' },
             { title: 'knowledge base name', description: 'KB that will attach to the KS.', meta: 'airline-ops-kb' },
-            { title: 'model deployment', description: 'Azure OpenAI deployment used by the KB.', meta: 'gpt-4o' },
+            { title: 'model deployment', description: 'Model deployed in Microsoft Foundry for this KB.', meta: 'gpt-4o' },
             { title: 'auth mode', description: 'API key or Search RBAC, controlled by environment variables.', meta: 'AZURE_SEARCH_USE_RBAC' },
           ]}
         />
@@ -111,7 +111,7 @@ export default function SearchIndexGuidePage() {
       <GuideSection title="Steps">
         <GuideSteps
           steps={[
-            'Run check and confirm Search endpoint, API version, auth mode, and Azure OpenAI endpoint are set.',
+            'Run check and confirm Search endpoint, API version, auth mode, and Microsoft Foundry model endpoint are set.',
             'Create a searchIndex Knowledge Source that points at the existing index.',
             'Create a Knowledge Base and attach the Knowledge Source.',
             'Run retrieve with a question that should be answerable from the indexed data.',

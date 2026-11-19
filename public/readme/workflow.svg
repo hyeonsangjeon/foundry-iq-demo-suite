@@ -52,8 +52,8 @@
   <rect x="854" y="155" width="160" height="135" class="hot"/>
   <text x="878" y="190" class="num">05</text>
   <text x="878" y="220" class="label">Synthesize</text>
-  <text x="878" y="248" class="body">Azure OpenAI produces</text>
-  <text x="878" y="268" class="body">a grounded answer.</text>
+  <text x="878" y="248" class="body">Microsoft Foundry</text>
+  <text x="878" y="268" class="body">returns a cited answer.</text>
 
   <rect x="1054" y="155" width="110" height="135" class="step"/>
   <text x="1078" y="190" class="num">06</text>

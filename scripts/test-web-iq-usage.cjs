@@ -35,9 +35,10 @@ function harness(options = {}) {
     TURNSTILE_SITE_KEY: '0x4AAAAAAAOfflineSiteKey',
     TURNSTILE_SECRET_KEY: '0x4AAAAAAAOfflineSecretKey',
     TURNSTILE_ALLOWED_HOSTNAMES: 'public-demo.example',
-    WEBIQ_ANSWER_PRICING_MODEL: 'gpt-4o-2024-11-20',
-    WEBIQ_ANSWER_DEPLOYMENT: 'offline-answer',
-    AZURE_OPENAI_ENDPOINT: 'https://offline-model.example',
+    WEBIQ_ANSWER_PRICING_MODEL: 'gpt-5.4-mini-2026-03-17',
+    WEBIQ_ANSWER_DEPLOYMENT: 'gpt-5.4-mini',
+    WEBIQ_FOUNDRY_ENDPOINT: 'https://offline-model.services.ai.azure.com/',
+    AZURE_OPENAI_ENDPOINT: 'https://unused.openai.azure.com',
     AZURE_OPENAI_API_KEY: 'offline-fake-key',
     ...options.env,
   };
@@ -53,11 +54,15 @@ function harness(options = {}) {
     webResults: [{ title: 'Official port notice', url: 'https://port.example/notice', content: 'The access road is closed.' }],
   };
   const completion = options.completion ?? {
-    model: 'gpt-4o-2024-11-20',
+    model: 'gpt-5.4-mini-2026-03-17',
     usage: { prompt_tokens: 1000, completion_tokens: 50 },
     choices: [{ finish_reason: 'stop', message: { content: 'Internal inventory is limited [I1]. Check the road closure [W1].' } }],
   };
-  const tokenManager = { getToken: async () => { events.push('model-auth'); return 'offline-fake-token'; } };
+  const tokenManager = { getToken: async scope => {
+    assert.equal(scope, 'https://ai.azure.com/.default');
+    events.push('model-auth');
+    return 'offline-fake-token';
+  } };
   const auth = {
     isWebIqConfigured: () => options.configured !== false,
     getWebIqRequestAuth: async () => {
@@ -87,7 +92,7 @@ function harness(options = {}) {
       } : options.botPayload;
       return OfflineResponse.json(payload, { status: options.botStatus || 200 });
     }
-    const destination = url === webUrl ? 'web' : url === 'https://offline-model.example/openai/v1/chat/completions' ? 'model' : null;
+    const destination = url === webUrl ? 'web' : url === 'https://offline-model.services.ai.azure.com/openai/v1/chat/completions' ? 'model' : null;
     assert.ok(destination, `Unapproved outbound URL: ${url}`);
     events.push(destination);
     requests.push({ destination, body: JSON.parse(init.body), init });
@@ -98,6 +103,8 @@ function harness(options = {}) {
       if (options.webThrows) throw new Error('Ambiguous upstream network failure');
       return OfflineResponse.json(webPayload, { status: options.webStatus || 200 });
     }
+    assert.equal(new Headers(init.headers).get('Authorization'), 'Bearer offline-fake-token');
+    assert.equal(new Headers(init.headers).has('api-key'), false);
     if (options.modelThrows) throw new Error('Ambiguous model network failure');
     return OfflineResponse.json(completion, { status: options.modelStatus || 200 });
   };
@@ -422,8 +429,8 @@ test('answer: verified model usage settles once at conservative budget rates', a
   assert.equal(h.reservations[0].amount, 421000);
   assert.equal(h.settlements.length, 1);
   assert.equal(h.settlements[0].reservation, h.reservations[0].reservation);
-  assert.equal(h.settlements[0].amount, 10600);
-  assert.equal(h.spent, 10600);
+  assert.equal(h.settlements[0].amount, 8170);
+  assert.equal(h.spent, 8170);
   assert.deepEqual(paidEvents(h), ['web', 'model']);
   assert.ok(h.events.indexOf('bot-check') < h.events.indexOf('auth'));
   assert.ok(h.events.indexOf('bot-check') < h.events.indexOf('reserve'));
@@ -433,8 +440,9 @@ test('answer: verified model usage settles once at conservative budget rates', a
   assert.equal(Object.hasOwn(webRequest, 'internalAnswer'), false);
   assert.equal(Object.hasOwn(webRequest, 'sources'), false);
   const modelRequest = h.requests.find(request => request.destination === 'model').body;
+  assert.equal(modelRequest.reasoning_effort, 'low');
   assert.equal(modelRequest.max_completion_tokens, 2500);
-  assert.equal(modelRequest.model, 'offline-answer');
+  assert.equal(modelRequest.model, 'gpt-5.4-mini');
 });
 
 test('questions: only a matched preset determines the answer language', () => {
@@ -486,7 +494,7 @@ for (const [language, instruction] of [['en', 'English'], ['ko', 'Korean (한국
 for (const [name, extra] of [
   ['missing usage', {}],
   ['unknown model', { model: 'gpt-different', usage: { prompt_tokens: 1000, completion_tokens: 50 } }],
-  ['impossible output usage', { model: 'gpt-4o-2024-11-20', usage: { prompt_tokens: 1000, completion_tokens: 2501 } }],
+  ['impossible output usage', { model: 'gpt-5.4-mini-2026-03-17', usage: { prompt_tokens: 1000, completion_tokens: 2501 } }],
 ]) {
   test(`answer: ${name} retains the full reservation`, async () => {
     const h = harness({ completion: { ...extra, choices: [{ finish_reason: 'stop', message: { content: 'Road closure [W1].' } }] } });
@@ -526,6 +534,30 @@ test('answer: model failure retains full reservation and does not retry', async 
   assert.deepEqual(paidEvents(h), ['web', 'model']);
 });
 
+test('answer: only the dedicated Foundry inference host can receive a token or start a paid call', async () => {
+  for (const endpoint of ['', 'https://unused.openai.azure.com', 'http://offline-model.services.ai.azure.com',
+    'https://offline-model.services.ai.azure.com.invalid', 'https://offline-model.services.ai.azure.com/api/projects/demo',
+    'https://user@offline-model.services.ai.azure.com']) {
+    const h = harness({ env: { WEBIQ_FOUNDRY_ENDPOINT: endpoint } });
+    const readiness = await (await h.routes.answer.GET(h.getRequest('answer'))).json();
+    assert.equal(readiness.synthesisConfigured, false);
+    const response = await h.routes.answer.POST(h.request('answer'));
+    assert.equal(response.status, 503);
+    assert.deepEqual(h.events, []);
+  }
+});
+
+test('answer: a stale GPT-4o deployment with the mini pricing marker cannot start any paid work', async () => {
+  const h = harness({ env: { WEBIQ_ANSWER_DEPLOYMENT: 'gpt-4o' } });
+  const readiness = await h.routes.answer.GET(h.getRequest('answer'));
+  assert.equal(readiness.status, 503);
+  assert.equal((await readiness.json()).usageProtectionReady, false);
+  const response = await h.routes.answer.POST(h.request('answer'));
+  assert.equal(response.status, 503);
+  assert.equal((await response.json()).code, 'USAGE_GUARD_UNAVAILABLE');
+  assert.deepEqual(h.events, []);
+});
+
 test('answer: missing pricing profile cannot execute paid work', async () => {
   const h = harness({ env: { WEBIQ_ANSWER_PRICING_MODEL: '' } });
   const response = await h.routes.answer.POST(h.request('answer'));
@@ -536,10 +568,10 @@ test('answer: missing pricing profile cannot execute paid work', async () => {
 
 test('usage: malformed, negative, fractional and excessive token counts cannot refund', () => {
   const h = harness();
-  for (const usage of [undefined, null, { prompt_tokens: -1, completion_tokens: 1 }, { prompt_tokens: 1.5, completion_tokens: 1 }, { prompt_tokens: 128001, completion_tokens: 1 }, { prompt_tokens: 1, completion_tokens: 2501 }, { prompt_tokens: '1', completion_tokens: 1 }]) {
-    assert.equal(h.usage.answerUsageMicroUsd({ model: 'gpt-4o-2024-11-20', usage }), null);
+  for (const usage of [undefined, null, { prompt_tokens: -1, completion_tokens: 1 }, { prompt_tokens: 1.5, completion_tokens: 1 }, { prompt_tokens: 272001, completion_tokens: 1 }, { prompt_tokens: 1, completion_tokens: 2501 }, { prompt_tokens: '1', completion_tokens: 1 }]) {
+    assert.equal(h.usage.answerUsageMicroUsd({ model: 'gpt-5.4-mini-2026-03-17', usage }), null);
   }
-  assert.equal(h.usage.answerUsageMicroUsd({ model: 'gpt-4o-2024-11-20', usage: { prompt_tokens: 128000, completion_tokens: 2500 } }), 421000);
+  assert.equal(h.usage.answerUsageMicroUsd({ model: 'gpt-5.4-mini-2026-03-17', usage: { prompt_tokens: 272000, completion_tokens: 2500 } }), 265300);
 });
 
 test('IP: provider header wins, lists are rejected, local fallback is explicit', () => {
@@ -630,7 +662,7 @@ test('pricing: profile assertion and verified usage calculation match the budget
   assert.equal(h.usage.answerPricingConfigured(), true);
   h.env.WEBIQ_ANSWER_PRICING_MODEL = 'gpt-other';
   assert.equal(h.usage.answerPricingConfigured(), false);
-  assert.equal(h.usage.answerUsageMicroUsd({ model: 'gpt-4o-2024-11-20', usage: { prompt_tokens: 1000, completion_tokens: 50 } }), 10600);
+  assert.equal(h.usage.answerUsageMicroUsd({ model: 'gpt-5.4-mini-2026-03-17', usage: { prompt_tokens: 1000, completion_tokens: 50 } }), 8170);
 });
 
 module.exports = { harness };

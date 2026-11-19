@@ -222,8 +222,8 @@ export function CreateKnowledgeBaseForm({
 
             <FormField name="modelDeployment" error={errors.modelDeployment?.message}>
               <div className="flex items-center gap-2">
-                <FormLabel required>Azure OpenAI deployment</FormLabel>
-                <Tooltip content="Select the Azure OpenAI deployment the knowledge base should use for grounded answers.">
+                <FormLabel required>Microsoft Foundry model deployment</FormLabel>
+                <Tooltip content="Select the model deployed in Microsoft Foundry that will write answers from this knowledge base.">
                   <Info20Regular className="h-4 w-4 text-fg-muted cursor-help" />
                 </Tooltip>
               </div>
@@ -246,7 +246,7 @@ export function CreateKnowledgeBaseForm({
                 </Select>
               </FormControl>
               <FormDescription>
-                Pick the Azure OpenAI deployment to answer with grounded context.
+                This model uses the retrieved material to write an answer.
               </FormDescription>
               <FormMessage />
             </FormField>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
   <title id="title">Foundry IQ Demo Suite architecture</title>
-  <desc id="desc">A reference architecture showing Next.js, Azure AI Search knowledge bases, Azure OpenAI, and multiple knowledge sources.</desc>
+  <desc id="desc">A reference architecture showing Next.js, Azure AI Search knowledge bases, Microsoft Foundry Models, and multiple knowledge sources.</desc>
   <defs>
     <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0%" stop-color="#0b1226"/>
@@ -54,7 +54,7 @@
 
   <rect x="890" y="165" width="250" height="150" class="box"/>
   <text x="918" y="207" class="tiny">SYNTHESIS</text>
-  <text x="918" y="236" class="label">Azure OpenAI</text>
+  <text x="918" y="236" class="label">Microsoft Foundry Models</text>
   <text x="918" y="265" class="small">Answer synthesis over retrieved</text>
   <text x="918" y="286" class="small">source data and citations</text>
 

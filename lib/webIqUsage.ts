@@ -4,7 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { DemoUsageError, reserveDemoUsage } from '@/lib/demoUsageLedger';
 import { isAllowedWebIqQuestion } from '@/lib/webIqDemoQuestions';
 import {
-  WEB_IQ_SEARCH_MICRO_USD, WEB_IQ_ANSWER_MAX_COMPLETION_TOKENS, WEB_IQ_ANSWER_INPUT_MICRO_USD_PER_TOKEN,
+  estimateAnswerSynthesisMicroUsd, WEB_IQ_ANSWER_DEPLOYMENT, WEB_IQ_ANSWER_MODEL, WEB_IQ_SEARCH_MICRO_USD,
+  WEB_IQ_ANSWER_MAX_COMPLETION_TOKENS, WEB_IQ_ANSWER_INPUT_MICRO_USD_PER_TOKEN,
   WEB_IQ_ANSWER_OUTPUT_MICRO_USD_PER_TOKEN, WEB_IQ_ANSWER_CONTEXT_TOKENS, WEB_IQ_ANSWER_RESERVATION_MICRO_USD,
 } from '@/lib/webIqPricing';
 import { verifiedAnswerUsage } from '@/lib/webIqTelemetry';
@@ -12,22 +13,22 @@ import { verifiedAnswerUsage } from '@/lib/webIqTelemetry';
 // Microsoft Web IQ /web: $7 per 1,000 calls, verified 2026-11-10.
 export const WEB_IQ_CALL_MICRO_USD = WEB_IQ_SEARCH_MICRO_USD;
 export const ANSWER_MAX_COMPLETION_TOKENS = WEB_IQ_ANSWER_MAX_COMPLETION_TOKENS;
-// gpt-4o 2024-11-20 GlobalStandard: verified retail $2.50/$10 per million,
-// with a 20% budget margin. Cache discounts are deliberately not assumed.
+// Conservative budget rates from the current Foundry synthesis pricing profile.
 export const ANSWER_INPUT_MICRO_USD_PER_TOKEN = WEB_IQ_ANSWER_INPUT_MICRO_USD_PER_TOKEN;
 export const ANSWER_OUTPUT_MICRO_USD_PER_TOKEN = WEB_IQ_ANSWER_OUTPUT_MICRO_USD_PER_TOKEN;
 export const ANSWER_CONTEXT_TOKENS = WEB_IQ_ANSWER_CONTEXT_TOKENS;
 export const ANSWER_RESERVATION_MICRO_USD = WEB_IQ_ANSWER_RESERVATION_MICRO_USD;
 
 export function answerPricingConfigured(): boolean {
-  // A deployment alias alone does not establish its model or price.
-  return process.env.WEBIQ_ANSWER_PRICING_MODEL === 'gpt-4o-2024-11-20';
+  // Reserve only for the deployment and model version covered by this budget profile.
+  return process.env.WEBIQ_ANSWER_DEPLOYMENT?.trim() === WEB_IQ_ANSWER_DEPLOYMENT
+    && process.env.WEBIQ_ANSWER_PRICING_MODEL === WEB_IQ_ANSWER_MODEL;
 }
 
 export function answerUsageMicroUsd(completion: unknown): number | null {
   const usage = verifiedAnswerUsage(completion);
   if (usage.status !== 'verified') return null;
-  return WEB_IQ_CALL_MICRO_USD + usage.inputTokens! * ANSWER_INPUT_MICRO_USD_PER_TOKEN + usage.outputTokens! * ANSWER_OUTPUT_MICRO_USD_PER_TOKEN;
+  return WEB_IQ_CALL_MICRO_USD + estimateAnswerSynthesisMicroUsd(usage.inputTokens!, usage.outputTokens!);
 }
 
 /** Trust only the hosting provider's overwritten IP header. Local mode is explicit. */

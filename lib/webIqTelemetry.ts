@@ -1,7 +1,7 @@
 import {
-  WEB_IQ_ANSWER_CONTEXT_TOKENS, WEB_IQ_ANSWER_INPUT_MICRO_USD_PER_TOKEN,
+  estimateAnswerSynthesisMicroUsd, WEB_IQ_ANSWER_CONTEXT_TOKENS,
   WEB_IQ_ANSWER_MAX_COMPLETION_TOKENS, WEB_IQ_ANSWER_MODEL,
-  WEB_IQ_ANSWER_OUTPUT_MICRO_USD_PER_TOKEN, WEB_IQ_PRICING_PROFILE, WEB_IQ_SEARCH_MICRO_USD,
+  WEB_IQ_PRICING_PROFILE, WEB_IQ_SEARCH_MICRO_USD,
 } from '@/lib/webIqPricing';
 
 export interface WebIqTelemetry {
@@ -63,7 +63,7 @@ export function buildWebIqTelemetry(options: {
 }): WebIqTelemetry {
   const usage = verifiedAnswerUsage(options.completion);
   const extraSynthesisMicroUsd = usage.status === 'verified'
-    ? usage.inputTokens! * WEB_IQ_ANSWER_INPUT_MICRO_USD_PER_TOKEN + usage.outputTokens! * WEB_IQ_ANSWER_OUTPUT_MICRO_USD_PER_TOKEN : null;
+    ? estimateAnswerSynthesisMicroUsd(usage.inputTokens!, usage.outputTokens!) : null;
   return {
     schemaVersion: 'webiq.telemetry.v1',
     timing: {
@@ -94,15 +94,21 @@ export function parseWebIqTelemetry(value: unknown): WebIqTelemetry | null {
   if (dto.schemaVersion !== 'webiq.telemetry.v1' || dto.comparisonClass !== 'workflow-observation'
     || !dto.timing || !dto.usage || !dto.cost || !dto.truncation) return null;
   const { cost, usage, truncation } = dto;
+  // Previously saved v1 telemetry used GPT-4o at buffered rates of 3/12 microUSD per token.
+  // This profile is read-only. Live settlement always checks the current provider model.
+  const legacyProfile = cost.pricingProfile === 'webiq-2026-11-12-v1';
   if (cost.currency !== 'USD' || cost.unit !== 'microUSD' || cost.kind !== 'estimate'
-    || cost.kbCostStatus !== 'not_included' || cost.pricingProfile !== WEB_IQ_PRICING_PROFILE
+    || cost.kbCostStatus !== 'not_included' || (!legacyProfile && cost.pricingProfile !== WEB_IQ_PRICING_PROFILE)
     || cost.webSearchMicroUsd !== WEB_IQ_SEARCH_MICRO_USD
     || !['settled', 'reservation_retained'].includes(cost.settlement)) return null;
   if (!['verified', 'unknown'].includes(usage.status)) return null;
   if (usage.status === 'verified') {
-    if (usage.model !== WEB_IQ_ANSWER_MODEL || !safeCount(usage.inputTokens, WEB_IQ_ANSWER_CONTEXT_TOKENS)
+    const expectedModel = legacyProfile ? 'gpt-4o-2024-11-20' : WEB_IQ_ANSWER_MODEL;
+    const inputLimit = legacyProfile ? 128_000 : WEB_IQ_ANSWER_CONTEXT_TOKENS;
+    if (usage.model !== expectedModel || !safeCount(usage.inputTokens, inputLimit)
       || !safeCount(usage.outputTokens, WEB_IQ_ANSWER_MAX_COMPLETION_TOKENS)) return null;
-    const expected = usage.inputTokens * WEB_IQ_ANSWER_INPUT_MICRO_USD_PER_TOKEN + usage.outputTokens * WEB_IQ_ANSWER_OUTPUT_MICRO_USD_PER_TOKEN;
+    const expected = legacyProfile ? usage.inputTokens * 3 + usage.outputTokens * 12
+      : estimateAnswerSynthesisMicroUsd(usage.inputTokens, usage.outputTokens);
     if (cost.extraSynthesisMicroUsd !== expected || cost.addedKnownMicroUsd !== WEB_IQ_SEARCH_MICRO_USD + expected) return null;
   } else if (usage.model !== null || usage.inputTokens !== null || usage.outputTokens !== null
     || cost.extraSynthesisMicroUsd !== null || cost.addedKnownMicroUsd !== WEB_IQ_SEARCH_MICRO_USD) return null;

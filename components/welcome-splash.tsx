@@ -8,7 +8,7 @@ import Image from 'next/image'
 const healthChecks = [
   { id: 'kb', label: 'Knowledge Base', tag: 'KB', delay: 400 },
   { id: 'search', label: 'Azure AI Search', tag: 'SEARCH', delay: 800 },
-  { id: 'openai', label: 'OpenAI GPT-4o', tag: 'LLM', delay: 1200 },
+  { id: 'openai', label: 'Microsoft Foundry Models', tag: 'LLM', delay: 1200 },
   { id: 'engine', label: 'Agentic Retrieval', tag: 'ENGINE', delay: 1600 },
 ]
 

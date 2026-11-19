@@ -272,7 +272,7 @@ export function EditKnowledgeBaseForm({
 
               <FormField name="modelDeployment">
                 <div className="flex items-center gap-2">
-                  <FormLabel required>Azure OpenAI deployment</FormLabel>
+                  <FormLabel required>Microsoft Foundry model deployment</FormLabel>
                   <Tooltip content="Select the model deployment used for grounded answers.">
                     <Info20Regular className="h-4 w-4 text-fg-muted cursor-help" />
                   </Tooltip>

@@ -146,9 +146,12 @@ export default function ArchitecturePage() {
                 <p className="mt-4 text-xs leading-5 text-fg-subtle">{pick('Each KB uses the sources configured for it. These are connection options, not a claim that every source is active.', '실제 조회 대상은 선택한 지식 베이스의 설정에 따릅니다. 위 목록은 연결 가능한 경로이며, 모든 원본이 연결되어 있다는 뜻은 아닙니다.')}</p>
 
                 <div className="mt-5 rounded-lg border border-stroke-divider bg-bg-subtle p-4">
-                  <p className="text-sm font-semibold">Azure OpenAI</p>
-                  <WebIqServiceLinks features={['answer-synthesis']} locale={language} context="documentation" className="mt-3" />
+                  <p className="text-sm font-semibold">{pick('Knowledge base model deployment', '지식 베이스에 설정된 모델')}</p>
                   <p className="mt-1 text-xs leading-5 text-fg-muted">{pick('A model configured on the KB can plan the search and write the answer, according to its reasoning and output settings.', '지식 베이스에 설정된 모델이 검색 계획과 답변 생성을 돕습니다. 사용 범위는 추론 및 출력 설정에 따릅니다.')}</p>
+                  <a href="https://learn.microsoft.com/en-us/azure/search/agentic-retrieval-how-to-create-knowledge-base#supported-models" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1 text-xs font-medium text-accent hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+                    {pick('Supported KB models and setup', '지원되는 KB 모델과 설정 방법')}
+                    <ArrowUpRight20Regular className="h-3.5 w-3.5" aria-hidden="true" />
+                  </a>
                 </div>
               </div>
 
@@ -163,7 +166,7 @@ export default function ArchitecturePage() {
                 </div>
                 <FlowArrow label={pick('KB evidence + KB answer, if returned + web results', '지식 베이스 원문 근거 + 답변(반환된 경우) + 웹 검색 결과')} />
                 <div className="rounded-lg border border-accent/30 bg-bg-canvas p-4">
-                  <p className="text-sm font-semibold">Azure OpenAI</p>
+                  <p className="text-sm font-semibold">Microsoft Foundry Models</p>
                   <WebIqServiceLinks features={['answer-synthesis']} locale={language} context="documentation" className="mt-3" />
                   <p className="mt-2 text-sm leading-6 text-fg-muted">{pick('The app asks the model to combine both results, distinguish internal and web findings, and cite the evidence.', '앱이 두 결과를 모델에 전달합니다. 모델은 내부 자료와 웹에서 확인한 내용을 구분하고, 근거를 인용해 답변을 정리합니다.')}</p>
                 </div>
@@ -229,7 +232,7 @@ export default function ArchitecturePage() {
               <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-6 text-fg-muted">
                 <span>Next.js</span><ArrowRight20Regular className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
                 <span>{pick('Web IQ search', 'Web IQ 검색')}</span><ArrowRight20Regular className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
-                <span>{pick('Optional Azure OpenAI synthesis', '필요시 Azure OpenAI 추가 답변')}</span>
+                <span>{pick('Optional answer generation in Microsoft Foundry', '선택 시 Microsoft Foundry에서 답변 생성')}</span>
               </p>
               <p className="mt-2 text-xs leading-5 text-fg-muted">{pick('The usage service only approves and records usage. Questions, source passages, and paid AI requests follow the answer flow above.', '사용량 서비스는 사용 승인과 기록을 담당합니다. 질문·원문 근거·유료 AI 요청은 위의 답변 생성 경로로 처리합니다.')}</p>
             </div>
@@ -250,11 +253,11 @@ export default function ArchitecturePage() {
               </div>
               <div>
                 <dt className="font-semibold">{pick('What the $5 covers', '$5 한도에 포함되는 비용')}</dt>
-                <dd className="mt-1 text-fg-muted">{pick('Web IQ searches and the additional Azure OpenAI answer that combines web and KB results. Existing KB retrieval and infrastructure costs are outside this budget.', 'Web IQ 검색과 웹·지식 베이스 결과를 함께 정리하는 추가 Azure OpenAI 답변 비용입니다. 기존 지식 베이스 조회와 인프라 운영 비용은 이 한도에 포함되지 않습니다.')}</dd>
+                <dd className="mt-1 text-fg-muted">{pick('Web IQ searches and the tokens the model in Microsoft Foundry uses to combine the web and KB results. Existing KB retrieval and infrastructure costs are outside this budget.', 'Web IQ 검색 비용과 Microsoft Foundry에 배포한 모델이 웹 자료와 지식 베이스 자료를 종합할 때 쓰는 토큰 비용입니다. 기존 지식 베이스 조회와 인프라 운영 비용은 이 한도에 포함되지 않습니다.')}</dd>
               </div>
               <div>
                 <dt className="font-semibold">{pick('Current operation', '현재 운영 방식')}</dt>
-                <dd className="mt-1 text-fg-muted">{pick('One small usage-service instance stays running in Azure Container Apps. The application remains on Vercel, where it calls Web IQ and Azure OpenAI after approval.', 'Azure Container Apps에서 작은 사용량 서비스 인스턴스 1개를 상시 유지합니다. 앱은 Vercel에서 실행되며, 사용 승인 후 Web IQ와 Azure OpenAI를 호출합니다.')}</dd>
+                <dd className="mt-1 text-fg-muted">{pick('One small usage-service instance stays running in Azure Container Apps. The application remains on Vercel, where it calls Web IQ and Microsoft Foundry Models after approval.', 'Azure Container Apps에서 작은 사용량 서비스 인스턴스 1개를 상시 유지합니다. 앱은 Vercel에서 실행되며, 사용 승인 후 Web IQ와 Microsoft Foundry Models를 호출합니다.')}</dd>
               </div>
             </dl>
           </details>

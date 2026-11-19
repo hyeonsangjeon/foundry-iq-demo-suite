@@ -162,7 +162,7 @@ export function ArchitectureDiagram() {
       <text x={340} y={730} textAnchor="middle" fill="rgba(255,255,255,0.4)" style={{ fontSize: 12 }}>Infrastructure</text>
 
       {/* ── Infrastructure boxes ───────────────────────────────────── */}
-      <FoundryBox x={40} y={745} w={290} h={36} title="AI Search + Azure OpenAI + Embedding" />
+      <FoundryBox x={40} y={745} w={290} h={42} title="Azure AI Search" sub="Microsoft Foundry Models · Chat and embeddings" />
       <AzureBox x={340} y={745} w={300} h={36} title="SharePoint + Entra + Azure Blob" />
       <FabricBox x={40} y={795} w={290} h={36} title="Fabric + Spark + OneLake" />
       <AppBox x={340} y={795} w={300} h={36} title="Application" />

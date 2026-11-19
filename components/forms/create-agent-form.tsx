@@ -306,7 +306,7 @@ export function CreateAgentForm({
                 </Select>
               </FormControl>
               <FormDescription>
-                Choose the Azure OpenAI model that best fits your quality and cost requirements
+                Choose a model from Microsoft Foundry Models that fits your quality and cost requirements
               </FormDescription>
               <FormMessage />
             </FormField>

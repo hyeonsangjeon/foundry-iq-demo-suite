@@ -1014,7 +1014,7 @@ export const t = {
       steps: [
         { title: 'Enterprise Document Search', description: 'SharePoint documents are automatically indexed by AI Search. Just upload your documents and search begins.', poweredBy: 'Azure AI Search — SharePoint Indexer' },
         { title: 'Auto-Indexing Pipeline', description: 'PDF, DOCX, XLSX, PPTX are auto-extracted, chunked into 2000-char segments, vectorized, and indexed. Zero code required.', poweredBy: 'Azure AI Search — Skillset Pipeline' },
-        { title: 'Chunking & Embedding', description: 'SplitSkill divides documents into 2000-char chunks with 500-char overlap to preserve context. 1536-dim vectors are generated.', poweredBy: 'Azure OpenAI — text-embedding-3-large' },
+        { title: 'Chunking & Embedding', description: 'SplitSkill divides documents into 2000-char chunks with 500-char overlap to preserve context. 1536-dim vectors are generated.', poweredBy: 'Microsoft Foundry Models — text-embedding-3-large' },
         { title: 'Knowledge Base Query', description: 'Once SharePoint documents are connected to a KB, you can search with the same Agentic Retrieval as Phase 1.', poweredBy: 'Foundry IQ — Agentic Retrieval' },
         { title: 'Enterprise RAG Complete', description: 'Any enterprise can transform their SharePoint document library into AI search. Setup time: 5 minutes.', poweredBy: 'Foundry IQ · GA + Preview' },
       ],
@@ -1026,7 +1026,7 @@ export const t = {
       steps: [
         { title: '기업 문서 검색', description: 'SharePoint 문서가 AI Search에 의해 자동으로 인덱싱됩니다. 문서만 업로드하면 검색이 시작됩니다.', poweredBy: 'Azure AI Search — SharePoint Indexer' },
         { title: '자동 인덱싱 파이프라인', description: 'PDF, DOCX, XLSX, PPTX가 자동 추출되어 2000자 세그먼트로 청킹, 벡터화, 인덱싱됩니다. 코드가 필요 없습니다.', poweredBy: 'Azure AI Search — Skillset Pipeline' },
-        { title: '청킹 & 임베딩', description: 'SplitSkill이 문서를 2000자 청크로 나누며, 500자 오버랩으로 컨텍스트를 보존합니다. 1536차원 벡터가 생성됩니다.', poweredBy: 'Azure OpenAI — text-embedding-3-large' },
+        { title: '청킹 & 임베딩', description: 'SplitSkill이 문서를 2000자 청크로 나누며, 500자 오버랩으로 컨텍스트를 보존합니다. 1536차원 벡터가 생성됩니다.', poweredBy: 'Microsoft Foundry Models — text-embedding-3-large' },
         { title: 'Knowledge Base 쿼리', description: 'SharePoint 문서가 KB에 연결되면, Phase 1과 동일한 에이전틱 검색으로 검색할 수 있습니다.', poweredBy: 'Foundry IQ — Agentic Retrieval' },
         { title: '기업 RAG 완성', description: '모든 기업이 SharePoint 문서 라이브러리를 AI 검색으로 전환할 수 있습니다. 설정 시간: 5분.', poweredBy: 'Foundry IQ · GA + Preview' },
       ],
@@ -1038,7 +1038,7 @@ export const t = {
       steps: [
         { title: '企业文档搜索', description: 'SharePoint 文档由 AI Search 自动索引。只需上传文档，搜索即刻开始。', poweredBy: 'Azure AI Search — SharePoint Indexer' },
         { title: '自动索引管道', description: 'PDF、DOCX、XLSX、PPTX 自动提取，切分为 2000 字符段，向量化并索引。无需编写代码。', poweredBy: 'Azure AI Search — Skillset Pipeline' },
-        { title: '分块与嵌入', description: 'SplitSkill 将文档切分为 2000 字符块，500 字符重叠以保留上下文。生成 1536 维向量。', poweredBy: 'Azure OpenAI — text-embedding-3-large' },
+        { title: '分块与嵌入', description: 'SplitSkill 将文档切分为 2000 字符块，500 字符重叠以保留上下文。生成 1536 维向量。', poweredBy: 'Microsoft Foundry Models — text-embedding-3-large' },
         { title: 'Knowledge Base 查询', description: 'SharePoint 文档连接到 KB 后，可使用与 Phase 1 相同的 Agentic Retrieval 进行搜索。', poweredBy: 'Foundry IQ — Agentic Retrieval' },
         { title: '企业 RAG 完成', description: '任何企业都可以将 SharePoint 文档库转换为 AI 搜索。设置时间：5 分钟。', poweredBy: 'Foundry IQ · GA + Preview' },
       ],
@@ -1050,7 +1050,7 @@ export const t = {
       steps: [
         { title: 'エンタープライズ文書検索', description: 'SharePoint 文書は AI Search によって自動的にインデックスされます。文書をアップロードするだけで検索が開始されます。', poweredBy: 'Azure AI Search — SharePoint Indexer' },
         { title: '自動インデックスパイプライン', description: 'PDF、DOCX、XLSX、PPTX が自動抽出され、2000 文字セグメントにチャンク化、ベクトル化、インデックスされます。コード不要。', poweredBy: 'Azure AI Search — Skillset Pipeline' },
-        { title: 'チャンキング & 埋め込み', description: 'SplitSkill が文書を 2000 文字チャンクに分割し、500 文字のオーバーラップでコンテキストを保持します。1536 次元ベクトルが生成されます。', poweredBy: 'Azure OpenAI — text-embedding-3-large' },
+        { title: 'チャンキング & 埋め込み', description: 'SplitSkill が文書を 2000 文字チャンクに分割し、500 文字のオーバーラップでコンテキストを保持します。1536 次元ベクトルが生成されます。', poweredBy: 'Microsoft Foundry Models — text-embedding-3-large' },
         { title: 'Knowledge Base クエリ', description: 'SharePoint 文書が KB に接続されると、Phase 1 と同じ Agentic Retrieval で検索できます。', poweredBy: 'Foundry IQ — Agentic Retrieval' },
         { title: 'エンタープライズ RAG 完成', description: 'すべての企業が SharePoint ドキュメントライブラリを AI 検索に変換できます。セットアップ時間：5 分。', poweredBy: 'Foundry IQ · GA + Preview' },
       ],
@@ -1062,7 +1062,7 @@ export const t = {
       steps: [
         { title: 'एंटरप्राइज़ दस्तावेज़ खोज', description: 'SharePoint दस्तावेज़ AI Search द्वारा स्वचालित रूप से अनुक्रमित होते हैं। बस अपने दस्तावेज़ अपलोड करें और खोज शुरू हो जाती है।', poweredBy: 'Azure AI Search — SharePoint Indexer' },
         { title: 'स्वचालित इंडेक्सिंग पाइपलाइन', description: 'PDF, DOCX, XLSX, PPTX स्वचालित रूप से निकाले जाते हैं, 2000-अक्षर खंडों में विभाजित, वेक्टरीकृत और अनुक्रमित होते हैं। कोड की आवश्यकता नहीं।', poweredBy: 'Azure AI Search — Skillset Pipeline' },
-        { title: 'चंकिंग और एम्बेडिंग', description: 'SplitSkill दस्तावेज़ों को 2000-अक्षर चंक में विभाजित करता है, संदर्भ बनाए रखने के लिए 500-अक्षर ओवरलैप के साथ। 1536-आयामी वेक्टर उत्पन्न होते हैं।', poweredBy: 'Azure OpenAI — text-embedding-3-large' },
+        { title: 'चंकिंग और एम्बेडिंग', description: 'SplitSkill दस्तावेज़ों को 2000-अक्षर चंक में विभाजित करता है, संदर्भ बनाए रखने के लिए 500-अक्षर ओवरलैप के साथ। 1536-आयामी वेक्टर उत्पन्न होते हैं।', poweredBy: 'Microsoft Foundry Models — text-embedding-3-large' },
         { title: 'Knowledge Base क्वेरी', description: 'एक बार SharePoint दस्तावेज़ KB से जुड़ने के बाद, Phase 1 के समान Agentic Retrieval से खोज कर सकते हैं।', poweredBy: 'Foundry IQ — Agentic Retrieval' },
         { title: 'एंटरप्राइज़ RAG पूर्ण', description: 'कोई भी एंटरप्राइज़ अपनी SharePoint दस्तावेज़ लाइब्रेरी को AI खोज में बदल सकता है। सेटअप समय: 5 मिनट।', poweredBy: 'Foundry IQ · GA + Preview' },
       ],

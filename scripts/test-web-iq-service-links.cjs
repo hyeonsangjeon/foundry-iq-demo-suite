@@ -27,7 +27,11 @@ for (const [id, rawUrl] of Object.entries(urls)) {
     assert(!url.username && !url.password);
     assert.equal(checks[id].httpStatus, 200);
     assert(checks[id].title.length > 3);
-    assert.equal(checks[id].checkedAt, ['S105', 'S106', 'S107'].includes(id) ? '2026-11-17' : '2026-11-12');
+    const expectedDates = {
+      S105: '2026-11-17', S106: '2026-11-17', S107: '2026-11-17',
+      S115: '2026-11-19', S139: '2026-11-19',
+    };
+    assert.equal(checks[id].checkedAt, expectedDates[id] || '2026-11-12');
   });
 }
 for (const [id, record] of Object.entries(references)) {
@@ -40,6 +44,13 @@ for (const [id, record] of Object.entries(references)) {
     if (record.provider === 'Cloudflare') assert.equal(record.serviceId, 'cloudflare-turnstile');
   });
 }
+check('answer synthesis links to Foundry Models and the v1 Chat Completions contract', () => {
+  const synthesis = references['answer-synthesis'];
+  assert.equal(synthesis.serviceName, 'Microsoft Foundry Models');
+  assert.equal(synthesis.overviewUrl, urls.S139);
+  assert.equal(synthesis.featureUrl, urls.S115);
+  assert.equal(synthesis.apiUrl, synthesis.featureUrl);
+});
 check('native web source remains distinct from separate Web IQ calls', () => {
   assert.deepEqual(Array.from(serviceFeaturesForSource('web')), ['web-source']);
   assert.notEqual(references['web-source'].featureUrl, references['web-search'].featureUrl);

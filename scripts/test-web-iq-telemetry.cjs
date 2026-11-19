@@ -4,7 +4,7 @@ const { harness } = require('./test-web-iq-usage.cjs');
 // Uses the existing in-memory route harness: fake credentials and zero real network I/O.
 const cases = [];
 const test = (name, run) => cases.push({ name, run });
-const completion = (extra = {}) => ({ model: 'gpt-4o-2024-11-20', usage: { prompt_tokens: 1000, completion_tokens: 50 },
+const completion = (extra = {}) => ({ model: 'gpt-5.4-mini-2026-03-17', usage: { prompt_tokens: 1000, completion_tokens: 50 },
   choices: [{ finish_reason: 'stop', message: { content: 'Internal observation [I1]. Public update [W1].' } }], ...extra });
 const plain = value => JSON.parse(JSON.stringify(value));
 
@@ -29,9 +29,9 @@ test('answer: additive telemetry preserves legacy contract and exposes only obse
   assert.equal(body.schemaVersion, 'webiq.answer.v2');
   for (const field of ['answer', 'sources', 'webSearch', 'trace', 'kbContextOnly']) assert.ok(Object.hasOwn(body, field));
   assert.equal(body.telemetry.usage.status, 'verified');
-  assert.equal(body.telemetry.usage.model, 'gpt-4o-2024-11-20');
-  assert.equal(body.telemetry.cost.extraSynthesisMicroUsd, 3600);
-  assert.equal(body.telemetry.cost.addedKnownMicroUsd, 10600);
+  assert.equal(body.telemetry.usage.model, 'gpt-5.4-mini-2026-03-17');
+  assert.equal(body.telemetry.cost.extraSynthesisMicroUsd, 1170);
+  assert.equal(body.telemetry.cost.addedKnownMicroUsd, 8170);
   assert.equal(body.telemetry.cost.settlement, 'settled');
   assert.equal(body.telemetry.cost.kbCostStatus, 'not_included');
   assert.equal(body.telemetry.comparisonClass, 'workflow-observation');
@@ -44,6 +44,36 @@ test('answer: additive telemetry preserves legacy contract and exposes only obse
   assert.equal(h.settlements.length, 1);
   const serialized = JSON.stringify(body);
   for (const secret of ['offline-fake-key', 'offline-fake-token', 'reservation-1', '192.0.2.1', 'prompt_tokens', 'choices']) assert.ok(!serialized.includes(secret));
+});
+
+test('pricing: round once after adding the margin and hold enough for the entire model input window', () => {
+  const h = harness();
+  const p = h.load('lib/webIqPricing.ts');
+  assert.equal(p.WEB_IQ_PRICING.answer.retailInput, 0.75);
+  assert.equal(p.WEB_IQ_PRICING.answer.retailOutput, 4.50);
+  assert.equal(p.WEB_IQ_PRICING.answer.budgetMarginPercent, 20);
+  // 3 uncached input tokens + 1 output token = 8.1 microUSD after margin, rounded up once.
+  const observed = completion({ usage: { prompt_tokens: 3, completion_tokens: 1, prompt_tokens_details: { cached_tokens: 2 } } });
+  assert.equal(h.usage.answerUsageMicroUsd(observed), 7009);
+  assert.equal(h.usage.answerUsageMicroUsd(completion({ usage: { prompt_tokens: 10, completion_tokens: 5 } })), 7036);
+  const maximum = h.usage.answerUsageMicroUsd(completion({ usage: { prompt_tokens: 272000, completion_tokens: 2500 } }));
+  assert.equal(maximum, 265300);
+  assert.ok(maximum <= p.WEB_IQ_ANSWER_RESERVATION_MICRO_USD);
+});
+
+test('telemetry: historical GPT-4o estimates remain readable with their original rates and token bounds', async () => {
+  const h = harness();
+  const { parseWebIqTelemetry } = h.load('lib/webIqTelemetry.ts');
+  const { telemetry } = await (await h.routes.answer.POST(h.request('answer'))).json();
+  const legacy = { ...telemetry,
+    usage: { ...telemetry.usage, model: 'gpt-4o-2024-11-20' },
+    cost: { ...telemetry.cost, pricingProfile: 'webiq-2026-11-12-v1', extraSynthesisMicroUsd: 3600, addedKnownMicroUsd: 10600 },
+  };
+  assert.deepEqual(plain(parseWebIqTelemetry(legacy)), legacy);
+  assert.equal(parseWebIqTelemetry({ ...legacy, usage: { ...legacy.usage, model: telemetry.usage.model } }), null);
+  assert.equal(parseWebIqTelemetry({ ...legacy, usage: { ...legacy.usage, inputTokens: 128001 },
+    cost: { ...legacy.cost, extraSynthesisMicroUsd: 384603, addedKnownMicroUsd: 391603 } }), null);
+  assert.equal(h.usage.answerUsageMicroUsd(completion({ model: legacy.usage.model })), null);
 });
 
 test('tickets: only public web results receive capabilities, and capabilities stay outside model context', async () => {
@@ -99,7 +129,7 @@ test('settlement: one failure keeps successful answer and marks full reservation
   const body = await response.json();
   assert.ok(body.answer);
   assert.equal(body.telemetry.cost.settlement, 'reservation_retained');
-  assert.equal(body.telemetry.cost.addedKnownMicroUsd, 10600);
+  assert.equal(body.telemetry.cost.addedKnownMicroUsd, 8170);
   assert.equal(h.spent, 421000);
   assert.equal(h.settlements.length, 1);
   assert.equal(h.requests.filter(item => ['web', 'model'].includes(item.destination)).length, 2);

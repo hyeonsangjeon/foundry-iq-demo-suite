@@ -74,17 +74,17 @@ test('Web Search identity and official links precede the form; the named paid ac
   }
 });
 
-test('comparison names Web Search and Azure OpenAI separately before execution and on a KB failure', () => {
+test('comparison names Web Search and Microsoft Foundry Models separately before execution and on a KB failure', () => {
   for (const language of ['ko', 'en']) {
     const failed = { runId: 'offline-run', attemptId: 'offline-attempt', state: 'failed', startedAt: '2026-11-14T00:00:00Z',
       selection: { kbId: 'nasa-earth-book', presetId: 'nasa-earth-at-night', query: 'offline fixture', language, settings: {} },
       errorCode: 'KB_RETRIEVAL_FAILED', errorStage: 'kb', errorStatus: 502 };
     for (const run of [null, failed]) {
       const html = render(Comparison, { run, language });
-      assert.match(expanded(html), /<h3[^>]*>Microsoft Web IQ · Web Search \+ Azure OpenAI<\/h3>/);
+      assert.match(expanded(html), /<h3[^>]*>Microsoft Web IQ · Web Search \+ Microsoft Foundry Models<\/h3>/);
       assert.ok(text(expanded(html)).includes(language === 'ko'
-        ? 'Web Search가 웹 근거를 찾고, Azure OpenAI가 KB 자료와 함께 추가 답변을 생성합니다.'
-        : 'Web Search finds web evidence. Azure OpenAI combines it with KB material to generate the additional answer.'));
+        ? 'Web Search가 관련 페이지를 찾으면 Microsoft Foundry에 배포한 모델이 웹 자료와 지식 베이스 자료를 함께 읽고 두 번째 답변을 작성합니다.'
+        : 'Web Search finds relevant pages. A model in Microsoft Foundry combines those pages with the KB material to write the second answer.'));
     }
   }
 });

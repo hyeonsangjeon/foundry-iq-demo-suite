@@ -46,12 +46,12 @@ export async function GET() {
     results.push({ name: 'Azure AI Search', status: 'error', detail: e.message })
   }
 
-  // 2. OpenAI ping
+  // 2. Check connectivity to the configured model endpoint
   const aoaiStart = Date.now()
   try {
     const aoaiEndpoint = process.env.NEXT_PUBLIC_AZURE_OPENAI_ENDPOINT?.replace(/\/$/, '')
     if (!aoaiEndpoint) {
-      results.push({ name: 'OpenAI', status: 'error', detail: 'Not configured' })
+      results.push({ name: 'Microsoft Foundry Models', status: 'error', detail: 'Not configured' })
     } else {
       // API Key 없이 endpoint 연결만 확인 (MI 환경에서는 Key 비활성)
       // 서버가 응답하면 (200, 401, 403 모두) connected
@@ -64,14 +64,14 @@ export async function GET() {
       )
       const aoaiLatency = Date.now() - aoaiStart
       results.push({
-        name: 'OpenAI',
+        name: 'Microsoft Foundry Models',
         status: 'connected',
         detail: `Endpoint reachable (${aoaiResp.status})`,
         latencyMs: aoaiLatency,
       })
     }
   } catch (e: any) {
-    results.push({ name: 'OpenAI', status: 'error', detail: e.message })
+    results.push({ name: 'Microsoft Foundry Models', status: 'error', detail: e.message })
   }
 
   // 3. Knowledge Base ping

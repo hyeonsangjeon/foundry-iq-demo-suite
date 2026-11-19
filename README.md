@@ -30,7 +30,7 @@ Most agent demos stop at "chat with a PDF." This repo shows the enterprise retri
 2. Azure AI Search plans retrieval through a Knowledge Base.
 3. The Knowledge Base routes to the right Knowledge Sources.
 4. Indexed Search, SharePoint, Fabric IQ ontology, Blob/PDF/JSON, or MCP Server tools return grounding data.
-5. Azure OpenAI synthesizes an answer with citations and inspectable source data.
+5. A model in Microsoft Foundry writes an answer with citations to the retrieved sources.
 
 It is built to be shown live, forked locally, and reused as a practical reference app for agentic retrieval.
 
@@ -127,7 +127,7 @@ Full walkthrough: [Easy Data, Knowledge Source, and Knowledge Base Setup](docs/e
 
 ![Foundry IQ Demo Suite architecture](public/readme/architecture.svg)
 
-At runtime, the app calls Azure AI Search Knowledge Base APIs. A Knowledge Base references one or more Knowledge Sources. Each source can represent indexed data, enterprise documents, live ontology calls, or remote MCP tools. Azure OpenAI handles answer synthesis over the retrieved references.
+At runtime, the app calls Azure AI Search Knowledge Base APIs. A Knowledge Base references one or more Knowledge Sources. Each source can represent indexed data, enterprise documents, live ontology calls, or remote MCP tools. The model deployed in Microsoft Foundry uses the retrieved references to write the answer.
 
 ## Runtime Workflow
 
@@ -281,7 +281,7 @@ public/readme/             # README screenshots and diagrams
 - React 18 + TypeScript
 - Tailwind CSS
 - Azure AI Search Knowledge Bases and Knowledge Sources
-- Azure OpenAI answer synthesis
+- Microsoft Foundry Models for answer synthesis
 - Vercel deployment
 - Optional Azure Search RBAC via service principal
 

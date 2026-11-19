@@ -586,7 +586,7 @@ export function KBPlaygroundView({ preselectedAgent }: KBPlaygroundViewProps) {
     if (signal.aborted) return null
     setWebIqStatus(status)
     if (!status.botProtectionConfigured || !status.turnstileSiteKey) throw new Error(locale === 'ko' ? '사람 확인 기능을 준비 중입니다. 잠시 후 다시 시도하거나 KB만 사용해 주세요.' : 'Human verification is unavailable. Try again later or use the selected KB only.')
-    if (!status.configured) throw new Error(locale === 'ko' ? 'Web IQ와 Azure OpenAI 답변 모델의 연결 설정이 필요합니다. 설정을 마치거나 KB만 사용해 질문해 주세요.' : 'Combined Web IQ answers are not configured. Configure Web IQ and an Azure OpenAI answer deployment, or use the selected KB only.')
+    if (!status.configured) throw new Error(locale === 'ko' ? 'Web IQ와 Microsoft Foundry의 답변 모델을 연결해야 합니다. 설정을 마치거나 KB만 사용해 질문해 주세요.' : 'Combined Web IQ answers are not configured. Configure Web IQ and an answer model deployment in Microsoft Foundry, or use the selected KB only.')
     return token
   }
 
@@ -1549,7 +1549,7 @@ function MessageBubble({ message, locale, agent, showCostEstimates, onOpenSource
                 <ol className="mt-2 list-decimal space-y-1 pl-5">
                   <li>{locale === 'ko' ? '선택한 지식 베이스의 조회를 완료했습니다.' : 'Selected knowledge base retrieval completed.'}</li>
                   <li>{locale === 'ko' ? 'Web IQ가 같은 질문으로 웹을 검색했습니다' : 'Web IQ searched the question'} · {message.webIq.trace.webSearchMs} ms · {message.webIq.webSearch.results.length}{locale === 'ko' ? '개 페이지' : ' pages'}.</li>
-                  <li>{locale === 'ko' ? 'Azure OpenAI가 제공된 근거를 모아 답변을 생성했습니다' : 'Azure OpenAI combined the supplied evidence'} · {message.webIq.trace.synthesisMs} ms.</li>
+                  <li>{locale === 'ko' ? 'Microsoft Foundry에 배포한 모델이 웹 자료와 KB 자료를 종합해 답변을 작성했습니다' : 'The model in Microsoft Foundry combined the web and KB material'} · {message.webIq.trace.synthesisMs} ms.</li>
                 </ol>
                 <p className="mt-2 break-all">{locale === 'ko' ? '웹 검색어' : 'Web query'}: {message.webIq.webSearch.query}</p>
                 <p className="mt-1">{locale === 'ko' ? '조회 시각' : 'Retrieved'}: {message.webIq.webSearch.retrievedAt}</p>

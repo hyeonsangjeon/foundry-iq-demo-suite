@@ -60,7 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Create and delete temporary Foundry IQ KS/KB resources.")
     parser.add_argument("--env-file", default=str(helper.DEFAULT_ENV))
     parser.add_argument("--index-name", help="Existing Azure AI Search index to use. Defaults to the first index.")
-    parser.add_argument("--model", help="Azure OpenAI deployment. Defaults to AZURE_OPENAI_DEPLOYMENT or gpt-4o.")
+    parser.add_argument("--model", help="Model deployment in Microsoft Foundry. Defaults to AZURE_OPENAI_DEPLOYMENT or gpt-4o.")
     parser.add_argument("--api-version", default=os.environ.get("AZURE_SEARCH_API_VERSION", helper.DEFAULT_API_VERSION))
     parser.add_argument("--auth-mode", choices=["auto", "api-key", "rbac"], default="auto")
     parser.add_argument("--prefix", default="codex-it")
