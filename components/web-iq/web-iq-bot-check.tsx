@@ -35,6 +35,7 @@ type WebIqBotCheckProps = {
   language: 'en' | 'ko';
   onTokenChange: (token: string | null) => void;
   resetKey: number;
+  showServiceLinks?: boolean;
 };
 
 const SCRIPT_ID = 'web-iq-turnstile-script';
@@ -104,7 +105,7 @@ const copy = {
 };
 
 /** Managed Turnstile check shared by the guarded Web IQ actions. */
-export function WebIqBotCheck({ siteKey, action, language, onTokenChange, resetKey }: WebIqBotCheckProps) {
+export function WebIqBotCheck({ siteKey, action, language, onTokenChange, resetKey, showServiceLinks = true }: WebIqBotCheckProps) {
   const text = action === 'webiq_browse'
     ? { ...copy[language], label: language === 'ko' ? '본문 조회 전 간단한 확인' : 'Quick verification before inspecting the passage', verified: language === 'ko' ? '본문 확인 준비 완료' : 'Ready to inspect the passage' }
     : action === 'webiq_auto'
@@ -196,7 +197,7 @@ export function WebIqBotCheck({ siteKey, action, language, onTokenChange, resetK
         {status === 'verified' && <span aria-hidden="true">✓</span>}
         {text[status]}
       </p>
-      <WebIqServiceLinks features={['bot-check']} locale={language} compact />
+      {showServiceLinks && <WebIqServiceLinks features={['bot-check']} locale={language} compact />}
       {(status === 'error' || status === 'expired') && (
         <Button type="button" variant="outline" size="sm" className="min-h-11" onClick={() => setAttempt(value => value + 1)}>{text.retry}</Button>
       )}

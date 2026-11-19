@@ -41,6 +41,7 @@ function load(relative) {
   return exports;
 }
 const references = load('lib/webIqServiceReferences.ts').WEB_IQ_SERVICE_REFERENCES;
+const Auto = load('components/web-iq/web-iq-auto-weather.tsx').WebIqAutoWeather;
 const Search = load('components/web-iq/web-iq-live-search.tsx').WebIqLiveSearch;
 const Comparison = load('components/web-iq/web-iq-answer-comparison.tsx').WebIqAnswerComparison;
 const Browse = load('components/web-iq/web-iq-source-detail.tsx').WebIqSourceDetail;
@@ -71,6 +72,23 @@ test('Web Search identity and official links precede the form; the named paid ac
     assert.match(expanded(html), /<h2[^>]*>Microsoft Web IQ · Web Search<\/h2>/);
     visibleLinksBefore(html, ['web-search'], '<form');
     assert.match(action(html, language === 'ko' ? 'Web Search로 검색' : 'Search with Web Search'), /disabled/);
+  }
+});
+
+test('Auto tab shows both weather actions and product-specific output formats before a visitor submits either', () => {
+  for (const language of ['ko', 'en']) {
+    const ko = language === 'ko';
+    const html = expanded(render(Auto, { language }));
+    const cards = [...html.matchAll(/<article\b[^>]*>[\s\S]*?<\/article>/g)].map(item => item[0]);
+    assert.equal(cards.length, 2);
+    const [pages, weather] = cards;
+    assert.match(action(pages, ko ? 'Web Search로 문서 찾기' : 'Find pages with Web Search'), /disabled/);
+    assert.match(action(weather, ko ? 'Auto로 날씨 값 받기' : 'Get weather values with Auto'), /disabled/);
+    assert.ok(pages.includes(ko ? '검색 결과 예시' : 'Example search result'));
+    assert.match(pages, /href="https:\/\/www\.weather\.go\.kr\/w\/forecast\/overall\/short-term\.do"/);
+    assert.ok(weather.includes(ko ? '날씨 카드 미리보기' : 'Weather card preview'));
+    assert.doesNotMatch(weather, /weather\.go\.kr|\d\s*°C|\d\s*km\/h/);
+    assert.ok(weather.includes('°C') && weather.includes('km/h'));
   }
 });
 

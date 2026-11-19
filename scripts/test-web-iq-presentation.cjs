@@ -39,7 +39,7 @@ function modules({ interactive = false } = {}) {
       compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
     }).outputText;
     vm.runInNewContext(compiled, {
-      exports, URLSearchParams, URL, AbortController, setTimeout, clearTimeout,
+      exports, URLSearchParams, URL, AbortController, setTimeout, clearTimeout, window: { setTimeout, clearTimeout },
       fetch: (...args) => { networkCalls.push(args); return Promise.reject(new Error('Offline readiness unavailable')); },
       require: name => {
         if (name === 'react') return hooks;
@@ -54,7 +54,7 @@ function modules({ interactive = false } = {}) {
         if (name === '@/components/ui/button') return { Button: ({ children, variant, size, ...props }) => React.createElement('button', props, children) };
         if (name === '@/lib/utils') return { cn: (...items) => items.filter(Boolean).join(' ') };
         if (name === '@/lib/i18n') return { getLocale: () => 'en' };
-        if (name.startsWith('@/components/web-iq/') && !/web-iq-(presentation|speaker-notes|auto-weather|auto-time-zone|service-links)$/.test(name)) {
+        if (name.startsWith('@/components/web-iq/') && !/(?:web-iq-(presentation|speaker-notes|auto-weather|auto-time-zone|weather-search-card|service-links)|use-web-iq-search)$/.test(name)) {
           return new Proxy({}, { get: () => () => React.createElement('div') });
         }
         if (name.startsWith('@/')) {
@@ -174,7 +174,7 @@ test('stage buttons, notes buttons, playback, and material toggles use the same 
   assert.ok(interaction.stopped.filter(value => value === false).length >= 3);
 });
 
-test('Auto opens with a free comparison prompt, visible Learn links and a guarded city lookup in either language', () => {
+test('Auto opens with two weather cards, visible Learn links and a guarded city lookup in either language', () => {
   const { WebIqAutoWeather } = h.load('components/web-iq/web-iq-auto-weather.tsx');
   for (const language of ['ko', 'en']) {
     const html = renderToStaticMarkup(React.createElement(WebIqAutoWeather, { language }));
@@ -186,12 +186,12 @@ test('Auto opens with a free comparison prompt, visible Learn links and a guarde
     const header = html.match(/<header[^>]*>([\s\S]*?)<\/header>/)[1];
     assert.ok(header.includes('https://learn.microsoft.com/en-us/web-iq/overview'));
     assert.ok(header.includes('https://learn.microsoft.com/en-us/web-iq/reference/auto'));
-    assert.match(html, /<button[^>]*aria-expanded="false"[^>]*aria-controls="web-iq-auto-comparison"/);
-    assert.ok(html.includes(ko ? '같은 질문으로 결과 비교하기' : 'Compare results for the same question'));
+    assert.ok(!html.includes('aria-controls="web-iq-auto-comparison"'));
+    assert.ok(html.includes(ko ? 'Auto로 날씨 값 받기' : 'Get weather values with Auto'));
     assert.ok(html.includes(ko ? '두 도시 시차 조회' : 'Check local time in both cities'));
-    assert.ok(!html.includes(ko ? '인천 날씨 실제 조회' : 'Check Incheon weather'));
     assert.match(html, /<button[^>]*disabled=""[^>]*>/);
-    assert.ok(!/°[CF]|hPa|km\/h|\bhumidity\b/i.test(html));
+    assert.ok(html.includes(ko ? '날씨 카드 미리보기' : 'Weather card preview'));
+    assert.doesNotMatch(html, /\d\s*°C|\d\s*km\/h|13:52|2026-11-18/);
   }
 });
 
@@ -210,8 +210,7 @@ test('Auto tab navigation sends nothing and its mounted panel checks readiness w
   const Panel = mounted.load('components/web-iq/web-iq-auto-weather.tsx').WebIqAutoWeather;
   const html = renderToStaticMarkup(React.createElement(Panel, { language: 'en' }));
   mounted.flushEffects();
-  assert.equal(mounted.networkCalls.length, 1);
-  assert.equal(mounted.networkCalls[0][0], '/api/web-iq/auto');
+  assert.deepEqual(mounted.networkCalls.map(([url]) => url).sort(), ['/api/web-iq/auto', '/api/web-iq/search']);
   assert.ok(!mounted.networkCalls.some(([, options]) => options?.method === 'POST'));
   assert.match(html, /<option value="london" selected=""/);
   assert.ok(!html.includes('nasa-earth-book'));

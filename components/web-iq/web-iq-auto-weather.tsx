@@ -3,10 +3,11 @@
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
+import { WebIqWeatherSearchCard } from '@/components/web-iq/web-iq-weather-search-card';
 import { WebIqAutoTimeZone } from '@/components/web-iq/web-iq-auto-time-zone';
 import { WebIqBotCheck } from '@/components/web-iq/web-iq-bot-check';
 import { WebIqServiceLinks } from '@/components/web-iq/web-iq-service-links';
-import { WEB_IQ_AUTO_LOCATION_ID, type WebIqAutoReadiness, type WebIqAutoResponse, type WebIqAutoWeatherEvidence } from '@/lib/webIqAuto';
+import { WEB_IQ_AUTO_LOCATION_ID, WEB_IQ_AUTO_QUESTION, type WebIqAutoReadiness, type WebIqAutoResponse, type WebIqAutoWeatherEvidence } from '@/lib/webIqAuto';
 import { isAutoTimeZoneResponse, type TimeZoneCityId, type WebIqAutoTimeZoneResponse } from '@/lib/webIqAutoTimeZone';
 import type { WebIqLanguage } from '@/lib/webIqScenario';
 import { WEB_IQ_SERVICE_REFERENCES } from '@/lib/webIqServiceReferences';
@@ -192,8 +193,6 @@ export function WebIqAutoWeather({ language }: { language: WebIqLanguage }) {
   const [cityId, setCityId] = React.useState<TimeZoneCityId>('london');
   const cityRef = React.useRef<TimeZoneCityId>('london');
   const [timeZoneResult, setTimeZoneResult] = React.useState<WebIqAutoTimeZoneResponse | null>(null);
-  const [comparisonOpen, setComparisonOpen] = React.useState(false);
-  const comparisonHeading = React.useRef<HTMLHeadingElement>(null);
   const generation = React.useRef(0);
   const pending = React.useRef<PendingRequest | null>(null);
   const ready = Boolean(readiness?.enabled && readiness.configured && readiness.botProtectionConfigured && readiness.turnstileSiteKey?.trim());
@@ -237,15 +236,6 @@ export function WebIqAutoWeather({ language }: { language: WebIqLanguage }) {
       tokenRef.current = null;
     };
   }, [language]);
-
-  React.useEffect(() => {
-    if (comparisonOpen) comparisonHeading.current?.focus();
-  }, [comparisonOpen]);
-
-  function showComparison() {
-    if (comparisonOpen) comparisonHeading.current?.focus();
-    else setComparisonOpen(true);
-  }
 
   const onTokenChange = React.useCallback((value: string | null) => {
     tokenRef.current = value;
@@ -304,7 +294,7 @@ export function WebIqAutoWeather({ language }: { language: WebIqLanguage }) {
   async function requestAuto(kind: AutoRequestKind) {
     // Reserve the shared slot and take the token before either button can submit again.
     const turnstileToken = tokenRef.current;
-    if (pending.current || !ready || !turnstileToken || (kind === 'weather' && !comparisonOpen)) return;
+    if (pending.current || !ready || !turnstileToken) return;
     const requestCity = cityRef.current;
     const controller = new AbortController();
     const request: PendingRequest = {
@@ -363,22 +353,22 @@ export function WebIqAutoWeather({ language }: { language: WebIqLanguage }) {
           : !ready ? pick('Auto is unavailable in this app’s current configuration.', '현재 앱 설정에서 Auto를 사용할 수 없습니다.')
             : inProgress ? pick('Waiting for Auto…', 'Auto 응답을 기다리고 있습니다…')
               : loading ? pick('Wait for the other Auto request to finish.', '다른 Auto 조회가 끝나면 시작할 수 있습니다.')
-                : !token ? pick('Complete the shared browser verification to continue.', '공통 브라우저 확인을 마치면 조회할 수 있습니다.')
-                  : pick('Ready to send one request.', '한 번 조회할 준비가 됐습니다.');
+                : !token && kind === 'timezone' ? <a className="text-accent underline underline-offset-4" href="#web-iq-auto-verification">{pick('Verify your browser in the Auto card above', '위 Auto 카드에서 브라우저 확인하기')}</a>
+                  : '';
     return <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" disabled={!ready || !token || loading !== null}
+        <Button type="button" variant={kind === 'weather' ? 'default' : 'outline'} disabled={!ready || !token || loading !== null}
           onClick={event => {
             // Verification can renew between the two clicks of a double-click.
             if (event.detail <= 1) void requestAuto(kind);
           }}
-          aria-describedby={`${statusId} ${requestId}`} className="h-auto min-h-11 max-w-full whitespace-normal break-keep py-2">
-          {kind === 'weather' ? pick('Check Incheon weather', '인천 날씨 실제 조회') : pick('Check local time in both cities', '두 도시 시차 조회')}
+          aria-describedby={status ? `${statusId} ${requestId}` : requestId} className="h-auto min-h-11 max-w-full whitespace-normal break-keep py-2">
+          {kind === 'weather' ? pick('Get weather values with Auto', 'Auto로 날씨 값 받기') : pick('Check local time in both cities', '두 도시 시차 조회')}
         </Button>
         {inProgress && <Button type="button" variant="ghost" onClick={() => cancelRequest(kind)} className="min-h-11">{pick('Cancel request', '조회 취소')}</Button>}
       </div>
       <p id={requestId} className="break-keep text-xs leading-6 text-fg-muted">{pick('Clicking sends one request to Web IQ Auto.', '누르면 Web IQ Auto에 1회 요청합니다')}</p>
-      <p id={statusId} role="status" className="break-keep text-xs leading-6 text-fg-muted">{status}</p>
+      {status && <p id={statusId} role="status" className="break-keep text-xs leading-6 text-fg-muted">{status}</p>}
       {notices[kind] && <p role="alert" className="break-keep text-sm leading-6 text-fg-default">{notices[kind]}</p>}
     </div>;
   }
@@ -391,8 +381,8 @@ export function WebIqAutoWeather({ language }: { language: WebIqLanguage }) {
           <span className="rounded-md border border-accent/40 bg-accent/10 px-2 py-1 text-xs font-medium text-accent">GA</span>
         </div>
         <p className="max-w-3xl break-keep text-sm leading-7 text-fg-muted">{pick(
-          'When you send a question, Auto decides what information you need. Ask about weather and it returns temperature and wind. Ask about time differences and it returns local times for both cities in a format your app can use directly.',
-          '질문을 보내면 Auto가 어떤 정보가 필요한지 판단합니다. 날씨를 물으면 기온과 바람을, 시차를 물으면 두 도시의 현지 시각을 앱에서 바로 쓸 수 있는 형태로 돌려줍니다.',
+          'Web Search finds pages you can read. Web IQ Auto can return the weather as numbers and times, so your app can display current conditions directly.',
+          'Web Search는 날씨를 확인할 웹페이지를 찾아줍니다. Web IQ Auto는 기온과 풍속을 숫자로 돌려줘서 앱의 날씨 카드에 바로 표시할 수 있습니다.',
         )}</p>
         <div className="flex flex-wrap gap-x-5 gap-y-1">
           {([
@@ -410,53 +400,44 @@ export function WebIqAutoWeather({ language }: { language: WebIqLanguage }) {
           'I’m leaving from Incheon Port. What’s the weather like right now?',
           '인천항에서 출발하려는데, 지금 날씨가 어떤가요?',
         )}</h3>
-        <Button type="button" aria-expanded={comparisonOpen} aria-controls="web-iq-auto-comparison"
-          onClick={showComparison} className="h-auto min-h-11 max-w-full whitespace-normal break-keep py-2">
-          {pick('Compare results for the same question', '같은 질문으로 결과 비교하기')}
-        </Button>
-        <div id="web-iq-auto-comparison">
-          {comparisonOpen && <section className="min-w-0 space-y-3" aria-labelledby="web-iq-auto-format-title">
-            <h4 ref={comparisonHeading} id="web-iq-auto-format-title" tabIndex={-1}
-              className="scroll-mt-24 rounded text-base font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
-              {pick('Compare response formats', '응답 형식 비교')}
-            </h4>
-            <p className="text-sm leading-6 text-fg-muted">{pick('Format examples for the same question', '같은 질문의 응답 형식 예시')}</p>
-            <div className="grid min-w-0 items-start gap-4 sm:grid-cols-2">
-              <article className="min-w-0 space-y-4 rounded-xl border border-stroke-divider bg-bg-card p-4" aria-labelledby="web-iq-format-web-search">
-                <h5 id="web-iq-format-web-search" className="font-semibold">Web Search</h5>
-                <p className="break-keep text-sm leading-6 text-fg-muted">{pick('Finds pages about the weather.', '날씨를 다룬 페이지를 찾습니다.')}</p>
-                <div className="space-y-2 rounded-lg border border-stroke-divider p-4 text-sm">
-                  <span className="text-xs text-fg-muted">{pick('Example search result', '검색 결과 예시')}</span>
-                  <p className="font-semibold">{pick('Short-term forecast for South Korea', '기상청 날씨누리 단기예보')}</p>
-                  <p className="border-l-2 border-stroke-divider pl-3 leading-6 text-fg-muted">{pick('The regional forecast covers the Seoul and Incheon area, with expected weather and temperatures.', '서울과 인천을 포함한 수도권의 예상 날씨와 기온을 확인할 수 있습니다.')}</p>
-                  <a href="https://www.weather.go.kr/w/forecast/overall/short-term.do" target="_blank" rel="noopener noreferrer"
-                    className="inline-flex min-h-11 items-center gap-1 rounded text-sm text-accent underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
-                    {pick('Open the Korea Meteorological Administration forecast', '기상청에서 예보 보기')}<span aria-hidden="true">↗</span>
-                  </a>
-                </div>
-              </article>
-              <article className="min-w-0 space-y-4 rounded-xl border border-accent/30 bg-accent/5 p-4" aria-labelledby="web-iq-format-auto">
-                <h5 id="web-iq-format-auto" className="font-semibold">Web IQ Auto</h5>
-                <p className="break-keep text-sm leading-6 text-fg-muted">{pick('Returns weather values your app can display.', '날씨를 화면에 표시할 값으로 받습니다.')}</p>
-                {result ? <WeatherResult result={result} language={language} /> : <ul className="grid grid-cols-2 gap-2 text-sm text-fg-muted">
-                  {(ko ? ['기온', '풍속', '관측 시각', '출처'] : ['Temperature', 'Wind speed', 'Observation time', 'Source']).map(field => (
-                    <li key={field} className="min-w-0 rounded-lg bg-bg-subtle p-3">{field}</li>
+        <div className="grid min-w-0 items-start gap-4 md:grid-cols-2">
+          <WebIqWeatherSearchCard language={language} question={WEB_IQ_AUTO_QUESTION} />
+          <article aria-labelledby="web-iq-format-auto" className="min-w-0 space-y-4 rounded-xl border border-accent/40 bg-bg-card p-4 sm:p-5">
+            <header className="space-y-2">
+              <p className="text-xs font-semibold text-accent">Web IQ Auto</p>
+              <h4 id="web-iq-format-auto" className="break-keep text-lg font-semibold">{pick('Weather values for your app', '앱에 표시할 날씨 값')}</h4>
+              <p className="break-keep text-sm leading-6 text-fg-muted">{pick('Get the temperature and wind speed for Incheon, together with the observation time and source.', '인천의 기온과 풍속을 관측 시각, 출처와 함께 받습니다.')}</p>
+            </header>
+            {requestControls('weather')}
+            {ready && readiness?.turnstileSiteKey && <div id="web-iq-auto-verification" className="scroll-mt-20" tabIndex={-1}>
+              <WebIqBotCheck siteKey={readiness.turnstileSiteKey} action="webiq_auto" language={language}
+                onTokenChange={onTokenChange} resetKey={resetKey} showServiceLinks={false} />
+            </div>}
+            <div className="space-y-3 rounded-lg border border-stroke-divider bg-bg-subtle p-4">
+              <p className="text-xs font-semibold text-fg-muted">{result ? pick('Live Auto response', '이번 Auto 조회 결과') : pick('Weather card preview', '날씨 카드 미리보기')}</p>
+              {result ? <WeatherResult result={result} language={language} /> : <>
+                <dl className="grid grid-cols-2 gap-3">
+                  {[[pick('Temperature', '기온'), '°C'], [pick('Wind speed', '풍속'), 'km/h']].map(([label, unit]) => (
+                    <div key={unit}>
+                      <dt className="text-xs text-fg-muted">{label}</dt>
+                      <dd className="mt-1 flex items-baseline gap-1.5">
+                        <span aria-hidden="true" className="text-2xl font-semibold">—</span>
+                        <span className="sr-only">{pick('Available after lookup', '조회 후 표시')}</span>
+                        <span className="text-sm text-fg-muted">{unit}</span>
+                      </dd>
+                    </div>
                   ))}
-                </ul>}
-                {requestControls('weather')}
-                <a href={`${AUTO_DOCS.featureUrl}#weather-object`} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex min-h-11 items-center gap-1 rounded text-sm text-accent underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
-                  {pick('Weather response documentation', '날씨 응답 공식 문서')}<span aria-hidden="true">↗</span>
-                </a>
-              </article>
+                </dl>
+                <p className="border-t border-stroke-divider pt-3 text-xs leading-5 text-fg-muted">{pick('Observation time and source appear with the live readings.', '조회하면 관측 시각과 출처도 함께 표시됩니다.')}</p>
+              </>}
             </div>
-            <p className="break-keep text-xs leading-6 text-fg-muted">{pick('This check covers real weather in the Incheon area. Shipments A, B and C belong to the separate fictional scenario.', '여기서는 실제 인천 지역의 날씨를 확인합니다. A/B/C 화물 배정은 별도의 가상 시나리오입니다.')}</p>
-          </section>}
+            <a href={`${AUTO_DOCS.featureUrl}#weather-object`} target="_blank" rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center gap-1 rounded text-sm text-accent underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+              {pick('Weather response documentation', '날씨 응답 공식 문서')}<span aria-hidden="true">↗</span>
+            </a>
+          </article>
         </div>
       </section>
-
-      {ready && readiness?.turnstileSiteKey && <WebIqBotCheck siteKey={readiness.turnstileSiteKey} action="webiq_auto"
-        language={language} onTokenChange={onTokenChange} resetKey={resetKey} />}
 
       <WebIqAutoTimeZone language={language} cityId={cityId} onCityChange={changeCity} result={timeZoneResult} controls={requestControls('timezone')} />
 
@@ -465,7 +446,7 @@ export function WebIqAutoWeather({ language }: { language: WebIqLanguage }) {
         <div className="space-y-3 pb-1">
           <p className="break-keep text-xs leading-6 text-fg-muted">{pick('Auto lite reserves $0.008 per request (8,000 microUSD). The reservation may remain after cancellation, timeout or a lost response.', 'Auto lite는 요청당 $0.008(8,000µUSD)을 예약하며 취소·시간 초과·응답 유실 시 예약이 유지될 수 있습니다.')}</p>
           <p className="break-keep text-xs leading-6 text-fg-muted">{pick('Shared demo estimate limit: $5 per Korea-time day. Request limit: 100 per IP in a rolling 120 seconds. A new request requires fresh verification and an explicit click.', '데모 추정 한도는 한국시간 하루 $5를 공유하며, 같은 IP에서 최근 120초간 100회까지입니다. 새 요청에는 다시 확인한 뒤 직접 누르는 동작이 필요합니다.')}</p>
-          <WebIqServiceLinks features={['auto']} locale={language} context="documentation" compact />
+          <WebIqServiceLinks features={['auto', 'bot-check']} locale={language} context="documentation" compact />
         </div>
       </details>
     </section>

@@ -59,7 +59,7 @@ function elements(node, predicate) {
 }
 function harness(options = {}) {
   const slots = [], jobs = [], calls = [], timers = new Map();
-  let cursor = 0, mounted = true, lateUpdates = 0, language = 'en', tree, timerSequence = 0, focusCalls = 0;
+  let cursor = 0, mounted = true, lateUpdates = 0, language = 'en', tree, timerSequence = 0;
   const same = (a, b) => a && b && a.length === b.length && a.every((item, index) => Object.is(item, b[index]));
   const hooks = {
     ...React,
@@ -92,6 +92,10 @@ function harness(options = {}) {
   };
   const Button = ({ children, variant, size, ...props }) => React.createElement('button', props, children);
   const Bot = () => null;
+  // Search owns its own verification and request state. The child has a separate route interaction suite.
+  const WebIqWeatherSearchCard = ({ language, question }) => React.createElement(
+    'article', { 'aria-label': 'Web Search fixture', lang: language }, question,
+  );
   const exports = {};
   const filename = path.join(root, 'components/web-iq/web-iq-auto-weather.tsx');
   const compiled = ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: {
@@ -109,6 +113,7 @@ function harness(options = {}) {
     if (name === 'react') return hooks;
     if (name === 'react/jsx-runtime') return require(name);
     if (name === '@/components/ui/button') return { Button };
+    if (name === '@/components/web-iq/web-iq-weather-search-card') return { WebIqWeatherSearchCard };
     if (name === '@/components/web-iq/web-iq-auto-time-zone') return { WebIqAutoTimeZone };
     if (name === '@/components/web-iq/web-iq-bot-check') return { WebIqBotCheck: Bot };
     if (name === '@/components/web-iq/web-iq-service-links') return { WebIqServiceLinks: () => null };
@@ -120,15 +125,12 @@ function harness(options = {}) {
   const render = (nextLanguage = language) => {
     language = nextLanguage; cursor = 0;
     tree = exports.WebIqAutoWeather({ language });
-    const heading = elements(tree, item => item.props.id === 'web-iq-auto-format-title')[0];
-    if (heading?.props.ref) heading.props.ref.current = { focus: () => { focusCalls++; } };
     while (jobs.length) jobs.shift()();
     return tree;
   };
   const timeZone = () => elements(tree, item => item.type === WebIqAutoTimeZone)[0];
   const action = kind => elements(kind === 'timezone' ? timeZone().props.controls : tree, item =>
-    item.type === Button && item.props['aria-describedby']?.startsWith(`web-iq-auto-${kind}-status`))[0];
-  const compareButton = () => elements(tree, item => item.type === Button && item.props['aria-controls'] === 'web-iq-auto-comparison')[0];
+    item.type === Button && item.props['aria-describedby']?.split(' ').includes(`web-iq-auto-${kind}-request`))[0];
   return {
     calls, render,
     html: () => renderToStaticMarkup(tree),
@@ -139,9 +141,7 @@ function harness(options = {}) {
       elements(region, item => item.type === Button && /Cancel request|조회 취소/.test(item.props.children))[0].props.onClick();
     },
     disabled: (kind = 'weather') => action(kind).props.disabled,
-    compare: () => { compareButton().props.onClick(); render(); },
-    comparisonOpen: () => compareButton().props['aria-expanded'],
-    focusCalls: () => focusCalls,
+    search: () => elements(tree, item => item.type === WebIqWeatherSearchCard)[0],
     city: () => timeZone().props.cityId,
     cityResult: () => timeZone().props.result,
     changeCity: cityId => timeZone().props.onCityChange(cityId),
@@ -154,11 +154,10 @@ function harness(options = {}) {
     lateUpdates: () => lateUpdates,
   };
 }
-async function readyHarness(options, open = true) {
+async function readyHarness(options) {
   const h = harness(options);
   h.render();
   await h.flush();
-  if (open) h.compare();
   return h;
 }
 
@@ -196,7 +195,8 @@ test('a verified explicit click submits fixed DTO once; a same-tick double click
   assert.match(h.html(), /Weather observation time/); assert.match(h.html(), /Source observation time/);
   assert.match(h.html(), /Source crawl time/); assert.match(h.html(), /Source last updated/); assert.match(h.html(), /App retrieval time/);
   const rightCard = h.html().split('aria-labelledby="web-iq-format-auto"')[1].split('</article>')[0];
-  assert.doesNotMatch(rightCard, /<li[^>]*>Temperature<\/li>/);
+  assert.doesNotMatch(rightCard, /Weather card preview/);
+  assert.doesNotMatch(h.timeZoneHtml(), /OFFLINE_WEATHER_FIXTURE/);
   assert.ok(rightCard.indexOf('0 °C') < rightCard.indexOf('Weather evidence details'));
   assert.ok(rightCard.indexOf('Weather observation time') < rightCard.indexOf('Weather evidence details'));
   assert.equal(h.postCalls().length, 1); h.unmount();
@@ -217,10 +217,9 @@ test('a second pointer click cannot submit again after a fast response and fresh
   }
 });
 
-test('timezone can verify and submit once before comparison opens, without turning the weather example into a result', async () => {
-  const h = await readyHarness({ post: () => Response.json(timeZoneResult()) }, false);
+test('timezone can verify and submit once without populating the weather card', async () => {
+  const h = await readyHarness({ post: () => Response.json(timeZoneResult()) });
   assert.equal(h.city(), 'london');
-  assert.equal(h.comparisonOpen(), false);
   assert.equal(h.bot().props.action, 'webiq_auto');
   h.submit('timezone');
   assert.equal(h.postCalls().length, 0);
@@ -229,8 +228,8 @@ test('timezone can verify and submit once before comparison opens, without turni
   h.submit('timezone');
   h.submit('timezone');
   await h.flush();
-  assert.equal(h.comparisonOpen(), false);
-  assert.doesNotMatch(h.html(), /id="web-iq-auto-weather-result"/);
+  assert.match(h.html(), /Weather card preview/);
+  assert.doesNotMatch(h.html(), /OFFLINE_WEATHER_FIXTURE/);
   assert.equal(h.postCalls().length, 1);
   assert.deepEqual(JSON.parse(h.postCalls()[0].init.body), {
     schemaVersion: 'webiq.auto.timezone.request.v1', cityId: 'london', language: 'en', turnstileToken: 'offline-token',
@@ -253,7 +252,7 @@ test('renders both clocks from the November 18 Auto comparison with unnamed loca
   const parsed = timeZoneContract.parseWebIqTimeZonePayload({
     results: [{ evidence: { type: 'structured/timeZone', content: actualContent } }],
   }, 'london');
-  const h = await readyHarness({ post: () => Response.json(timeZoneResult('london', parsed)) }, false);
+  const h = await readyHarness({ post: () => Response.json(timeZoneResult('london', parsed)) });
   h.token();
   h.submit('timezone');
   await h.flush();
@@ -261,6 +260,28 @@ test('renders both clocks from the November 18 Auto comparison with unnamed loca
   assert.match(html, /Seoul is 9 hours ahead of London/);
   assert.match(html, /2026-11-18T14:43/);
   assert.match(html, /2026-11-18T05:43/);
+  h.unmount();
+});
+
+test('weather and partial time zone responses populate only their own result and survive each other', async () => {
+  const h = await readyHarness({ post: (_, init) => {
+    const request = JSON.parse(init.body);
+    return Response.json(request.cityId ? timeZoneResult('london', { status: 'not_verified', destination: null, differenceMinutes: null }) : result());
+  } });
+  h.token(); h.submit(); await h.flush();
+  const weatherCard = () => h.html().split('aria-labelledby="web-iq-format-auto"')[1].split('</article>')[0];
+  const temperatureCard = weatherCard();
+  assert.match(temperatureCard, /OFFLINE_WEATHER_FIXTURE/);
+  assert.equal(h.cityResult(), null);
+  h.token(); h.submit('timezone'); await h.flush();
+  assert.match(h.timeZoneHtml(), /2026-11-17T14:00/);
+  assert.match(h.timeZoneHtml(), /couldn’t confirm the time difference/);
+  assert.doesNotMatch(h.timeZoneHtml(), /OFFLINE_WEATHER_FIXTURE|9 hours ahead/);
+  assert.equal(weatherCard(), temperatureCard);
+  h.changeCity('seattle'); h.render();
+  assert.equal(h.cityResult(), null);
+  assert.equal(weatherCard(), temperatureCard);
+  assert.equal(h.postCalls().length, 2);
   h.unmount();
 });
 
@@ -353,7 +374,7 @@ test('a language change aborts the previous request, clears its token and reject
   h.token(); h.submit(); h.render('ko'); await h.flush();
   assert.equal(h.postCalls()[0].init.signal.aborted, true); assert.equal(h.disabled(), true);
   response.resolve(Response.json(result())); await h.flush();
-  assert.ok(!h.html().includes('OFFLINE_WEATHER_FIXTURE')); assert.match(h.html(), /인천 날씨 실제 조회/);
+  assert.ok(!h.html().includes('OFFLINE_WEATHER_FIXTURE')); assert.match(h.html(), /Auto로 날씨 값 받기/);
   assert.equal(h.postCalls().length, 1); h.unmount();
 });
 
@@ -403,38 +424,34 @@ test('only safe HTTPS source links render; forecast and alert details are collap
   h.unmount();
 });
 
-test('KO/EN comparison opens without readiness, focuses its heading on every click, and presents format examples', async () => {
+test('KO/EN weather cards and empty structured fields are visible on entry, even without live access', async () => {
   for (const language of ['ko', 'en']) {
-    const h = await readyHarness({ readiness: { enabled: false } }, false);
-    h.render(language); await h.flush();
-    assert.equal(h.comparisonOpen(), false);
-    assert.doesNotMatch(h.html(), /id="web-iq-auto-format-title"/);
-    assert.equal(h.focusCalls(), 0);
-    h.compare();
-    assert.equal(h.comparisonOpen(), true);
-    assert.equal(h.focusCalls(), 1);
-    h.compare();
-    assert.equal(h.focusCalls(), 2);
+    const h = await readyHarness({ readiness: { enabled: false } });
+    h.render(language);
+    await h.flush();
     const html = h.html();
-    const format = html.match(/<section[^>]+aria-labelledby="web-iq-auto-format-title"[\s\S]*?<\/section>/)?.[0];
-    assert.ok(format);
-    assert.match(html, language === 'ko' ? /인천항에서 출발하려는데, 지금 날씨가 어떤가요\?/ : /I’m leaving from Incheon Port\. What’s the weather like right now\?/);
-    assert.match(format, language === 'ko' ? /응답 형식 예시/ : /Format examples/);
-    const cards = [...format.matchAll(/<article\b[\s\S]*?<\/article>/g)].map(item => item[0]);
-    assert.equal(cards.length, 2);
-    const searchFields = language === 'ko'
-      ? ['검색 결과 예시', '기상청 날씨누리 단기예보', '수도권의 예상 날씨와 기온', '기상청에서 예보 보기']
-      : ['Example search result', 'Short-term forecast for South Korea', 'Seoul and Incheon area', 'Open the Korea Meteorological Administration forecast'];
-    for (const field of searchFields) assert.ok(cards[0].includes(field));
-    assert.match(cards[0], /href="https:\/\/www\.weather\.go\.kr\/w\/forecast\/overall\/short-term\.do"/);
-    assert.doesNotMatch(cards[0], /<(?:button|time)/);
-    const autoFields = language === 'ko' ? ['기온', '풍속', '관측 시각', '출처'] : ['Temperature', 'Wind speed', 'Observation time', 'Source'];
-    assert.deepEqual([...cards[1].matchAll(/<li\b[^>]*>([^<]+)<\/li>/g)].map(item => item[1]), autoFields);
-    assert.ok(cards[1].includes(serviceReferences.WEB_IQ_SERVICE_REFERENCES.auto.featureUrl + '#weather-object'));
-    assert.equal((cards[1].match(/<a /g) || []).length, 1);
-    assert.doesNotMatch(cards[1], /<time|OFFLINE_WEATHER_FIXTURE/);
+    const search = h.search();
+    assert.ok(search);
+    assert.equal(search.props.language, language);
+    const heading = html.match(/<h3[^>]+id="web-iq-auto-weather-question"[^>]*>([^<]+)<\/h3>/)?.[1];
+    assert.ok(heading);
+    assert.equal(search.props.question, autoContract.WEB_IQ_AUTO_QUESTION);
+    assert.ok(html.indexOf('aria-label="Web Search fixture"') < html.indexOf('aria-labelledby="web-iq-format-auto"'));
+    assert.doesNotMatch(html, /aria-controls="web-iq-auto-comparison"/);
+    const card = html.split('aria-labelledby="web-iq-format-auto"')[1].split('</article>')[0];
+    assert.ok(card.includes(language === 'ko' ? '날씨 카드 미리보기' : 'Weather card preview'));
+    for (const field of language === 'ko' ? ['기온', '풍속', '관측 시각', '출처'] : ['Temperature', 'Wind speed', 'Observation time', 'Source']) {
+      assert.ok(card.toLowerCase().includes(field.toLowerCase()), field);
+    }
+    assert.match(card, /°C/);
+    assert.match(card, /km\/h/);
+    assert.doesNotMatch(card, /\d\s*°C|\d\s*km\/h|13:52|2026-11-18|OFFLINE_WEATHER_FIXTURE/);
+    assert.ok(card.includes(serviceReferences.WEB_IQ_SERVICE_REFERENCES.auto.featureUrl + '#weather-object'));
+    assert.ok(card.includes(language === 'ko' ? 'Auto로 날씨 값 받기' : 'Get weather values with Auto'));
+    h.changeCity('seattle'); h.render();
     assert.equal(h.postCalls().length, 0);
-    assert.equal(h.disabled(), true); h.unmount();
+    assert.equal(h.disabled(), true);
+    h.unmount();
   }
 });
 
@@ -446,7 +463,7 @@ test('execution details start collapsed while both actions, request count and av
   assert.match(details, /Request limits and API details/);
   assert.match(details, /Shared demo estimate limit/); assert.match(details, /reservation may remain/);
   const visible = html.replace(details, '');
-  assert.match(visible, /Check Incheon weather/); assert.match(visible, /Check local time in both cities/);
+  assert.match(visible, /Get weather values with Auto/); assert.match(visible, /Check local time in both cities/);
   assert.match(visible, /Auto is off/);
   assert.equal((visible.match(/Clicking sends one request to Web IQ Auto/g) || []).length, 2);
   assert.match(visible, /href="https:\/\/learn.microsoft.com\/en-us\/web-iq\/overview"/);
