@@ -381,8 +381,8 @@ export function WebIqAutoWeather({ language }: { language: WebIqLanguage }) {
           <span className="rounded-md border border-accent/40 bg-accent/10 px-2 py-1 text-xs font-medium text-accent">GA</span>
         </div>
         <p className="max-w-3xl break-keep text-sm leading-7 text-fg-muted">{pick(
-          'Web Search finds pages you can read. Web IQ Auto can return the weather as numbers and times, so your app can display current conditions directly.',
-          'Web Search는 날씨를 확인할 웹페이지를 찾아줍니다. Web IQ Auto는 기온과 풍속을 숫자로 돌려줘서 앱의 날씨 카드에 바로 표시할 수 있습니다.',
+          'Web IQ Auto gives your app weather readings or local times, depending on what you ask.',
+          'Web IQ Auto는 질문에 따라 날씨나 도시별 현지 시각을 앱에 바로 표시할 수 있는 형태로 알려줍니다.',
         )}</p>
         <div className="flex flex-wrap gap-x-5 gap-y-1">
           {([
@@ -396,10 +396,16 @@ export function WebIqAutoWeather({ language }: { language: WebIqLanguage }) {
       </header>
 
       <section className="min-w-0 space-y-4" aria-labelledby="web-iq-auto-weather-question">
-        <h3 id="web-iq-auto-weather-question" className="break-keep text-lg font-semibold leading-7">{pick(
-          'I’m leaving from Incheon Port. What’s the weather like right now?',
-          '인천항에서 출발하려는데, 지금 날씨가 어떤가요?',
-        )}</h3>
+        <div className="space-y-1">
+          <h3 id="web-iq-auto-weather-question" className="break-keep text-lg font-semibold leading-7">{pick(
+            'Question: I’m leaving from Incheon Port. What’s the weather like right now?',
+            '질문 : 인천항에서 출발하려는데, 지금 날씨가 어떤가요?',
+          )}</h3>
+          <p className="break-keep text-sm leading-6 text-fg-muted">{pick(
+            'Web Search finds pages about the weather, while Web IQ Auto gives you the temperature and wind speed as numbers.',
+            'Web Search는 날씨를 확인할 웹페이지를 찾아주고, Web IQ Auto는 기온과 풍속을 숫자로 알려줍니다.',
+          )}</p>
+        </div>
         <div className="grid min-w-0 items-start gap-4 md:grid-cols-2">
           <WebIqWeatherSearchCard language={language} question={WEB_IQ_AUTO_QUESTION} />
           <article aria-labelledby="web-iq-format-auto" className="min-w-0 space-y-4 rounded-xl border border-accent/40 bg-bg-card p-4 sm:p-5">
